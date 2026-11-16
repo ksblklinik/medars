@@ -595,6 +595,34 @@ final class SchemaMigrator
                 hasil TEXT NOT NULL,
                 PRIMARY KEY (no_rawat, tgl_periksa, jam)
             ){$suffix}",
+
+            // 9. Bridging BPJS, SatuSehat FHIR & Vedika (Fase 6)
+            "CREATE TABLE IF NOT EXISTS bridging_sync_queue (
+                id {$bigAutoIncPk},
+                provider VARCHAR(30) NOT NULL,
+                resource_type VARCHAR(50) NOT NULL,
+                no_rawat VARCHAR(20) NOT NULL,
+                endpoint VARCHAR(255) NOT NULL,
+                payload_json TEXT NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                attempts INT NOT NULL DEFAULT 0,
+                last_error TEXT,
+                external_id VARCHAR(100) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL,
+                updated_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_vedika (
+                id {$autoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                no_sep VARCHAR(40) NOT NULL DEFAULT '',
+                jenis_pelayanan VARCHAR(15) NOT NULL DEFAULT 'Ralan',
+                status VARCHAR(30) NOT NULL DEFAULT 'Pengajuan',
+                catatan TEXT,
+                verified_by VARCHAR(50) NOT NULL DEFAULT '',
+                verified_at VARCHAR(30) NOT NULL DEFAULT '',
+                UNIQUE (no_rawat)
+            ){$suffix}",
         ];
 
         foreach ($statements as $sql) {

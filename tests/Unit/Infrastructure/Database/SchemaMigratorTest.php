@@ -74,6 +74,8 @@ class SchemaMigratorTest extends TestCase
             'permintaan_radiologi',
             'permintaan_pemeriksaan_radiologi',
             'hasil_radiologi',
+            'bridging_sync_queue',
+            'mlite_vedika',
         ];
 
         $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'");

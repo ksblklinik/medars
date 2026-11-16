@@ -431,4 +431,59 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, $rep['visits_by_poli']);
         $this->assertSame('J06.9', $rep['top_diseases'][0]['kd_penyakit']);
     }
+
+    public function testBridgingCircuitBreakerAndSatuSehatQueueEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Belum Bayar');
+            INSERT INTO pemeriksaan_ralan (no_rawat, tgl_perawatan, jam_rawat, suhu_tubuh, tensi, nadi, respirasi, tinggi, berat, spo2, gcs, kesadaran, keluhan, pemeriksaan, alergi, lingkar_perut, rtl, penilaian, instruksi, evaluasi, nip)
+            VALUES ('2026/11/16/000001', '{$today}', '08:15:00', '36.5', '120/80', '80', '20', '170', '65', '98', '15', 'Compos Mentis', 'Batuk', 'Ronkhi (-)', '-', '-', 'Obat', 'ISPA', '-', '-', 'DR001');
+            INSERT INTO penyakit (kd_penyakit, nm_penyakit, nm_indonesia) VALUES ('J06.9', 'Acute URI', 'ISPA Akut');
+            INSERT INTO diagnosa_pasien (no_rawat, kd_penyakit, status, prioritas) VALUES ('2026/11/16/000001', 'J06.9', 'Ralan', 1);
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/bridging');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Circuit Breaker', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Status Circuit Breaker (0ms mock karena kredensial belum diisi)
+        $statusRes = $this->app->handle('GET', '/api/v1/bridging/status');
+        $this->assertSame(200, $statusRes['status']);
+        $statusData = json_decode($statusRes['body'], true);
+        $this->assertTrue($statusData['bpjs_circuit']['circuit_open']);
+
+        // 2. Antrean SatuSehat FHIR Asinkron
+        $qRes = $this->app->handle(
+            'POST',
+            '/api/v1/bridging/satusehat/queue',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'patient_ihs_id' => 'P001',
+                'practitioner_ihs_id' => 'N001',
+                'icd10_code' => 'J06.9',
+                'icd10_display' => 'ISPA Akut',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $qRes['status']);
+
+        // 3. Verifikasi Klaim Vedika
+        $vRes = $this->app->handle(
+            'POST',
+            '/api/v1/bridging/vedika/verify',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'no_sep' => '0123R0011126V000001',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $vRes['status']);
+        $vData = json_decode($vRes['body'], true);
+        $this->assertSame('Layak', $vData['verification']['status']);
+    }
 }

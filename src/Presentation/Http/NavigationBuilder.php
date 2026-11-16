@@ -63,6 +63,12 @@ final class NavigationBuilder
                 'modules' => ['laporan'],
             ],
             [
+                'title' => 'Bridging BPJS',
+                'icon' => 'fa-network-wired',
+                'route' => '/bridging',
+                'modules' => ['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika'],
+            ],
+            [
                 'title' => 'Pengguna',
                 'icon' => 'fa-users',
                 'route' => '/users',

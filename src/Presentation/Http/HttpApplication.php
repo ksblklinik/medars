@@ -8,6 +8,9 @@ use App\Application\Billing\UseCase\ProcessPosApotekUmumUseCase;
 use App\Application\Billing\UseCase\ProcessSplitPaymentUseCase;
 use App\Application\Billing\UseCase\ReconcilePendingOrderUseCase;
 use App\Application\Billing\UseCase\VoidBillingTransactionUseCase;
+use App\Application\Bridging\UseCase\ProcessBridgingQueueUseCase;
+use App\Application\Bridging\UseCase\QueueSatuSehatSyncUseCase;
+use App\Application\Bridging\UseCase\VerifyVedikaClaimUseCase;
 use App\Application\Pharmacy\UseCase\CreateResepUseCase;
 use App\Application\Pharmacy\UseCase\DeleteResepUseCase;
 use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
@@ -25,14 +28,20 @@ use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
 use App\Application\Support\UseCase\DeleteLabOrderUseCase;
 use App\Application\Support\UseCase\SaveLabResultUseCase;
 use App\Application\Support\UseCase\SaveRadiologyResultUseCase;
+use App\Domain\Bridging\Service\BpjsGatewayService;
+use App\Domain\Bridging\Service\HfisLeanCalculator;
+use App\Domain\Bridging\ValueObject\BridgingCredentials;
+use App\Domain\Bridging\ValueObject\TimeoutPolicy;
 use App\Domain\Security\Entity\UserAccount;
 use App\Domain\Security\Exception\ForbiddenException;
 use App\Domain\Security\Exception\UnauthorizedException;
 use App\Domain\Setting\Service\SettingService;
 use App\Infrastructure\Database\PdoTransactionManager;
+use App\Infrastructure\Http\CurlHttpClient;
 use App\Infrastructure\Persistence\PdoAuditLogRepository;
 use App\Infrastructure\Persistence\PdoBillingLedgerRepository;
 use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
+use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
@@ -279,6 +288,32 @@ final class HttpApplication
             new DeleteLabOrderUseCase($labRepo, $tx, $ledgerRepo),
             new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx),
             new SaveRadiologyResultUseCase($labRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $bridgingQueueRepo = new PdoBridgingQueueRepository($this->pdo);
+        $httpClient = new CurlHttpClient();
+        $timeoutPolicy = new TimeoutPolicy(2, 4);
+        $bpjsCreds = new BridgingCredentials(
+            (string) $settingService->get('bridging', 'bpjs_consid', '-'),
+            (string) $settingService->get('bridging', 'bpjs_secretkey', '-'),
+            (string) $settingService->get('bridging', 'bpjs_user_key', '-'),
+            (string) $settingService->get('bridging', 'bpjs_url', '-'),
+        );
+        $satuSehatCreds = new BridgingCredentials(
+            (string) $settingService->get('bridging', 'satusehat_org_id', '-'),
+            (string) $settingService->get('bridging', 'satusehat_client_id', '-'),
+            (string) $settingService->get('bridging', 'satusehat_client_secret', '-'),
+            (string) $settingService->get('bridging', 'satusehat_url', '-'),
+        );
+        $bridgingController = new BridgingController(
+            $bridgingQueueRepo,
+            new BpjsGatewayService($bpjsCreds, $httpClient, $timeoutPolicy),
+            new HfisLeanCalculator(),
+            new QueueSatuSehatSyncUseCase($bridgingQueueRepo),
+            new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy),
+            new VerifyVedikaClaimUseCase($this->pdo),
             $this->renderer,
             $this->navBuilder
         );
@@ -616,6 +651,37 @@ final class HttpApplication
         $router->get('/api/v1/laporan/operasional', function () use ($supportController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);
             return $supportController->operationalReports($queryParams);
+        });
+
+        // Bridging BPJS, SatuSehat FHIR & HFIS LEAN (PLN-30)
+        $router->get('/bridging', function () use ($bridgingController): array {
+            $user = $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika']);
+            return $bridgingController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/bridging/status', function () use ($bridgingController): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika']);
+            return $bridgingController->status();
+        });
+        $router->get('/api/v1/bridging/lean/estimate', function () use ($bridgingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'pendaftaran', 'anjungan']);
+            return $bridgingController->leanEstimate($queryParams);
+        });
+        $router->post('/api/v1/bridging/satusehat/queue', function () use ($bridgingController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat', 'dokter_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $bridgingController->queueSatuSehat($data);
+        });
+        $router->post('/api/v1/bridging/satusehat/process', function () use ($bridgingController, $postData, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $bridgingController->processQueue();
+        });
+        $router->post('/api/v1/bridging/vedika/verify', function () use ($bridgingController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vedika', 'kasir']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $bridgingController->verifyVedika($data, $user->getUsername());
         });
 
         return $router->dispatch($method, $path);

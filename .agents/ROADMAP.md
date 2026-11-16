@@ -70,26 +70,21 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-6 (Bridging BPJS & SatuSehat)
+## 🎯 Fase Aktif Saat Ini: FASE-7 (WA Gateway CRM & Homecare PWA)
 
-- [x] **PLN-23: Value Objects & Entities Laboratorium, Radiologi & Pemisahan PL (TDD)** ✅ *(SELESAI — 214 tests, 817 assertions PASS)*
-  - Entitas `PermintaanLab`, `PermintaanPemeriksaanLab`, `PermintaanRadiologi`, `DetailPeriksaLab`, `HasilRadiologi`.
-  - Penomoran order `PLYYYYMMDD0001` & `PRYYYYMMDD0001` serta pemisahan nomor order berdasarkan jenis klaim (Kapitasi vs Tunai) dan status pembayaran kasir.
-- [x] **PLN-24: Migrasi Skema Penunjang & Repositories ACID (TDD)** ✅ *(SELESAI)*
-  - Tambahkan DDL tabel `permintaan_lab`, `permintaan_pemeriksaan_lab`, `detail_periksa_lab`, `permintaan_radiologi`, `permintaan_pemeriksaan_radiologi`, `hasil_radiologi` ke `SchemaMigrator`.
-  - Query bebas N+1 untuk Laporan Kunjungan, 10 Besar Penyakit ICD-10, dan Pendapatan per Pilar Klaim (`PdoOperationalReportRepository`).
-- [x] **PLN-25: Use-Case Order Penunjang, Lock Validasi Kasir & Input Hasil (TDD)** ✅ *(SELESAI)*
-  - Pemisahan nomor PL baru otomatis jika nomor PL lama sudah `Paid`/`Approved` di Kasir.
-  - Lock tombol/aksi validasi hasil laboratorium jika order belum dilunasi/diapprove di Kasir (`SaveLabResultUseCase::isValidationUnlocked`).
-  - Penghapusan permintaan lab atomik dalam transaksi ACID (`DeleteLabOrderUseCase`).
-- [x] **PLN-26: UI/UX Order Lab/Rad, Input Hasil Nilai Rujukan & Laporan (Paritas ksmlite)** ✅ *(SELESAI)*
-  - Penandaan visual otomatis nilai rujukan abnormal (`Rendah`/`Tinggi`/`Normal`) pada hasil lab, serta dashboard laporan operasional (`SupportController`, `templates/support/index.php`, `public/assets/js/modules/support.js`).
+- [x] **PLN-27: Value Objects, Circuit Breaker & Config Bridging BPJS / SatuSehat (TDD)** ✅ *(SELESAI — 223 tests, 877 assertions PASS)*
+  - `BridgingCredentials`, `TimeoutPolicy` (connect `<= 2s`, execution `<= 4s`), `BpjsGatewayService` Zero-Latency Circuit Breaker (`0ms` mock saat kredensial kosong/`-`/`0`/`12345`).
+- [x] **PLN-28: Service VClaim/PCare, HFIS LEAN Board & Verifikasi Klaim Vedika (TDD)** ✅ *(SELESAI)*
+  - `HfisLeanCalculator` (Shift Pagi `08:00:00`, Sore Gigi `15:00:00`, Sore Non-Gigi `16:00:00`, Saran Tiba, & *Net Signed Avg*) serta `VerifyVedikaClaimUseCase`.
+- [x] **PLN-29: FHIR Bundle Builder & SatuSehat Sync Worker (TDD)** ✅ *(SELESAI)*
+  - Skema `bridging_sync_queue` & `mlite_vedika`, `QueueSatuSehatSyncUseCase` (non-blocking async queue), dan `ProcessBridgingQueueUseCase`.
+- [x] **PLN-30: UI/UX Monitoring Bridging, HFIS Board & E2E Integration (Paritas ksmlite)** ✅ *(SELESAI)*
+  - `BridgingController`, `templates/bridging/index.php`, `public/assets/js/modules/bridging.js`, rute `/bridging` & `/api/v1/bridging/*`, serta E2E `testBridgingCircuitBreakerAndSatuSehatQueueEndToEnd`.
 
-### Antrean Tugas FASE-6 (Bridging BPJS & SatuSehat)
-- [ ] **PLN-27: Value Objects, Circuit Breaker & Config Bridging BPJS / SatuSehat (TDD)**
-- [ ] **PLN-28: Service VClaim/PCare, HFIS LEAN Board & Verifikasi Klaim Vedika (TDD)**
-- [ ] **PLN-29: FHIR Bundle Builder & SatuSehat Sync Worker (TDD)**
-- [ ] **PLN-30: UI/UX Monitoring Bridging, HFIS Board & E2E Integration (Paritas ksmlite)**
+### Antrean Tugas FASE-7 (WA Gateway CRM & Homecare PWA)
+- [ ] **PLN-31: Dual-Session WA Gateway (`system` vs `cs`), Whitelist & Anti-Banned Spintax (TDD)**
+- [ ] **PLN-32: Homecare PWA Mandiri & Trias Preceptorship Privacy Shield (TDD)**
+- [ ] **PLN-33: UI/UX WA CRM & Homecare + E2E Integration (Paritas ksmlite)**
 
 ---
 
