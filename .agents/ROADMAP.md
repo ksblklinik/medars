@@ -70,21 +70,20 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🚧 Sedang Dikerjakan (IN PROGRESS)
+## 🎯 Fase Aktif Saat Ini: FASE-2 (Rekam Medis Elektronik & Form SOAP Dinamis)
 
-### [FASE-1B] Fondasi Autentikasi, RBAC, Kepegawaian, Master Data & Pengaturan (PRD 13)
-- [ ] **PLN-10A: Autentikasi, Keamanan Sesi, CSRF & RBAC Middleware (TDD)**
-  - `UserAccount` entity (`mlite_users`), `AuthService` (`password_verify()`, `session_regenerate_id(true)`), dan rate-limiter brute-force.
-  - Middleware `CsrfGuard` & `RbacGuard` (`role`, `access` per modul, `cap` cakupan poliklinik).
-  - `AuditLogService` (*append-only* `mlite_logs` untuk login, gagal login, dan mutasi sensitif).
-- [ ] **PLN-10B: Manajemen Pengguna & Kepegawaian (TDD)**
-  - CRUD User (`mlite_users`, `mlite_user_roles`) dengan proteksi Anti-Lockout (blokir hapus superadmin ID 1 atau hapus diri sendiri).
-  - Master SDM (`pegawai`, `dokter`, `petugas` termasuk NIP/SIP/STR) dengan *Soft-Deactivation* (`status = '0'`) agar histori RME/billing tetap utuh.
-- [ ] **PLN-10C: Master Data Operasional & Pengaturan Global (TDD)**
-  - CRUD `poliklinik` (termasuk pengaturan *data-driven* `allow_bpjs`, tarif baru/lama), `jadwal` dokter multi-shift (anti-overlap hari & jam), `penjab`, dan `jns_perawatan`.
-  - `SettingsService` (`mlite_settings` key-value per modul untuk identitas klinik & parameter fitur).
-- [ ] **PLN-10D: UI/UX Login, Manajemen Users, Kepegawaian, Master & Settings (Paritas ksmlite)**
-  - Halaman Login bersih, panel Manajemen User & Role/Cap, Master Poliklinik/Jadwal Dokter, dan Pengaturan Sistem dengan proteksi CSRF & XSS.
+- [ ] **PLN-11: Value Objects, Entities RME & Triase (TDD)**
+  - Entitas `PemeriksaanRalan` dan `PemeriksaanRanap` dengan composite primary key `(no_rawat, tgl_perawatan, jam_rawat)` pencegah tabrakan SOAP multi-visite per hari.
+  - Value Object tanda-tanda vital (Suhu, TD, Nadi, Respirasi, SpO2, GCS, Skala Nyeri).
+  - Triase Skala Australia/ATS & WHO (Gawat Darurat, Resusitasi, Non-Urgent).
+- [ ] **PLN-12: Repositories RME, Riwayat Pasien & Grounding ICD-10 (TDD)**
+  - Dual-Connection ACL untuk riwayat rekam medis historis pasien (*Smart Peek* membaca riwayat SOAP lampau dari legacy tanpa mutasi).
+  - Grounding ICD-10 SatuSehat Kemenkes dari Obsidian Clinical Second Brain (`knowledge-vault/`).
+- [ ] **PLN-13: Use-Case SOAP Dokter & Perawat, E-Resep Linking & Surat Medis (TDD)**
+  - Simpan SOAP dokter (`kd_dokter`) dan perawat (`nip`) dengan locking status antrean.
+  - Pembuatan Surat Sakit, Surat Rujukan, dan Surat Bebas Narkoba.
+- [ ] **PLN-14: UI/UX RME Dinamis & Smart Peek Riwayat Medis (Paritas ksmlite)**
+  - Antarmuka SOAP split view dengan riwayat medis lampau di panel samping, auto-complete ICD-10, modal preview lab/radiologi, dan hotkeys.
 
 ---
 
@@ -92,7 +91,6 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 | Kode Fase | Domain / Modul Utama | PRD Rujukan | Target Luaran Kunci |
 | :--- | :--- | :--- | :--- |
-| **FASE-1B** | Auth, Users/RBAC, Kepegawaian, Master & Settings | [`PRD 13`](file:///c:/aplikasi/rea-mlite/docs/prd/13_pengguna_rbac_kepegawaian_master_settings.md) | Login, RBAC (`role`/`access`/`cap`), `pegawai`/`dokter`, Master Poliklinik (`allow_bpjs`) & Jadwal anti-overlap, `mlite_settings` & `mlite_logs`. |
 | **FASE-2** | RME, SOAP (Ralan/IGD/Ranap) & Surat Medis | [`PRD 02`](file:///c:/aplikasi/rea-mlite/docs/prd/02_rekam_medis_dan_soap.md) | Composite key `pemeriksaan_ralan`/`ranap`, Triase IGD, Form SOAP dinamis, Grounding ICD-10, Medical History Smart Peek, dan Cetak Surat Medis (`surat`). |
 | **FASE-3** | E-Resep, Gudang Farmasi & Apotek | [`PRD 03`](file:///c:/aplikasi/rea-mlite/docs/prd/03_farmasi_dan_e_resep.md) | Resep non-racik vs racik (Ralan/IGD/Ranap), Offset jam racikan `+1 detik`, mutasi stok `gudangbarang`, isolasi `PO-APT-%`. |
 | **FASE-4** | Kasir, Billing Ledger, Akuntansi & Rawat Inap | [`PRD 04`](file:///c:/aplikasi/rea-mlite/docs/prd/04_kasir_billing_dan_akuntansi.md) | Split Billing 4-Pilar (`[T]`, `[K]`, `[NK]`, `[P]`) untuk Ralan/IGD/Ranap (`kamar_inap`), Jurnal Keuangan anti-delete void, Hotkeys Kasir (`F2`,`F8`,`F9`). |
@@ -100,6 +98,27 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **FASE-6** | Bridging BPJS & SatuSehat | [`PRD 07`](file:///c:/aplikasi/rea-mlite/docs/prd/07_bridging_bpjs_dan_satusehat.md) | Zero-Latency Circuit Breaker, Antrean BPJS HFIS, VClaim/PCare, Verifikasi Klaim (`vedika`), dan Bundle FHIR SatuSehat Kemenkes. |
 | **FASE-7** | WA Gateway CRM & Homecare PWA | [`PRD 06`](file:///c:/aplikasi/rea-mlite/docs/prd/06_whatsapp_gateway_crm.md), [`PRD 08`](file:///c:/aplikasi/rea-mlite/docs/prd/08_homecare_dan_pendidikan.md) | WA Dual-Session (`system` vs `cs`) anti-banned whitelist, Homecare PWA mandiri & Trias Preceptorship. |
 | **FASE-8** | Audit ACID & Hardening Linux Staging | [`PRD 11`](file:///c:/aplikasi/rea-mlite/docs/prd/11_audit_acid_dan_keamanan.md) | Audit integritas multi-tabel, OWASP hardening (SQLi, XSS, CSRF), Uji drop-in di Linux Staging MySQL 8.0. |
+
+---
+
+## ✅ Riwayat Rencana Selesai (COMPLETED)
+
+| ID | Modul / Scope | Rangkuman Hasil Eksekusi | Tanggal Selesai |
+| :--- | :--- | :--- | :--- |
+| **PLN-01** | Fondasi Repositori & Spesifikasi | Inisialisasi Git, remote GitHub, 13 PRD domain, DDL oracle database, clone pustaka referensi `.ref/ksmlite/`, konfigurasi PHP 8.3 & PHPUnit 11 test harness. | 16-11-2026 |
+| **PLN-02** | Dual-Connection & Transaction Manager | Implementasi `PdoTransactionManager` (ACID + Nested Savepoints), `ReadOnlyConnectionGuard` (proteksi mutlak database eksisting), `ConnectionFactory` (strict flags & anti-cast), terverifikasi 13 unit test PASS. | 16-11-2026 |
+| **PLN-03** | Module Loader & Registry Kernel | Implementasi arsitektur modular PRD 12 (`ModuleManifest`, `DependencyResolver`, `ModuleLoader` lifecycle, menu navigation dinamis, safe uninstall), terverifikasi 8 unit test PASS (Total 21 test PASS). | 16-11-2026 |
+| **PLN-04** | Master Layout Shell Paritas 100% | Master layout Bootstrap 5 bertema Medical Teal (`#00897b`), Topbar, menu-icon, `ViewRenderer` XSS-safe, Dynamic Viewport Slot (`#moduleViewportSlot`), Single-Host Modal (`#appModalHost`), dan hotkeys operasional (`F2`-`F9`). Total 23 test PASS. | 16-11-2026 |
+| **PLN-05** | Real-Time SSE Stream Engine | Implementasi engine Server-Sent Events (`EventMessage`, `InMemoryEventBroadcaster`, `SseStreamResponse`, heartbeat ping, SSE headers W3C), terverifikasi 5 test PASS (Total 28 test PASS). Seluruh Fase 0 Tuntas 100%. | 16-11-2026 |
+| **PLN-06** | Value Objects & Entities Registrasi | Implementasi `NoRkmMedis`, `NoRawat`, `NoReg` (digit validation & anti-000), `Pasien` (umur SIMRS & guard lahir masa depan), `PoliklinikSetting` (data-driven penjamin), `RegPeriksa` (`prefik`/`room`/`shift`), dan `BookingRegistrasi`. 13 test PASS. | 16-11-2026 |
+| **PLN-07** | Repository Dual-Connection ACL & Concurrency | `PdoPasienRepository` (fallback legacy Read-Only via `ReadOnlyConnectionGuard`, `getNextNoRkmMedis` lintas DB), `PdoBookingRegistrasiRepository`, `PdoRegPeriksaRepository` (reservasi antrean Walk-In vs Mobile JKN, auto-regenerasi atomik `no_rawat` & `no_reg`, clinical guard check). 11 test PASS (Total 62 test PASS). | 16-11-2026 |
+| **PLN-08** | Use-Case Dua Jalur Registrasi & Clinical Guard | `RegisterInSiteUseCase` (Walk-In, validasi tarif/umur/penjamin, guard tunggakan & double-submit, route booking masa depan), `CheckInMobileJknUseCase` (preservasi `no_reg` booking asli, ACID tx konversi `Terdaftar`, dokter pengganti), `ClinicalGuardShieldUseCase` (blokir ubah antrean berstatus SOAP/tindakan/resep/lab/rad). 11 test PASS (Total 73 test PASS). | 16-11-2026 |
+| **PLN-09** | Form Registrasi & Modal Pasien F4 | Paritas 100% tampilan visual & ergonomi ksmlite (Medical Teal `#00897b`, panel `#form` & `#display`), modal cari pasien `F4` Single-Host (`#appModalHost`), hotkeys <kbd>F2</kbd>, <kbd>F4</kbd>, <kbd>F9</kbd>, endpoint REST API lengkap. 9 test PASS (Total 82 test PASS). | 16-11-2026 |
+| **PLN-10** | Display TV Antrean & Kiosk Mandiri | Layar Display TV Full-HD/4K audio chime & speech synthesis bahasa Indonesia real-time SSE (`/display-antrean`), Layar Kiosk Mandiri (`/kiosk`) virtual keypad & General Consent digital signature, endpoint `/api/v1/queue/summary` & `/api/v1/queue/call`. 4 test PASS (Total 86 test PASS). **FASE 1 SELESAI 100%**. | 16-11-2026 |
+| **PLN-10A** | Autentikasi, Keamanan Sesi, CSRF & RBAC Middleware | `UserAccount` entity, `SessionAuthService` (rate-limiting 5x gagal, mitigasi session fixation via regenerate ID, audit log `mlite_logs`), `CsrfGuard` (token per sesi & validasi ketat POST), `RbacGuard` (role & cap poli). 20 test PASS. | 16-11-2026 |
+| **PLN-10B** | Manajemen Pengguna & Kepegawaian SDM | `PdoUserRepository` (CRUD `mlite_users` + Anti-Lockout superadmin ID 1 & self-delete), `PdoDokterRepository`, `PdoPetugasRepository`, `PdoPegawaiRepository` dengan *Soft-Deactivation* (`status = '0'`) menjaga integritas FK rekam medis lampau. 13 test PASS. | 16-11-2026 |
+| **PLN-10C** | Master Data Klinik, Jadwal Praktik & Penjamin | `PdoPenjabRepository`, `PdoJadwalRepository` dengan `ScheduleOverlapGuard` (deteksi tabrakan waktu multi-shift dokter pada hari yang sama), `PdoJenisPerawatanRepository`. 7 test PASS. | 16-11-2026 |
+| **PLN-10D** | Pengaturan Sistem & UI/UX Administrasi | `SettingService` & `PdoSettingRepository` (`mlite_settings` key-value per modul ber-cache in-memory), `PdoAuditLogRepository` (`mlite_logs` viewer & filter), `AuthController` (login/logout view), `SettingsController` & `UsersController` (Medical Teal UI parity 99%). 12 test PASS (Total 143 test PASS). **FASE 1B SELESAI 100%**. | 16-11-2026 |
 
 ---
 
