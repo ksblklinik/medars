@@ -600,6 +600,7 @@ class HttpApplicationTest extends TestCase
         // K1: CDN yang dipakai layout.php/login.php/display wajib diizinkan, kalau tidak UI rusak total
         $this->assertStringContainsString('https://cdn.jsdelivr.net', $csp);
         $this->assertStringContainsString('https://cdnjs.cloudflare.com', $csp);
+        $this->assertStringContainsString("connect-src 'self' https://cdn.jsdelivr.net", $csp);
         $this->assertStringContainsString("frame-ancestors 'self'", $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
 
