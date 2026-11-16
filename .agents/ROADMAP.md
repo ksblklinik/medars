@@ -41,15 +41,18 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 ## 🚧 Sedang Dikerjakan (IN PROGRESS)
 
 ### [FASE-1] Pendaftaran, Pasien & Kiosk Antrean (PRD 01)
-- [x] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)** (Selesai Awal: 16-11-2026)
-  - `NoRkmMedis` (string format leading zeros `000123`), `NoRawat` (`YYYY/MM/DD/000001`), `NoReg` (`001`).
+- [x] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)** (Selesai & Hardened: 16-11-2026)
+  - `NoRkmMedis` (string format leading zeros `000123`), `NoRawat` (`YYYY/MM/DD/000001`), `NoReg` (`001`, validasi digit, penolakan '000').
   - `PoliklinikSetting` (aturan data-driven `allowBpjs` per poli, tanpa hardcode `PEX`).
-  - `Pasien` (perhitungan umur `Th`/`Bl`/`Hr`) & `RegPeriksa` (immutable entity).
-  - *Hardening Tertunda sebelum PLN-07:* Tambah `prefik`, `room`, `shift` ke `RegPeriksa`, validasi tanggal lahir masa depan di `Pasien`, dan blokir `'000'` di `NoReg`.
-- [ ] **PLN-07: Repository Dual-Connection ACL & Konkurensi Penomoran**
-  - Pencarian pasien lintas koneksi (`legacy` Read-Only + `next` Read-Write).
+  - `Pasien` (perhitungan umur `Th`/`Bl`/`Hr`, proteksi tanggal lahir di masa depan) & `RegPeriksa` (immutable entity dengan atribut `prefik`, `room`, `shift`).
+  - `BookingRegistrasi` (tracking status Belum/Terdaftar/Batal, validasi tanggal hari ini vs masa depan).
+- [x] **PLN-07: Repository Dual-Connection ACL & Konkurensi Penomoran (TDD)** (Selesai: 16-11-2026)
+  - Pencarian pasien lintas koneksi (`legacy` Read-Only via `ReadOnlyConnectionGuard` + `next` Read-Write).
   - Generator `no_rkm_medis` lintas DB (`MAX(legacy, next) + 1`) anti-tabrakan.
-  - Auto-regenerasi atomik untuk **`no_rawat` DAN `no_reg`** (`tgl_registrasi + kd_poli + kd_dokter + shift`) saat race condition.
+  - In-Site Queue Generator dengan reservasi antrean Mobile JKN (`MAX(reg_periksa, booking_registrasi) + 1`).
+  - Auto-regenerasi atomik untuk **`no_rawat` DAN `no_reg`** (`tgl_registrasi + kd_poli + kd_dokter + shift`) saat race condition insert.
+  - Deteksi tunggakan biaya kunjungan sebelumnya (`hasUnpaidPreviousVisit`) & guard double-submit (`hasActiveRegistrationToday`).
+  - Clinical Guard check (`hasClinicalRecords` mendeteksi SOAP, tindakan medis/paramedis, resep obat, lab, radiologi).
 - [ ] **PLN-08: Use-Case Dua Jalur (In-Site vs Mobile JKN Check-In) & Clinical Guard**
   - Jalur A (In-Site): Reservasi `no_reg` terhadap `booking_registrasi`, cek setting poli, tunggakan kasir, idempotency guard (anti double-submit).
   - Jalur B (Mobile JKN Check-In): Validasi tanggal & status booking, konversi ke `reg_periksa` dengan mempertahankan `no_reg` asli.
@@ -83,3 +86,5 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-03** | Module Loader & Registry Kernel | Implementasi arsitektur modular PRD 12 (`ModuleManifest`, `DependencyResolver`, `ModuleLoader` lifecycle, menu navigation dinamis, safe uninstall), terverifikasi 8 unit test PASS (Total 21 test PASS). | 16-11-2026 |
 | **PLN-04** | Master Layout Shell Paritas 100% | Master layout Bootstrap 5 bertema Medical Teal (`#00897b`), Topbar, menu-icon, `ViewRenderer` XSS-safe, Dynamic Viewport Slot (`#moduleViewportSlot`), Single-Host Modal (`#appModalHost`), dan hotkeys operasional (`F2`-`F9`). Total 23 test PASS. | 16-11-2026 |
 | **PLN-05** | Real-Time SSE Stream Engine | Implementasi engine Server-Sent Events (`EventMessage`, `InMemoryEventBroadcaster`, `SseStreamResponse`, heartbeat ping, SSE headers W3C), terverifikasi 5 test PASS (Total 28 test PASS). Seluruh Fase 0 Tuntas 100%. | 16-11-2026 |
+| **PLN-06** | Value Objects & Entities Registrasi | Implementasi `NoRkmMedis`, `NoRawat`, `NoReg` (digit validation & anti-000), `Pasien` (umur SIMRS & guard lahir masa depan), `PoliklinikSetting` (data-driven penjamin), `RegPeriksa` (`prefik`/`room`/`shift`), dan `BookingRegistrasi`. 13 test PASS. | 16-11-2026 |
+| **PLN-07** | Repository Dual-Connection ACL & Concurrency | `PdoPasienRepository` (fallback legacy Read-Only via `ReadOnlyConnectionGuard`, `getNextNoRkmMedis` lintas DB), `PdoBookingRegistrasiRepository`, `PdoRegPeriksaRepository` (reservasi antrean Walk-In vs Mobile JKN, auto-regenerasi atomik `no_rawat` & `no_reg`, clinical guard check). 11 test PASS (Total 62 test PASS). | 16-11-2026 |
