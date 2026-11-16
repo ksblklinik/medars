@@ -12,6 +12,7 @@ use App\Domain\Communication\ValueObject\IndonesianPhoneNumber;
 use App\Domain\Security\Entity\UserAccount;
 use App\Infrastructure\Communication\CurlWaClient;
 use App\Infrastructure\Database\SchemaMigrator;
+use App\Infrastructure\Persistence\PdoLogRotationRepository;
 use App\Infrastructure\Persistence\PdoWaGatewayRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
@@ -112,7 +113,7 @@ class CriticalSecurityFixesTest extends TestCase
             VALUES ('system', '6281234567890', 'lama', 'Sent', NULL, '{$old}');
         ");
 
-        $service = new LogRotationService($this->pdo);
+        $service = new LogRotationService(new PdoLogRotationRepository($this->pdo));
 
         try {
             $service->pruneLogs(30);

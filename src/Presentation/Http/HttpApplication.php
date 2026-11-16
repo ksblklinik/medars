@@ -49,10 +49,12 @@ use App\Infrastructure\Persistence\PdoBillingLedgerRepository;
 use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
 use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
+use App\Infrastructure\Persistence\PdoDataIntegrityAuditRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
 use App\Infrastructure\Persistence\PdoHomeCareRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
 use App\Infrastructure\Persistence\PdoLabRadiologyRepository;
+use App\Infrastructure\Persistence\PdoLogRotationRepository;
 use App\Infrastructure\Persistence\PdoOdontogramRepository;
 use App\Infrastructure\Persistence\PdoOperationalReportRepository;
 use App\Infrastructure\Persistence\PdoPasienRepository;
@@ -65,6 +67,7 @@ use App\Infrastructure\Persistence\PdoRmeHistoryRepository;
 use App\Infrastructure\Persistence\PdoSettingRepository;
 use App\Infrastructure\Persistence\PdoSuratMedisRepository;
 use App\Infrastructure\Persistence\PdoUserRepository;
+use App\Infrastructure\Persistence\PdoVedikaRepository;
 use App\Infrastructure\Persistence\PdoWaGatewayRepository;
 use App\Infrastructure\Realtime\EventMessage;
 use App\Infrastructure\Realtime\PdoEventBroadcaster;
@@ -321,7 +324,7 @@ final class HttpApplication
             new HfisLeanCalculator(),
             new QueueSatuSehatSyncUseCase($bridgingQueueRepo),
             new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy),
-            new VerifyVedikaClaimUseCase($this->pdo),
+            new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), $tx),
             $this->renderer,
             $this->navBuilder
         );
@@ -343,8 +346,8 @@ final class HttpApplication
         );
 
         $auditController = new AuditController(
-            new DataIntegrityAuditService($this->pdo),
-            new LogRotationService($this->pdo),
+            new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
+            new LogRotationService(new PdoLogRotationRepository($this->pdo)),
             $this->renderer,
             $this->navBuilder
         );

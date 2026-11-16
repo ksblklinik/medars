@@ -7,6 +7,8 @@ namespace Tests\Unit\Presentation\Http;
 use App\Domain\Audit\Service\DataIntegrityAuditService;
 use App\Domain\Audit\Service\LogRotationService;
 use App\Infrastructure\Database\SchemaMigrator;
+use App\Infrastructure\Persistence\PdoDataIntegrityAuditRepository;
+use App\Infrastructure\Persistence\PdoLogRotationRepository;
 use App\Presentation\Http\AuditController;
 use App\Presentation\View\ViewRenderer;
 use PDO;
@@ -36,8 +38,8 @@ class AuditControllerTest extends TestCase
         $renderer = new ViewRenderer(dirname(__DIR__, 4) . '/src/Presentation/View/templates');
 
         $this->controller = new AuditController(
-            new DataIntegrityAuditService($this->pdo),
-            new LogRotationService($this->pdo),
+            new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
+            new LogRotationService(new PdoLogRotationRepository($this->pdo)),
             $renderer,
         );
     }

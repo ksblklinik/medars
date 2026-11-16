@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Audit\Service;
 
-use PDO;
+use App\Domain\Audit\Repository\LogRotationRepositoryInterface;
 
 final readonly class LogRotationService
 {
     public const MIN_RETENTION_DAYS = 90;
 
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private LogRotationRepositoryInterface $repo) {}
 
     /**
      * Rotates operational communication/sync logs older than retention days.
@@ -25,18 +25,6 @@ final readonly class LogRotationService
         }
 
         $cutoff = date('Y-m-d H:i:s', strtotime("-{$olderThanDays} days"));
-        $deleted = 0;
-
-        $waStmt = $this->pdo->prepare('DELETE FROM wagateway_outbox WHERE created_at < :cutoff');
-        $waStmt->execute([':cutoff' => $cutoff]);
-        $deleted += $waStmt->rowCount();
-
-        $brStmt = $this->pdo->prepare(
-            "DELETE FROM bridging_sync_queue WHERE status IN ('Synced', 'Failed') AND created_at < :cutoff"
-        );
-        $brStmt->execute([':cutoff' => $cutoff]);
-        $deleted += $brStmt->rowCount();
-
-        return $deleted;
+        return $this->repo->pruneOperationalLogsBefore($cutoff);
     }
 }

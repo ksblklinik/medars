@@ -12,8 +12,10 @@ use App\Domain\Bridging\Service\HfisLeanCalculator;
 use App\Domain\Bridging\Service\HttpClientInterface;
 use App\Domain\Bridging\ValueObject\BridgingCredentials;
 use App\Domain\Bridging\ValueObject\TimeoutPolicy;
+use App\Infrastructure\Database\PdoTransactionManager;
 use App\Infrastructure\Database\SchemaMigrator;
 use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
+use App\Infrastructure\Persistence\PdoVedikaRepository;
 use App\Presentation\Http\BridgingController;
 use App\Presentation\View\ViewRenderer;
 use PDO;
@@ -61,7 +63,7 @@ class BridgingControllerTest extends TestCase
             new HfisLeanCalculator(),
             new QueueSatuSehatSyncUseCase($queueRepo),
             new ProcessBridgingQueueUseCase($queueRepo, $client, $dummyCreds, new TimeoutPolicy(2, 4)),
-            new VerifyVedikaClaimUseCase($this->pdo),
+            new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), new PdoTransactionManager($this->pdo)),
             $renderer,
         );
     }

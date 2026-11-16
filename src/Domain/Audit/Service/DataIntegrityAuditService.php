@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Audit\Service;
 
-use PDO;
+use App\Domain\Audit\Repository\DataIntegrityAuditRepositoryInterface;
 
 final readonly class DataIntegrityAuditService
 {
@@ -19,7 +19,7 @@ final readonly class DataIntegrityAuditService
         ['table' => 'detail_pemberian_obat', 'column' => 'no_rawat'],
     ];
 
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private DataIntegrityAuditRepositoryInterface $repo) {}
 
     /**
      * @return array{healthy: bool, total_orphans: int, findings: list<array{table: string, column: string, orphan_count: int}>}
@@ -30,28 +30,14 @@ final readonly class DataIntegrityAuditService
         $totalOrphans = 0;
 
         foreach (self::CHILD_TABLES as $target) {
-            $table = $target['table'];
-            $col = $target['column'];
-
-            $sql = "SELECT COUNT(*) FROM {$table} c
-                    LEFT JOIN reg_periksa p ON c.{$col} = p.no_rawat
-                    WHERE p.no_rawat IS NULL AND c.{$col} IS NOT NULL AND c.{$col} != ''";
-
-            try {
-                $stmt = $this->pdo->query($sql);
-                $orphanCount = (int) $stmt->fetchColumn();
-
-                if ($orphanCount > 0) {
-                    $findings[] = [
-                        'table' => $table,
-                        'column' => $col,
-                        'orphan_count' => $orphanCount,
-                    ];
-                    $totalOrphans += $orphanCount;
-                }
-            } catch (\PDOException) {
-                // Skip if table does not exist in testing environment
-                continue;
+            $orphanCount = $this->repo->countOrphans($target['table'], $target['column']);
+            if ($orphanCount > 0) {
+                $findings[] = [
+                    'table' => $target['table'],
+                    'column' => $target['column'],
+                    'orphan_count' => $orphanCount,
+                ];
+                $totalOrphans += $orphanCount;
             }
         }
 
@@ -67,14 +53,7 @@ final readonly class DataIntegrityAuditService
      */
     public function auditBillingLedgerBalance(string $noRawat): array
     {
-        $stmt = $this->pdo->prepare(
-            "SELECT claim_type, COALESCE(SUM(total_amount), 0) AS subtotal
-             FROM mlite_billing_ledger
-             WHERE no_rawat = :nr AND status != 'Cancelled'
-             GROUP BY claim_type"
-        );
-        $stmt->execute([':nr' => $noRawat]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->repo->getBillingSubtotalsByClaimType($noRawat);
 
         $tunai = 0.0;
         $bpjs = 0.0;
@@ -82,8 +61,8 @@ final readonly class DataIntegrityAuditService
         $total = 0.0;
 
         foreach ($rows as $row) {
-            $type = (string) $row['claim_type'];
-            $amount = (float) $row['subtotal'];
+            $type = $row['claim_type'];
+            $amount = $row['subtotal'];
             $total += $amount;
 
             if ($type === 'Tunai') {
@@ -95,11 +74,8 @@ final readonly class DataIntegrityAuditService
             }
         }
 
-        // Verify balance arithmetic
-        $balanced = abs(($tunai + $bpjs + $piutang) - $total) < 0.01;
-
         return [
-            'balanced' => $balanced,
+            'balanced' => abs(($tunai + $bpjs + $piutang) - $total) < 0.01,
             'total_amount' => $total,
             'tunai_amount' => $tunai,
             'bpjs_amount' => $bpjs,
@@ -112,22 +88,12 @@ final readonly class DataIntegrityAuditService
      */
     public function auditStockBalance(string $kodeBrng, string $kdBangsal): array
     {
-        $stkStmt = $this->pdo->prepare(
-            'SELECT COALESCE(stok, 0) FROM gudangbarang WHERE kode_brng = :kb AND kd_bangsal = :bg LIMIT 1'
-        );
-        $stkStmt->execute([':kb' => $kodeBrng, ':bg' => $kdBangsal]);
-        $currentStock = (float) $stkStmt->fetchColumn();
-
-        $calcStmt = $this->pdo->prepare(
-            'SELECT COALESCE(SUM(masuk - keluar), 0) FROM riwayat_barang_medis WHERE kode_brng = :kb AND kd_bangsal = :bg'
-        );
-        $calcStmt->execute([':kb' => $kodeBrng, ':bg' => $kdBangsal]);
-        $calculatedStock = (float) $calcStmt->fetchColumn();
+        $totals = $this->repo->getStockAndMutationTotals($kodeBrng, $kdBangsal);
 
         return [
-            'balanced' => abs($currentStock - $calculatedStock) < 0.001,
-            'current_stock' => $currentStock,
-            'calculated_stock' => $calculatedStock,
+            'balanced' => abs($totals['current_stock'] - $totals['calculated_stock']) < 0.001,
+            'current_stock' => $totals['current_stock'],
+            'calculated_stock' => $totals['calculated_stock'],
         ];
     }
 }

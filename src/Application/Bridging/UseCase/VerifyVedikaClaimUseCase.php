@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\Bridging\UseCase;
 
+use App\Domain\Bridging\Repository\VedikaRepositoryInterface;
 use App\Domain\Registration\ValueObject\NoRawat;
-use App\Infrastructure\Database\PdoTransactionManager;
 use App\Infrastructure\Database\TransactionManagerInterface;
-use PDO;
 
 final readonly class VerifyVedikaClaimUseCase
 {
     public function __construct(
-        private PDO $pdo,
-        private ?TransactionManagerInterface $tx = null,
+        private VedikaRepositoryInterface $vedikaRepo,
+        private TransactionManagerInterface $tx,
     ) {}
 
     /**
@@ -31,25 +30,15 @@ final readonly class VerifyVedikaClaimUseCase
             throw new \InvalidArgumentException('Nomor SEP BPJS wajib diisi untuk verifikasi klaim Vedika.');
         }
 
-        $regStmt = $this->pdo->prepare('SELECT COUNT(*) FROM reg_periksa WHERE no_rawat = :nr');
-        $regStmt->execute([':nr' => $nr]);
-        if ((int) $regStmt->fetchColumn() === 0) {
+        if (!$this->vedikaRepo->registrationExists($noRawat)) {
             throw new \DomainException("Data registrasi '{$nr}' tidak ditemukan.");
         }
 
-        $soapStmt = $this->pdo->prepare('SELECT COUNT(*) FROM pemeriksaan_ralan WHERE no_rawat = :nr');
-        $soapStmt->execute([':nr' => $nr]);
-        $soapCount = (int) $soapStmt->fetchColumn();
-
-        $diagStmt = $this->pdo->prepare('SELECT COUNT(*) FROM diagnosa_pasien WHERE no_rawat = :nr');
-        $diagStmt->execute([':nr' => $nr]);
-        $diagCount = (int) $diagStmt->fetchColumn();
-
         $issues = [];
-        if ($soapCount === 0) {
+        if ($this->vedikaRepo->countSoapRalan($noRawat) === 0) {
             $issues[] = 'SOAP pemeriksaan belum diisi';
         }
-        if ($diagCount === 0) {
+        if ($this->vedikaRepo->countDiagnosa($noRawat) === 0) {
             $issues[] = 'Diagnosa ICD-10 belum diisi';
         }
 
@@ -57,24 +46,8 @@ final readonly class VerifyVedikaClaimUseCase
         $catatan = $issues === [] ? 'Berkas klaim lengkap' : implode('; ', $issues);
         $now = date('Y-m-d H:i:s');
 
-        $tx = $this->tx ?? new PdoTransactionManager($this->pdo);
-        $tx->transaction(function () use ($nr, $trimmedSep, $jenisPelayanan, $status, $catatan, $verifiedBy, $now): void {
-            $del = $this->pdo->prepare('DELETE FROM mlite_vedika WHERE no_rawat = :nr');
-            $del->execute([':nr' => $nr]);
-
-            $ins = $this->pdo->prepare(
-                'INSERT INTO mlite_vedika (no_rawat, no_sep, jenis_pelayanan, status, catatan, verified_by, verified_at)
-                 VALUES (:nr, :sep, :jp, :stts, :cat, :by, :at)'
-            );
-            $ins->execute([
-                ':nr' => $nr,
-                ':sep' => $trimmedSep,
-                ':jp' => $jenisPelayanan,
-                ':stts' => $status,
-                ':cat' => $catatan,
-                ':by' => $verifiedBy,
-                ':at' => $now,
-            ]);
+        $this->tx->transaction(function () use ($noRawat, $trimmedSep, $jenisPelayanan, $status, $catatan, $verifiedBy, $now): void {
+            $this->vedikaRepo->saveVerification($noRawat, $trimmedSep, $jenisPelayanan, $status, $catatan, $verifiedBy, $now);
         });
 
         return [

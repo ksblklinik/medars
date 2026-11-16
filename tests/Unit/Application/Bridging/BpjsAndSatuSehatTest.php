@@ -13,8 +13,10 @@ use App\Domain\Bridging\Service\HttpClientInterface;
 use App\Domain\Bridging\ValueObject\BridgingCredentials;
 use App\Domain\Bridging\ValueObject\TimeoutPolicy;
 use App\Domain\Registration\ValueObject\NoRawat;
+use App\Infrastructure\Database\PdoTransactionManager;
 use App\Infrastructure\Database\SchemaMigrator;
 use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
+use App\Infrastructure\Persistence\PdoVedikaRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -177,7 +179,7 @@ class BpjsAndSatuSehatTest extends TestCase
 
     public function testVedikaClaimVerificationChecksCompleteness(): void
     {
-        $verify = new VerifyVedikaClaimUseCase($this->pdo);
+        $verify = new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), new PdoTransactionManager($this->pdo));
         $result = $verify->execute(
             noRawat: new NoRawat('2026/11/16/000001'),
             noSep: '0123R0011126V000001',

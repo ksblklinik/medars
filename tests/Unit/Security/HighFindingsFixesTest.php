@@ -21,6 +21,7 @@ use App\Infrastructure\Database\SchemaMigrator;
 use App\Infrastructure\Persistence\PdoBillingLedgerRepository;
 use App\Infrastructure\Persistence\PdoHomeCareRepository;
 use App\Infrastructure\Persistence\PdoLabRadiologyRepository;
+use App\Infrastructure\Persistence\PdoVedikaRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -186,7 +187,7 @@ class HighFindingsFixesTest extends TestCase
 
     public function testVerifyVedikaClaimUsesTransaction(): void
     {
-        $verify = new VerifyVedikaClaimUseCase($this->pdo, $this->tx);
+        $verify = new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), $this->tx);
         $res = $verify->execute(new NoRawat('2026/11/16/000001'), '0123R0011126V000001', 'verif1');
         $this->assertSame('Layak', $res['status']);
         $this->assertFalse($this->pdo->inTransaction());

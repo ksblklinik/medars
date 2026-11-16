@@ -7,6 +7,8 @@ namespace Tests\Unit\Application\Audit;
 use App\Domain\Audit\Service\DataIntegrityAuditService;
 use App\Domain\Audit\Service\LogRotationService;
 use App\Infrastructure\Database\SchemaMigrator;
+use App\Infrastructure\Persistence\PdoDataIntegrityAuditRepository;
+use App\Infrastructure\Persistence\PdoLogRotationRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -22,8 +24,8 @@ class DataIntegrityAndSecurityAuditTest extends TestCase
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         (new SchemaMigrator($this->pdo))->migrate();
 
-        $this->integrityService = new DataIntegrityAuditService($this->pdo);
-        $this->rotationService = new LogRotationService($this->pdo);
+        $this->integrityService = new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo));
+        $this->rotationService = new LogRotationService(new PdoLogRotationRepository($this->pdo));
 
         $today = date('Y-m-d');
         $this->pdo->exec("
