@@ -13,7 +13,7 @@ starter-kit/
 ├── AGENTS.md               <- Pedoman Arsitektur Baru, TDD-First & Rules Antigravity
 ├── README.md               <- Petunjuk Setup Langkah Demi Langkah
 ├── docs/
-│   └── prd/                <- 11 Dokumen PRD Spesifikasi Domain (99% Proses Bisnis Eksisting)
+│   └── prd/                <- 12 Dokumen PRD Spesifikasi Domain (99% Proses Bisnis Eksisting)
 │       ├── 01_registrasi_dan_antrean.md
 │       ├── 02_rekam_medis_dan_soap.md
 │       ├── 03_farmasi_dan_e_resep.md
@@ -24,7 +24,8 @@ starter-kit/
 │       ├── 08_homecare_dan_pendidikan.md
 │       ├── 09_arsitektur_backend_clean.md
 │       ├── 10_arsitektur_frontend_ui_ux.md
-│       └── 11_audit_acid_dan_keamanan.md
+│       ├── 11_audit_acid_dan_keamanan.md
+│       └── 12_manajemen_modul_dan_ekstensibilitas.md
 └── .agents/
     └── skills/             <- 11 Skill Domain Modular untuk Agen AI Antigravity
         ├── audit/

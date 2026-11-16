@@ -51,7 +51,8 @@ Sebelum menulis kode atau test suite untuk modul tertentu, Agen AI **WAJIB memba
 | **Layanan Homecare & Trias Preceptorship** | [`08_homecare_dan_pendidikan.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/08_homecare_dan_pendidikan.md) | `homecare-preceptorship` |
 | **Fondasi Backend, Database & Transaksi** | [`09_arsitektur_backend_clean.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/09_arsitektur_backend_clean.md) | `backend-architecture`, `audit` |
 | **Desain Antarmuka, Hotkeys & UI/UX** | [`10_arsitektur_frontend_ui_ux.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/10_arsitektur_frontend_ui_ux.md) | `frontend-ui-ux` |
-| **Audit Integritas Data & Anti-Fraud** | [`11_audit_acid_dan_keamanan.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/11_audit_acid_dan_keamanan.md) | `audit` |
+| **Audit Integritas Data & Anti-Fraud** | [`11_audit_acid_dan_keamanan.md`](file:///c:/aplikasi/rea-mlite/docs/prd/11_audit_acid_dan_keamanan.md) | `audit` |
+| **Manajemen Modul & Ekstensibilitas** | [`12_manajemen_modul_dan_ekstensibilitas.md`](file:///c:/aplikasi/rea-mlite/docs/prd/12_manajemen_modul_dan_ekstensibilitas.md) | `backend-architecture`, `audit` |
 
 ---
 
