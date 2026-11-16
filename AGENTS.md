@@ -31,6 +31,7 @@ Dokumen ini adalah pedoman teknis resmi dan kontrak mutlak bagi Agen AI (Antigra
 
 ### 5. Paritas Proses Bisnis 99% Terhadap `ksmlite` (Reference Oracle)
 * Proyek lama (`ksmlite`) adalah **Single Source of Truth (SSOT)** proses bisnis.
+* **Repositori Kode Eksisting (Reference Oracle):** [`https://github.com/ksblklinik/ksmlite`](https://github.com/ksblklinik/ksmlite) (digunakan sebagai acuan rujukan logika bisnis, rumus kalkulasi, alur bridging BPJS/SatuSehat, dan parameter legacy saat dibutuhkan).
 * Jangan pernah mengubah aturan bisnis klinik yang sudah berjalan (seperti alur 4 pilar klaim ledger, pemisahan PO Apotek Umum `PO-APT-%`, dan pembatasan jam HFIS LEAN Board) tanpa instruksi atau persetujuan eksplisit dari Pengguna.
 
 ---

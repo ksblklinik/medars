@@ -5,7 +5,8 @@ Aplikasi baru (**ksm-next**) dirancang untuk dapat diuji langsung dan berjalan b
 
 Oleh karena itu, di tingkat persistensi database (*Infrastructure/Repository Layer*), **NAMA TABEL, NAMA KOLOM, TIPE DATA KUNCI, DAN COMPOSITE PRIMARY KEY WAJIB 100% KOMPATIBEL DENGAN SKEMA EKSISTING**. Di tingkat Domain/Entity boleh menggunakan Clean Architecture, namun mapping ORM ke database wajib mematuhi kamus ini.
 
-Berkas DDL skema fisik lengkap dapat dilihat pada: [`docs/database_schema_oracle.sql`](file:///opt/app/ksmlite/starter-kit/docs/database_schema_oracle.sql).
+Berkas DDL skema fisik lengkap dapat dilihat pada: [`docs/database_schema_oracle.sql`](file:///c:/aplikasi/rea-mlite/docs/database_schema_oracle.sql).
+Repositori kode sistem eksisting sebagai referensi oracle: [`https://github.com/ksblklinik/ksmlite`](https://github.com/ksblklinik/ksmlite).
 
 ---
 
