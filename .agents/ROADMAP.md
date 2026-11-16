@@ -85,8 +85,7 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 | Kode | Scope / Tindak Lanjut | Catatan Status |
 | :--- | :--- | :--- |
-| **STG-02** | OAuth2 SatuSehat & Dekripsi AES+LZString BPJS (T3/T4) | Menunggu kredensial sandbox & acuan implementasi dari `ksmlite`. |
-| **STG-03** | Verifikasi Paritas Visual Modul Baru vs `ksmlite` | Cek layout & ergonomi UI Fase 5–8 terhadap `.ref/ksmlite/`. |
+| **STG-03** | Verifikasi Paritas Visual Modul Baru vs `ksmlite` | Cek layout & ergonomi UI Fase 5–8 terhadap `.ref/ksmlite/` di browser nyata. |
 
 ---
 
@@ -126,3 +125,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-31..33** | WA Gateway CRM & Homecare Preceptorship | Dual-session `system` vs `cs`, whitelist non-admin, circuit breaker 3x gagal, webhook token + `wagateway_checkin` Zero-Reply, `HomeCarePrivacyShield`, validasi SK & guard DPJP otomatis, `CommunicationController` & UI. | 16-11-2026 |
 | **PLN-34..36** | Audit ACID, Security Hardening & Log Rotation | `DataIntegrityAuditService` (orphan, billing balance, stok), `LogRotationService` (min 90 hari, `mlite_logs` immutable), CSP CDN/Fonts + Security Headers, `AuditController` & UI. | 16-11-2026 |
 | **STG-01** | Uji Kompatibilitas MySQL 8.0 Strict Mode | `MySqlCompatibilityTest` terverifikasi di container `mysql:8.0` nyata (DDL idempoten, seeder, SOAP, Lab, Kasir, POS `PO-APT-`, Vedika, Laporan, & Audit). | 16-11-2026 |
+| **STG-02** | OAuth2 SatuSehat, Dekripsi BPJS & WA T5 | `SatuSehatAuthService` (`client_credentials`), `BpjsDecryptor` + `LzString` (AES-256-CBC + decompress), WA bulk whitelist-only, trip langsung `401/428/429/Banned`, `isOnWhatsApp`, & `WaSpintax::buildQrCheckinLinkText`. | 16-11-2026 |

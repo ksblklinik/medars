@@ -35,6 +35,7 @@ use App\Domain\Audit\Service\DataIntegrityAuditService;
 use App\Domain\Audit\Service\LogRotationService;
 use App\Domain\Bridging\Service\BpjsGatewayService;
 use App\Domain\Bridging\Service\HfisLeanCalculator;
+use App\Domain\Bridging\Service\SatuSehatAuthService;
 use App\Domain\Bridging\ValueObject\BridgingCredentials;
 use App\Domain\Bridging\ValueObject\TimeoutPolicy;
 use App\Domain\Security\Entity\UserAccount;
@@ -318,12 +319,19 @@ final class HttpApplication
             (string) $settingService->get('bridging', 'satusehat_client_secret', '-'),
             (string) $settingService->get('bridging', 'satusehat_url', '-'),
         );
+        $satuSehatAuth = new SatuSehatAuthService(
+            (string) $settingService->get('bridging', 'satusehat_auth_url', '-'),
+            (string) $settingService->get('bridging', 'satusehat_client_id', '-'),
+            (string) $settingService->get('bridging', 'satusehat_client_secret', '-'),
+            $httpClient,
+            $timeoutPolicy,
+        );
         $bridgingController = new BridgingController(
             $bridgingQueueRepo,
             new BpjsGatewayService($bpjsCreds, $httpClient, $timeoutPolicy),
             new HfisLeanCalculator(),
             new QueueSatuSehatSyncUseCase($bridgingQueueRepo),
-            new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy),
+            new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy, $satuSehatAuth),
             new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), $tx),
             $this->renderer,
             $this->navBuilder

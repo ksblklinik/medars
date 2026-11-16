@@ -11,13 +11,15 @@ use App\Domain\Security\Entity\UserAccount;
 
 final readonly class SendWhatsAppMessageUseCase
 {
+    private const IMMEDIATE_TRIP_HTTP_CODES = [401, 428, 429];
+
     public function __construct(
         private WaGatewayRepositoryInterface $waRepo,
         private WaClientInterface $waClient,
     ) {}
 
     /**
-     * @return array{status: string, message_id?: string, error?: string}
+     * @return array{status: string, http_status?: int, message_id?: ?string, error?: ?string}
      */
     public function execute(
         UserAccount $sender,
@@ -31,7 +33,7 @@ final readonly class SendWhatsAppMessageUseCase
 
         $phoneStr = $phone->value();
 
-        // 10-Lapis Rule: Admin bebas kirim; Non-admin WAJIB nomor Whitelist
+        // 10-Lapis Rule: Admin bebas kirim satuan; Non-admin WAJIB nomor Whitelist
         if (!$sender->isAdmin() && !$this->waRepo->isWhitelisted($phoneStr)) {
             throw new \DomainException(
                 "Proteksi Anti-Banned: Staf non-admin hanya diizinkan mengirim pesan WhatsApp ke nomor kontak Whitelist klinik ({$phoneStr})."
@@ -50,6 +52,7 @@ final readonly class SendWhatsAppMessageUseCase
                 $this->waRepo->recordOutbox($targetSession, $phoneStr, $message, 'Failed', $errorMsg);
                 return [
                     'status' => 'Failed',
+                    'http_status' => 503,
                     'message_id' => null,
                     'error' => $errorMsg,
                 ];
@@ -57,8 +60,21 @@ final readonly class SendWhatsAppMessageUseCase
             $targetSession = $fallbackSession;
         }
 
+        // Pre-Send Gate: verifikasi nomor terdaftar di WhatsApp
+        if (!$this->waClient->isOnWhatsApp($phoneStr)) {
+            $errorMsg = "Nomor {$phoneStr} tidak terdaftar di WhatsApp.";
+            $this->waRepo->recordOutbox($targetSession, $phoneStr, $message, 'Failed', $errorMsg);
+            return [
+                'status' => 'Failed',
+                'http_status' => 422,
+                'message_id' => null,
+                'error' => $errorMsg,
+            ];
+        }
+
         $res = $this->waClient->sendMessage($targetSession, $phoneStr, $message);
-        $isOk = ($res['status'] ?? 500) >= 200 && ($res['status'] ?? 500) < 300;
+        $httpStatus = (int) ($res['status'] ?? 500);
+        $isOk = $httpStatus >= 200 && $httpStatus < 300;
 
         $outboxStatus = $isOk ? 'Sent' : 'Failed';
         $errorMsg = $isOk ? null : ($res['error'] ?? 'Gagal mengirim pesan');
@@ -67,14 +83,18 @@ final readonly class SendWhatsAppMessageUseCase
 
         return [
             'status' => $outboxStatus,
+            'http_status' => $httpStatus,
             'message_id' => $res['message_id'] ?? null,
             'error' => $errorMsg,
         ];
     }
 
     /**
+     * PRD 06: Pengiriman massal (bulk) 100% dikunci hanya untuk nomor Whitelist Tier-1 (berlaku untuk semua role termasuk Admin),
+     * dan langsung memicu circuit breaker pada HTTP 401/428/429/Banned atau 3x gagal beruntun.
+     *
      * @param list<IndonesianPhoneNumber> $recipients
-     * @return array{sent_count: int, failed_count: int, aborted_count: int, circuit_breaker_tripped: bool}
+     * @return array{sent_count: int, failed_count: int, aborted_count: int, skipped_non_whitelist: int, circuit_breaker_tripped: bool}
      */
     public function sendBulk(UserAccount $sender, array $recipients, string $message): array
     {
@@ -82,16 +102,20 @@ final readonly class SendWhatsAppMessageUseCase
         $sentCount = 0;
         $failedCount = 0;
         $abortedCount = 0;
+        $skippedNonWhitelist = 0;
         $circuitTripped = false;
 
-        $total = count($recipients);
-        for ($i = 0; $i < $total; $i++) {
+        foreach ($recipients as $phone) {
             if ($circuitTripped) {
                 $abortedCount++;
                 continue;
             }
 
-            $phone = $recipients[$i];
+            if (!$this->waRepo->isWhitelisted($phone->value())) {
+                $skippedNonWhitelist++;
+                continue;
+            }
+
             $res = $this->execute($sender, $phone, $message);
 
             if ($res['status'] === 'Sent') {
@@ -100,7 +124,14 @@ final readonly class SendWhatsAppMessageUseCase
             } else {
                 $failedCount++;
                 $consecutiveFailures++;
-                if ($consecutiveFailures >= 3) {
+                $httpCode = (int) ($res['http_status'] ?? 500);
+                $errLower = strtolower((string) ($res['error'] ?? ''));
+
+                if (
+                    in_array($httpCode, self::IMMEDIATE_TRIP_HTTP_CODES, true)
+                    || str_contains($errLower, 'banned')
+                    || $consecutiveFailures >= 3
+                ) {
                     $circuitTripped = true;
                 }
             }
@@ -110,6 +141,7 @@ final readonly class SendWhatsAppMessageUseCase
             'sent_count' => $sentCount,
             'failed_count' => $failedCount,
             'aborted_count' => $abortedCount,
+            'skipped_non_whitelist' => $skippedNonWhitelist,
             'circuit_breaker_tripped' => $circuitTripped,
         ];
     }

@@ -61,6 +61,7 @@ class CriticalSecurityFixesTest extends TestCase
     {
         $offline = new class implements WaClientInterface {
             public int $sent = 0;
+            public function isOnWhatsApp(string $phone): bool { return true; }
             public function sendMessage(string $session, string $phone, string $message): array
             {
                 $this->sent++;

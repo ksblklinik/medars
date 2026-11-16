@@ -47,6 +47,7 @@ class CommunicationControllerTest extends TestCase
 
         $fakeClient = new class implements WaClientInterface {
             public int $sent = 0;
+            public function isOnWhatsApp(string $phone): bool { return true; }
             public function sendMessage(string $session, string $phone, string $message): array {
                 $this->sent++;
                 return ['status' => 200, 'message_id' => 'wa-mock-1'];

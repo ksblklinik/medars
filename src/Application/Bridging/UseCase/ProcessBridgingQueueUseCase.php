@@ -6,6 +6,7 @@ namespace App\Application\Bridging\UseCase;
 
 use App\Domain\Bridging\Repository\BridgingQueueRepositoryInterface;
 use App\Domain\Bridging\Service\HttpClientInterface;
+use App\Domain\Bridging\Service\SatuSehatAuthService;
 use App\Domain\Bridging\ValueObject\BridgingCredentials;
 use App\Domain\Bridging\ValueObject\TimeoutPolicy;
 
@@ -16,6 +17,7 @@ final readonly class ProcessBridgingQueueUseCase
         private HttpClientInterface $httpClient,
         private BridgingCredentials $credentials,
         private TimeoutPolicy $timeoutPolicy = new TimeoutPolicy(2, 4),
+        private ?SatuSehatAuthService $authService = null,
     ) {}
 
     /**
@@ -24,6 +26,14 @@ final readonly class ProcessBridgingQueueUseCase
     public function processPending(int $limit = 10): array
     {
         if (!$this->credentials->isActive()) {
+            return ['processed' => 0, 'synced' => 0, 'failed' => 0, 'circuit_open' => true];
+        }
+
+        $bearerToken = $this->authService !== null
+            ? $this->authService->getAccessToken()
+            : $this->credentials->userKey;
+
+        if ($bearerToken === '') {
             return ['processed' => 0, 'synced' => 0, 'failed' => 0, 'circuit_open' => true];
         }
 
@@ -38,7 +48,7 @@ final readonly class ProcessBridgingQueueUseCase
                 'POST',
                 $url,
                 [
-                    'Authorization' => 'Bearer ' . $this->credentials->userKey,
+                    'Authorization' => 'Bearer ' . $bearerToken,
                     'Content-Type' => 'application/json',
                 ],
                 (string) $item['payload_json'],

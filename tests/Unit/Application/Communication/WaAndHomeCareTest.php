@@ -61,6 +61,7 @@ class WaAndHomeCareTest extends TestCase
     {
         $fakeClient = new class implements WaClientInterface {
             public int $sent = 0;
+            public function isOnWhatsApp(string $phone): bool { return true; }
             public function sendMessage(string $session, string $phone, string $message): array {
                 $this->sent++;
                 return ['status' => 200, 'message_id' => 'wa-123'];
@@ -99,6 +100,7 @@ class WaAndHomeCareTest extends TestCase
     {
         $fakeClient = new class implements WaClientInterface {
             public int $sent = 0;
+            public function isOnWhatsApp(string $phone): bool { return true; }
             public function sendMessage(string $session, string $phone, string $message): array {
                 $this->sent++;
                 return ['status' => 200, 'message_id' => 'wa-123'];
@@ -134,9 +136,10 @@ class WaAndHomeCareTest extends TestCase
     {
         $failingClient = new class implements WaClientInterface {
             public int $attempts = 0;
+            public function isOnWhatsApp(string $phone): bool { return true; }
             public function sendMessage(string $session, string $phone, string $message): array {
                 $this->attempts++;
-                return ['status' => 429, 'error' => 'Rate limit / Banned'];
+                return ['status' => 500, 'error' => 'Temporary gateway error'];
             }
             public function getSessionStatus(string $session): string { return 'ONLINE'; }
         };
@@ -151,6 +154,9 @@ class WaAndHomeCareTest extends TestCase
             new IndonesianPhoneNumber('084444444444'),
             new IndonesianPhoneNumber('085555555555'),
         ];
+        foreach ($recipients as $idx => $r) {
+            $this->waRepo->addToWhitelist($r->value(), 'Pasien ' . $idx, 'Pasien');
+        }
 
         $summary = $useCase->sendBulk($admin, $recipients, 'Pesan Broadcast');
 
@@ -163,6 +169,7 @@ class WaAndHomeCareTest extends TestCase
     public function testShouldSkipQrGateGracefullyWhenAllSessionsAreOffline(): void
     {
         $offlineClient = new class implements WaClientInterface {
+            public function isOnWhatsApp(string $phone): bool { return false; }
             public function sendMessage(string $session, string $phone, string $message): array { return ['status' => 500]; }
             public function getSessionStatus(string $session): string { return 'OFFLINE'; }
         };

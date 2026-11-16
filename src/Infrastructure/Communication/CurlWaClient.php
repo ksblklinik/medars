@@ -13,6 +13,37 @@ final class CurlWaClient implements WaClientInterface
         private string $apiToken = '',
     ) {}
 
+    public function isOnWhatsApp(string $phone): bool
+    {
+        if (trim($this->gatewayUrl) === '' || trim($this->gatewayUrl) === '-' || !function_exists('curl_init')) {
+            return false;
+        }
+
+        $url = rtrim($this->gatewayUrl, '/') . '/check-number?phone=' . rawurlencode($phone);
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return false;
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 2,
+            CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $this->apiToken],
+        ]);
+
+        $body = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false || $status !== 200) {
+            return false;
+        }
+
+        $decoded = json_decode((string) $body, true);
+        return is_array($decoded) && (bool) ($decoded['registered'] ?? $decoded['exists'] ?? false);
+    }
+
     public function sendMessage(string $session, string $phone, string $message): array
     {
         if (trim($this->gatewayUrl) === '' || trim($this->gatewayUrl) === '-') {

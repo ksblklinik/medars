@@ -19,4 +19,14 @@ final class WaSpintax
 
         return $text;
     }
+
+    public static function buildQrCheckinLinkText(string $noRawat, string $pasienName = ''): string
+    {
+        $greeting = $pasienName !== '' ? "a.n. {$pasienName}" : '';
+        $template = "{Halo|Selamat pagi|Assalamu'alaikum|Salam sehat} {Admin|Petugas Pendaftaran|Klinik}, "
+            . "{saya konfirmasi kedatangan|mohon verifikasi antrean|izin check-in} {$greeting} "
+            . "untuk kode kunjungan {$noRawat}.";
+
+        return preg_replace('/\s+/', ' ', trim(self::parse($template))) ?? '';
+    }
 }

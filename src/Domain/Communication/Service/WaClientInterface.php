@@ -6,6 +6,8 @@ namespace App\Domain\Communication\Service;
 
 interface WaClientInterface
 {
+    public function isOnWhatsApp(string $phone): bool;
+
     /**
      * @return array{status: int, message_id?: string, error?: string}
      */
