@@ -62,4 +62,46 @@ final class ReadOnlyConnectionGuardTest extends TestCase
 
         $this->guard->execute("DROP TABLE pasien");
     }
+
+    public function test_blocks_comment_obfuscated_mutation_query(): void
+    {
+        $this->expectException(ReadOnlyConnectionException::class);
+
+        $this->guard->execute("/* bypass attempt */ DELETE FROM pasien WHERE no_rkm_medis = '000123'");
+    }
+
+    public function test_blocks_line_comment_obfuscated_mutation_query(): void
+    {
+        $this->expectException(ReadOnlyConnectionException::class);
+
+        $this->guard->execute("-- comment\nUPDATE pasien SET nm_pasien = 'X'");
+    }
+
+    public function test_blocks_multi_statement_sql_injection_attempt(): void
+    {
+        $this->expectException(ReadOnlyConnectionException::class);
+
+        $this->guard->query("SELECT * FROM pasien; DROP TABLE pasien;");
+    }
+
+    public function test_blocks_cte_with_mutation_keyword(): void
+    {
+        $this->expectException(ReadOnlyConnectionException::class);
+
+        $this->guard->execute("WITH target AS (SELECT no_rkm_medis FROM pasien) DELETE FROM pasien WHERE no_rkm_medis IN (SELECT no_rkm_medis FROM target)");
+    }
+
+    public function test_blocks_select_into_outfile(): void
+    {
+        $this->expectException(ReadOnlyConnectionException::class);
+
+        $this->guard->query("SELECT * FROM pasien INTO OUTFILE '/tmp/dump.csv'");
+    }
+
+    public function test_allows_select_containing_mutation_words_inside_string_literal(): void
+    {
+        $result = $this->guard->query("SELECT * FROM pasien WHERE nm_pasien = 'DELETE; DROP TABLE'");
+        $this->assertIsArray($result);
+        $this->assertCount(0, $result);
+    }
 }

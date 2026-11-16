@@ -187,18 +187,66 @@
         setInterval(update, 1000);
     }
 
+    // 5. SERVER-SENT EVENTS (SSE) REAL-TIME CLIENT
+    const AppSSE = {
+        _source: null,
+        _handlers: {},
+
+        init: function (streamUrl) {
+            if (typeof window.EventSource === 'undefined') return;
+
+            const badge = document.getElementById('sseBadge');
+            const statusText = document.getElementById('sseStatusText');
+
+            this._source = new window.EventSource(streamUrl || '/api/stream');
+
+            this._source.addEventListener('system.connected', () => {
+                if (badge) {
+                    badge.classList.remove('bg-danger-subtle', 'text-danger', 'border-danger');
+                    badge.classList.add('bg-success-subtle', 'text-success', 'border-success');
+                }
+                if (statusText) statusText.innerText = 'SSE Online';
+            });
+
+            this._source.onerror = () => {
+                if (badge) {
+                    badge.classList.remove('bg-success-subtle', 'text-success', 'border-success');
+                    badge.classList.add('bg-danger-subtle', 'text-danger', 'border-danger');
+                }
+                if (statusText) statusText.innerText = 'SSE Reconnecting...';
+            };
+        },
+
+        on: function (eventName, callback) {
+            if (!this._source || typeof callback !== 'function') return;
+            this._source.addEventListener(eventName, (e) => {
+                // Triple-Gate Protection (PRD 10 / frontend-ui-ux):
+                // Jangan ganggu DOM jika modal sedang aktif terbuka
+                if (document.querySelector('.modal.show')) return;
+                try {
+                    const payload = JSON.parse(e.data);
+                    callback(payload);
+                } catch (err) {
+                    console.error('[AppSSE] JSON parse error:', err);
+                }
+            });
+        }
+    };
+
     // Inisialisasi saat DOM siap
     document.addEventListener('DOMContentLoaded', () => {
         AppModal.init();
         AppHotkeys.init();
         startLiveClock();
+        AppSSE.init('/api/stream');
     });
 
     // Ekspor API ke global window untuk diakses modul-modul
     window.Medars = {
         viewport: AppViewport,
         modal: AppModal,
-        hotkeys: AppHotkeys
+        hotkeys: AppHotkeys,
+        sse: AppSSE
     };
 
 })(window, document);
