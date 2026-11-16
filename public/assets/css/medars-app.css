@@ -1,0 +1,112 @@
+/**
+ * medars-app.css — SIMRS ksm-next Clinical Theme
+ * 100% Visual Parity with ksmlite + Modern Bootstrap 5 Foundation
+ */
+
+:root {
+    --medical-teal: #00897b;
+    --medical-teal-dark: #00695c;
+    --medical-teal-light: #e0f2f1;
+    --bs-primary: #00897b;
+    --bs-primary-rgb: 0, 137, 123;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+    font-size: 0.875rem;
+}
+
+/* Background & Text Utility */
+.bg-medical-teal {
+    background-color: var(--medical-teal) !important;
+}
+
+.bg-teal-dark {
+    background-color: var(--medical-teal-dark) !important;
+}
+
+.text-medical-teal {
+    color: var(--medical-teal) !important;
+}
+
+.btn-medical-teal {
+    background-color: var(--medical-teal);
+    border-color: var(--medical-teal);
+    color: #ffffff;
+}
+
+.btn-medical-teal:hover, .btn-medical-teal:focus {
+    background-color: var(--medical-teal-dark);
+    border-color: var(--medical-teal-dark);
+    color: #ffffff;
+}
+
+/* Paritas Visual ksmlite: Menu Ikon Kotak Atas (.navbar li.menu-icon) */
+.menu-icon {
+    border: 1px solid #d2d6de;
+    border-radius: 4px;
+    margin: 2px 2px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease-in-out;
+}
+
+.menu-icon:hover {
+    border-color: var(--medical-teal);
+    background: #f8fafc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.menu-icon a {
+    color: #333333 !important;
+    font-weight: 500;
+}
+
+.menu-icon a:hover {
+    color: var(--medical-teal-dark) !important;
+}
+
+.menu-icon a.active {
+    background-color: var(--medical-teal-light) !important;
+    border-color: var(--medical-teal) !important;
+    color: var(--medical-teal-dark) !important;
+}
+
+/* Tabular Numbers untuk Kolom Kasir, Farmasi, dan Rekam Medis */
+.tabular-nums, table td.numeric, table th.numeric {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* Badge Klaim Baku SIMRS (PRD 04 & PRD 10) */
+.badge-claim-t {
+    background-color: #059669;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.badge-claim-k {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.badge-claim-nk {
+    background-color: #6366f1;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Pulse animation untuk SSE Indicator */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

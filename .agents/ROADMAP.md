@@ -22,9 +22,14 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - `ModuleLoader` lifecycle (`install`, `activate`, `deactivate`, `safe uninstall`).
   - Dinamisasi navigasi menu antarmuka dari modul-modul aktif.
   - Lolos 8 skenario pengujian TDD Unit Test.
-- [ ] **PLN-04: Master Layout Shell Paritas Eksisting (PRD 10)**
-  - Bootstrap 5 dengan warna Medical Teal (`#00897b`), Topbar, Menu Ikon Atas, dan Sidebar.
-  - Dynamic Viewport Slot (`#moduleViewportSlot`) & Single-Host Modal (`#appModalHost`).
+- [x] **PLN-04: Master Layout Shell Paritas Eksisting (PRD 10)** (Selesai: 16-11-2026)
+  - Layout master Bootstrap 5 dengan warna khas Medical Teal (`#00897b`).
+  - Topbar jam real-time & indikator status SSE.
+  - Menu ikon kotak cepat atas (`.menu-icon`) identik dengan `ksmlite`.
+  - Dynamic Viewport Slot (`#moduleViewportSlot`) untuk eliminasi tumpukan hidden-show.
+  - Single-Host Dynamic Modal (`#appModalHost`) dengan auto-focus & cleanup DOM.
+  - Hotkeys operasional klinik (`F2`, `F4`, `F8`, `F9`, `Esc`).
+  - `ViewRenderer` dengan sanitasi XSS aman lolos pengujian TDD.
 - [ ] **PLN-05: Real-Time SSE Stream Engine**
   - Endpoint `GET /api/stream` untuk push antrean dan notifikasi real-time.
 
@@ -52,3 +57,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-01** | Fondasi Repositori & Spesifikasi | Inisialisasi Git, remote GitHub, 13 PRD domain, DDL oracle database, clone pustaka referensi `.ref/ksmlite/`, konfigurasi PHP 8.3 & PHPUnit 11 test harness. | 16-11-2026 |
 | **PLN-02** | Dual-Connection & Transaction Manager | Implementasi `PdoTransactionManager` (ACID + Nested Savepoints), `ReadOnlyConnectionGuard` (proteksi mutlak database eksisting), `ConnectionFactory` (strict flags & anti-cast), terverifikasi 13 unit test PASS. | 16-11-2026 |
 | **PLN-03** | Module Loader & Registry Kernel | Implementasi arsitektur modular PRD 12 (`ModuleManifest`, `DependencyResolver`, `ModuleLoader` lifecycle, menu navigation dinamis, safe uninstall), terverifikasi 8 unit test PASS (Total 21 test PASS). | 16-11-2026 |
+| **PLN-04** | Master Layout Shell Paritas 100% | Master layout Bootstrap 5 bertema Medical Teal (`#00897b`), Topbar, menu-icon, `ViewRenderer` XSS-safe, Dynamic Viewport Slot (`#moduleViewportSlot`), Single-Host Modal (`#appModalHost`), dan hotkeys operasional (`F2`-`F9`). Total 23 test PASS. | 16-11-2026 |
