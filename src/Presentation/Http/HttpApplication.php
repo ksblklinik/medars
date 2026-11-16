@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http;
 
+use App\Application\Pharmacy\UseCase\CreateResepUseCase;
+use App\Application\Pharmacy\UseCase\DeleteResepUseCase;
+use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
+use App\Application\Pharmacy\UseCase\SaveCopyResepUseCase;
 use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
@@ -19,12 +23,15 @@ use App\Domain\Setting\Service\SettingService;
 use App\Infrastructure\Database\PdoTransactionManager;
 use App\Infrastructure\Persistence\PdoAuditLogRepository;
 use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
+use App\Infrastructure\Persistence\PdoDataBarangRepository;
+use App\Infrastructure\Persistence\PdoGudangBarangRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
 use App\Infrastructure\Persistence\PdoOdontogramRepository;
 use App\Infrastructure\Persistence\PdoPasienRepository;
 use App\Infrastructure\Persistence\PdoPemeriksaanRalanRepository;
 use App\Infrastructure\Persistence\PdoPoliklinikRepository;
 use App\Infrastructure\Persistence\PdoRegPeriksaRepository;
+use App\Infrastructure\Persistence\PdoResepRepository;
 use App\Infrastructure\Persistence\PdoRmeHistoryRepository;
 use App\Infrastructure\Persistence\PdoSettingRepository;
 use App\Infrastructure\Persistence\PdoSuratMedisRepository;
@@ -219,6 +226,22 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $barangRepo = new PdoDataBarangRepository($this->pdo);
+        $gudangRepo = new PdoGudangBarangRepository($this->pdo);
+        $resepRepo = new PdoResepRepository($this->pdo);
+
+        $pharmacyController = new PharmacyController(
+            $this->pdo,
+            $barangRepo,
+            $gudangRepo,
+            new CreateResepUseCase($resepRepo, $tx),
+            new DispenseResepUseCase($resepRepo, $barangRepo, $gudangRepo, $tx),
+            new DeleteResepUseCase($resepRepo, $tx),
+            new SaveCopyResepUseCase($resepRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         // --- RUTE PUBLIK / KIOSK HARDWARE ---
         $router->get('/auth/login', fn(): Response => $authController->showLogin());
         $router->post('/auth/login', fn(): Response => $authController->postLogin($postData, $ipAddress));
@@ -401,6 +424,47 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $dokterRalanController->apiCreateSuratSakit($user, $data);
+        });
+
+        // Farmasi & Validasi E-Resep (PLN-18)
+        $renderPharmacy = function () use ($pharmacyController): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            return $pharmacyController->index($user, $this->csrfGuard->getToken());
+        };
+        $router->get('/farmasi', $renderPharmacy);
+        $router->get('/apotek-ralan', $renderPharmacy);
+
+        $router->get('/api/v1/farmasi/queue', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            return $pharmacyController->apiQueueResep($queryParams);
+        });
+        $router->get('/api/v1/farmasi/obat/search', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
+            return $pharmacyController->apiSearchObat($queryParams);
+        });
+        $router->post('/api/v1/farmasi/resep/create', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pharmacyController->apiCreateResep($user, $data);
+        });
+        $router->post('/api/v1/farmasi/resep/dispense', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pharmacyController->apiDispenseResep($user, $data);
+        });
+        $router->post('/api/v1/farmasi/resep/delete', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pharmacyController->apiDeleteResep($data);
+        });
+        $router->post('/api/v1/farmasi/resep/copy', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pharmacyController->apiCopyResep($user, $data);
         });
 
         return $router->dispatch($method, $path);

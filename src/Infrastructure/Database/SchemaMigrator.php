@@ -353,6 +353,120 @@ final class SchemaMigrator
                 catatan TEXT,
                 PRIMARY KEY (no_rawat, kd_poli)
             ){$suffix}",
+
+            // 6. Farmasi, E-Resep & Gudang Multi-Depo (Fase 3)
+            "CREATE TABLE IF NOT EXISTS databarang (
+                kode_brng VARCHAR(20) PRIMARY KEY,
+                nama_brng VARCHAR(150) NOT NULL,
+                kode_sat VARCHAR(15) NOT NULL DEFAULT 'TAB',
+                dasar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                h_beli DECIMAL(15,2) NOT NULL DEFAULT 0,
+                harga_tunai DECIMAL(15,2) NOT NULL DEFAULT 0,
+                harga_kapitasi DECIMAL(15,2) NOT NULL DEFAULT 0,
+                harga_nonkapitasi DECIMAL(15,2) NOT NULL DEFAULT 0,
+                jualbebas DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(5) NOT NULL DEFAULT '1'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS resep_obat (
+                no_resep VARCHAR(14) PRIMARY KEY,
+                tgl_peresepan VARCHAR(15) NOT NULL,
+                jam_peresepan VARCHAR(10) NOT NULL,
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                tgl_perawatan VARCHAR(15) NOT NULL DEFAULT '0000-00-00',
+                jam VARCHAR(10) NOT NULL DEFAULT '00:00:00',
+                status VARCHAR(15) NOT NULL DEFAULT 'ralan'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS resep_dokter_nonracikan (
+                no_resep VARCHAR(14) NOT NULL,
+                kode_brng VARCHAR(20) NOT NULL,
+                jml DECIMAL(15,2) NOT NULL,
+                aturan_pakai VARCHAR(150) NOT NULL DEFAULT '-',
+                PRIMARY KEY (no_resep, kode_brng)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS resep_dokter_racikan (
+                no_resep VARCHAR(14) NOT NULL,
+                no_racik VARCHAR(10) NOT NULL,
+                nama_racik VARCHAR(150) NOT NULL,
+                kd_racik VARCHAR(10) NOT NULL DEFAULT 'R01',
+                jml_dr INT NOT NULL DEFAULT 1,
+                aturan_pakai VARCHAR(150) NOT NULL DEFAULT '-',
+                keterangan VARCHAR(200) NOT NULL DEFAULT '-',
+                PRIMARY KEY (no_resep, no_racik)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS resep_dokter_racikan_detail (
+                no_resep VARCHAR(14) NOT NULL,
+                no_racik VARCHAR(10) NOT NULL,
+                kode_brng VARCHAR(20) NOT NULL,
+                p1 DECIMAL(10,2) NOT NULL DEFAULT 1,
+                p2 DECIMAL(10,2) NOT NULL DEFAULT 1,
+                kandungan VARCHAR(50) NOT NULL DEFAULT '-',
+                jml DECIMAL(15,2) NOT NULL,
+                PRIMARY KEY (no_resep, no_racik, kode_brng)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS obat_racikan (
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                no_rawat VARCHAR(20) NOT NULL,
+                no_racik VARCHAR(10) NOT NULL,
+                nama_racik VARCHAR(150) NOT NULL,
+                kd_racik VARCHAR(10) NOT NULL DEFAULT 'R01',
+                jml_dr INT NOT NULL DEFAULT 1,
+                aturan_pakai VARCHAR(150) NOT NULL DEFAULT '-',
+                keterangan VARCHAR(200) NOT NULL DEFAULT '-',
+                PRIMARY KEY (tgl_perawatan, jam, no_rawat, no_racik)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS detail_pemberian_obat (
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                no_rawat VARCHAR(20) NOT NULL,
+                kode_brng VARCHAR(20) NOT NULL,
+                no_batch VARCHAR(30) NOT NULL DEFAULT '',
+                no_faktur VARCHAR(30) NOT NULL DEFAULT '',
+                h_beli DECIMAL(15,2) NOT NULL DEFAULT 0,
+                biaya_obat DECIMAL(15,2) NOT NULL DEFAULT 0,
+                jml DECIMAL(15,2) NOT NULL,
+                embalase DECIMAL(15,2) NOT NULL DEFAULT 0,
+                tuslah DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(15) NOT NULL DEFAULT 'Ralan',
+                kd_bangsal VARCHAR(10) NOT NULL,
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai',
+                PRIMARY KEY (tgl_perawatan, jam, no_rawat, kode_brng, no_batch, no_faktur)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS gudangbarang (
+                kode_brng VARCHAR(20) NOT NULL,
+                kd_bangsal VARCHAR(10) NOT NULL,
+                no_batch VARCHAR(30) NOT NULL DEFAULT '',
+                no_faktur VARCHAR(30) NOT NULL DEFAULT '',
+                stok DECIMAL(15,2) NOT NULL DEFAULT 0,
+                PRIMARY KEY (kode_brng, kd_bangsal, no_batch, no_faktur)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS riwayat_barang_medis (
+                id {$bigAutoIncPk},
+                kode_brng VARCHAR(20) NOT NULL,
+                stok_awal DECIMAL(15,2) NOT NULL,
+                masuk DECIMAL(15,2) NOT NULL DEFAULT 0,
+                keluar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                stok_akhir DECIMAL(15,2) NOT NULL,
+                posisi VARCHAR(50) NOT NULL,
+                tanggal VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                petugas VARCHAR(50) NOT NULL,
+                kd_bangsal VARCHAR(10) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'Simpan',
+                no_batch VARCHAR(30) NOT NULL DEFAULT '',
+                no_faktur VARCHAR(30) NOT NULL DEFAULT '',
+                keterangan VARCHAR(255) NOT NULL DEFAULT ''
+            ){$suffix}",
         ];
 
         foreach ($statements as $sql) {

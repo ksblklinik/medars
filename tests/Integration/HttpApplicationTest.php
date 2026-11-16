@@ -226,4 +226,54 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(403, $idorRes['status']);
     }
+
+    public function testPharmacyEndToEndResepCreateAndDispense(): void
+    {
+        $today = date('Y-m-d');
+        $hash = password_hash('Apotek123!', PASSWORD_BCRYPT);
+        $this->pdo->exec("
+            INSERT INTO mlite_users (id, username, password, email, no_telp, fullname, role, cap, access, status)
+            VALUES (4, 'APOTEK01', '{$hash}', 'apt@medars.local', '', 'Apt. Rina', 'farmasi', 'all', 'farmasi', '1');
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Sudah');
+            INSERT INTO databarang (kode_brng, nama_brng, kode_sat, dasar, h_beli, harga_tunai, harga_kapitasi, harga_nonkapitasi, jualbebas, status)
+            VALUES ('OBT001', 'Vitamin B6', 'TAB', 100, 120, 500, 300, 400, 600, '1');
+            INSERT INTO gudangbarang (kode_brng, kd_bangsal, no_batch, no_faktur, stok)
+            VALUES ('OBT001', 'FAR01', 'B01', 'F01', 20);
+        ");
+
+        $this->session['user_id'] = 4;
+        $page = $this->app->handle('GET', '/farmasi');
+        $this->assertSame(200, $page['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/farmasi/resep/create',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'kd_dokter' => 'DR001',
+                'non_racikan' => [['kode_brng' => 'OBT001', 'jml' => 5, 'aturan_pakai' => '3x1']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $create['status']);
+        $noResep = json_decode($create['body'], true)['data']['no_resep'];
+
+        $dispense = $this->app->handle(
+            'POST',
+            '/api/v1/farmasi/resep/dispense',
+            rawBody: json_encode([
+                'no_resep' => $noResep,
+                'kd_bangsal' => 'FAR01',
+                'jenis_klaim' => 'Kapitasi',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $dispense['status']);
+
+        $stok = (float) $this->pdo->query("SELECT stok FROM gudangbarang WHERE kode_brng = 'OBT001' AND kd_bangsal = 'FAR01'")->fetchColumn();
+        $this->assertSame(15.0, $stok);
+    }
 }
