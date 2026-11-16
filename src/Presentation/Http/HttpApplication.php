@@ -20,7 +20,9 @@ use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
 use App\Application\Pharmacy\UseCase\SaveCopyResepUseCase;
 use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
+use App\Application\Registration\UseCase\DeleteMasterPasienUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
+use App\Application\Registration\UseCase\SaveMasterPasienUseCase;
 use App\Application\Rme\UseCase\CreateSuratMedisUseCase;
 use App\Application\Rme\UseCase\DeleteOdontogramUseCase;
 use App\Application\Rme\UseCase\SaveOdontogramUseCase;
@@ -349,6 +351,14 @@ final class HttpApplication
             new SendWhatsAppMessageUseCase($waRepo, $waClient),
             new ProcessInboundWaWebhookUseCase($waRepo, $waClient),
             new AssignHomeCarePreceptorUseCase($homeCareRepo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $pasienController = new PasienController(
+            $pasienRepo,
+            new SaveMasterPasienUseCase($pasienRepo, $tx),
+            new DeleteMasterPasienUseCase($pasienRepo, $tx),
             $this->renderer,
             $this->navBuilder
         );
@@ -835,6 +845,44 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $auditController->apiRotateLogs($data);
+        });
+
+        // Master Pasien (GAP No. 1)
+        $router->get('/pasien', function () use ($pasienController): array {
+            $user = $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            return $pasienController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/pasien/kartu', function () use ($pasienController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            return $pasienController->cetakKartu($queryParams);
+        });
+        $router->get('/api/v1/pasien/list', function () use ($pasienController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            return $pasienController->apiList($queryParams);
+        });
+        $router->get('/api/v1/pasien/max-id', function () use ($pasienController): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            return $pasienController->apiMaxId();
+        });
+        $router->get('/api/v1/pasien/detail', function () use ($pasienController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            return $pasienController->apiDetail($queryParams);
+        });
+        $router->get('/api/v1/pasien/history', function () use ($pasienController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran', 'dokter_ralan']);
+            return $pasienController->apiHistory($queryParams);
+        });
+        $router->post('/api/v1/pasien/save', function () use ($pasienController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pasienController->apiSave($data);
+        });
+        $router->post('/api/v1/pasien/delete', function () use ($pasienController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['pasien', 'pendaftaran']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $pasienController->apiDelete($data);
         });
 
         return $router->dispatch($method, $path);

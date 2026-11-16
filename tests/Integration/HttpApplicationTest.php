@@ -656,4 +656,34 @@ class HttpApplicationTest extends TestCase
         $rotateData = json_decode($rotateRes['body'], true);
         $this->assertTrue($rotateData['ok']);
     }
+
+    public function testMasterPasienEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/pasien');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Form Master Pasien', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/pasien/save',
+            rawBody: json_encode([
+                'nm_pasien' => 'Dewi Lestari',
+                'no_ktp' => '3201010101950001',
+                'jk' => 'P',
+                'tgl_lahir' => '1995-03-15',
+                'alamat' => 'Jl. Melati 1',
+                'no_tlp' => '081234567890',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+        $saved = json_decode($save['body'], true);
+        $rm = $saved['pasien']['no_rkm_medis'];
+
+        $kartu = $this->app->handle('GET', '/pasien/kartu', queryParams: ['no_rkm_medis' => $rm]);
+        $this->assertSame(200, $kartu['status']);
+        $this->assertStringContainsString('Dewi Lestari', $kartu['body']);
+    }
 }

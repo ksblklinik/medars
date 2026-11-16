@@ -23,6 +23,30 @@ interface PasienRepositoryInterface
     public function save(Pasien $pasien): void;
 
     /**
+     * @param array<string, mixed> $extraFields
+     */
+    public function saveOrUpdate(Pasien $pasien, array $extraFields = []): void;
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findRawByNoRkmMedis(NoRkmMedis $noRkmMedis): ?array;
+
+    /**
+     * @return array{rows: list<array<string, mixed>>, total: int}
+     */
+    public function listPaginated(string $query = '', int $limit = 20, int $offset = 0): array;
+
+    public function hasRegistrations(NoRkmMedis $noRkmMedis): bool;
+
+    public function delete(NoRkmMedis $noRkmMedis): void;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function getVisitHistory(NoRkmMedis $noRkmMedis): array;
+
+    /**
      * Mengambil nomor rekam medis baru tertinggi dari gabungan basis data legacy dan next.
      */
     public function getNextNoRkmMedis(): NoRkmMedis;

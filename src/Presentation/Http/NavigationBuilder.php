@@ -23,6 +23,14 @@ final class NavigationBuilder
                 'modules' => [],
             ],
             [
+                'title' => 'Pasien',
+                'icon' => 'fa-address-card',
+                'route' => '/pasien',
+                'category' => 'Layanan',
+                'module_key' => 'pasien',
+                'modules' => ['pasien', 'pendaftaran'],
+            ],
+            [
                 'title' => 'Pendaftaran',
                 'icon' => 'fa-user-plus',
                 'route' => '/pendaftaran',
