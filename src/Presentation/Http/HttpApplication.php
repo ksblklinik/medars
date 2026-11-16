@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http;
 
+use App\Application\Billing\UseCase\ProcessPosApotekUmumUseCase;
+use App\Application\Billing\UseCase\ProcessSplitPaymentUseCase;
+use App\Application\Billing\UseCase\ReconcilePendingOrderUseCase;
+use App\Application\Billing\UseCase\VoidBillingTransactionUseCase;
 use App\Application\Pharmacy\UseCase\CreateResepUseCase;
 use App\Application\Pharmacy\UseCase\DeleteResepUseCase;
 use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
@@ -22,6 +26,7 @@ use App\Domain\Security\Exception\UnauthorizedException;
 use App\Domain\Setting\Service\SettingService;
 use App\Infrastructure\Database\PdoTransactionManager;
 use App\Infrastructure\Persistence\PdoAuditLogRepository;
+use App\Infrastructure\Persistence\PdoBillingLedgerRepository;
 use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
@@ -30,6 +35,7 @@ use App\Infrastructure\Persistence\PdoOdontogramRepository;
 use App\Infrastructure\Persistence\PdoPasienRepository;
 use App\Infrastructure\Persistence\PdoPemeriksaanRalanRepository;
 use App\Infrastructure\Persistence\PdoPoliklinikRepository;
+use App\Infrastructure\Persistence\PdoPosApotekUmumRepository;
 use App\Infrastructure\Persistence\PdoRegPeriksaRepository;
 use App\Infrastructure\Persistence\PdoResepRepository;
 use App\Infrastructure\Persistence\PdoRmeHistoryRepository;
@@ -238,6 +244,20 @@ final class HttpApplication
             new DispenseResepUseCase($resepRepo, $barangRepo, $gudangRepo, $tx),
             new DeleteResepUseCase($resepRepo, $tx),
             new SaveCopyResepUseCase($resepRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
+        $posRepo = new PdoPosApotekUmumRepository($this->pdo);
+
+        $billingController = new BillingController(
+            $this->pdo,
+            $ledgerRepo,
+            new ProcessSplitPaymentUseCase($ledgerRepo, $regRepo, $tx),
+            new VoidBillingTransactionUseCase($ledgerRepo, $regRepo, $this->auditRepo, $tx),
+            new ReconcilePendingOrderUseCase($ledgerRepo, $this->auditRepo, $tx),
+            new ProcessPosApotekUmumUseCase($barangRepo, $gudangRepo, $posRepo, $tx),
             $this->renderer,
             $this->navBuilder
         );
@@ -469,6 +489,53 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $pharmacyController->apiCopyResep($user, $data);
+        });
+
+        // Kasir, Split Billing 4-Pilar & POS Apotek Umum (PLN-22)
+        $renderBilling = function () use ($billingController): array {
+            $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd', 'apotek_umum']);
+            return $billingController->index($user, $this->csrfGuard->getToken());
+        };
+        $router->get('/kasir', $renderBilling);
+        $router->get('/kasir-rawat-jalan', $renderBilling);
+
+        $router->get('/api/v1/kasir/queue', function () use ($billingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            return $billingController->apiQueue($queryParams);
+        });
+        $router->get('/api/v1/kasir/detail', function () use ($billingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            return $billingController->apiDetail($queryParams);
+        });
+        $router->post('/api/v1/kasir/item', function () use ($billingController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiAddLedgerItem($data);
+        });
+        $router->post('/api/v1/kasir/pay', function () use ($billingController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiPay($data);
+        });
+        $router->post('/api/v1/kasir/void', function () use ($billingController, $postData, $rawBody, $headers, $ipAddress): array {
+            $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiVoid($user, $data, $ipAddress);
+        });
+        $router->post('/api/v1/kasir/reconcile', function () use ($billingController, $postData, $rawBody, $headers, $ipAddress): array {
+            $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiReconcile($user, $data, $ipAddress);
+        });
+        $router->post('/api/v1/apotek-umum/pos', function () use ($billingController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['kasir', 'apotek_umum', 'farmasi']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiPosApotekUmum($user, $data);
         });
 
         return $router->dispatch($method, $path);

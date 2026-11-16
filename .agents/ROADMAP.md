@@ -70,18 +70,20 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-4 (Kasir, Billing Ledger, Akuntansi & Rawat Inap)
+## 🎯 Fase Aktif Saat Ini: FASE-5 (Laboratorium, Radiologi & Laporan Operasional)
 
-- [ ] **PLN-19: Value Objects & Entities Billing Ledger 4-Pilar & Akuntansi (TDD)**
-  - Entitas `BillingLedger` (`mlite_billing_ledger` dengan `claim_type` `'Tunai'`, `'Kapitasi'`, `'Non-Kapitasi'`, `'Piutang'` dan status `'Pending'`, `'Paid'`, `'Approved'`, `'Bundled'`, `'Cancelled'`, `'Expired'`).
-  - Entitas `JurnalAkuntansi` (`1101.01` Kas Tunai vs `1103.xx` Piutang Penjamin/BPJS), `ReturVoidRecord` (anti-delete void), dan `KamarInap`.
-- [ ] **PLN-20: Migrasi Skema Kasir/Akuntansi/Ranap & Repositories ACID (TDD)**
-  - Tambahkan DDL tabel kasir, billing ledger, jurnal akuntansi, kamar inap, dan apotek umum (`mlite_billing_ledger`, `mlite_jurnal`, `kamar_inap`, `mlite_harga_apotek_umum`) ke `SchemaMigrator`.
-  - `PaymentService::syncToLedger()` & repositori akuntansi dalam transaksi ACID.
-- [ ] **PLN-21: Use-Case Split Billing `[T]` vs `[K]` vs `[NK]` vs `[P]`, Retur/Void & POS Apotek Umum (TDD)**
-  - Pemisahan pembayaran 4-Pilar, isolasi transaksi retail Apotek Umum (`PO-APT-%` & 5 cara bayar), dan mekanisme *Void Anti-Fraud* tanpa hapus fisik baris jurnal.
-- [ ] **PLN-22: UI/UX Kasir Ralan/IGD/Ranap & Apotek Umum (Paritas ksmlite)**
-  - Tombol selector klaim mandiri `[T]`, `[K]`, `[NK]` berdasarkan `harga_* > 0`, hotkeys kasir (`F2` Bayar, `F8` Pending, `F9` Reset), dan cetak nota/kwitansi.
+- [ ] **PLN-23: Value Objects & Entities Laboratorium, Radiologi & Pemisahan PL (TDD)**
+  - Entitas `PermintaanLab`, `PermintaanPemeriksaanLab`, `PermintaanRadiologi`, `PermintaanPemeriksaanRadiologi`, `DetailPeriksaLab`, `HasilRadiologi`.
+  - Penomoran order `PLYYYYMMDD0001` & `PRYYYYMMDD0001` serta pemisahan nomor order berdasarkan jenis klaim (Kapitasi vs Tunai) dan status pembayaran kasir.
+- [ ] **PLN-24: Migrasi Skema Penunjang & Repositories ACID (TDD)**
+  - Tambahkan DDL tabel `permintaan_lab`, `permintaan_pemeriksaan_lab`, `detail_periksa_lab`, `permintaan_radiologi`, `permintaan_pemeriksaan_radiologi`, `hasil_radiologi` ke `SchemaMigrator`.
+  - Query bebas N+1 untuk Laporan Kunjungan, 10 Besar Penyakit ICD-10, dan Pendapatan per Pilar Klaim.
+- [ ] **PLN-25: Use-Case Order Penunjang, Lock Validasi Kasir & Input Hasil (TDD)**
+  - Pemisahan nomor PL baru otomatis jika nomor PL lama sudah `Paid`/`Approved` di Kasir.
+  - Lock tombol/aksi validasi hasil laboratorium jika order belum dilunasi/diapprove di Kasir.
+  - Penghapusan permintaan lab/rad atomik dalam transaksi ACID (`DeletePermintaanLabUseCase`, `DeletePermintaanRadUseCase`).
+- [ ] **PLN-26: UI/UX Order Lab/Rad, Input Hasil Nilai Rujukan & Laporan (Paritas ksmlite)**
+  - Penandaan visual otomatis nilai rujukan abnormal (Rendah/Tinggi) pada hasil lab, serta dashboard laporan operasional.
 
 ---
 
@@ -126,6 +128,10 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-16** | Migrasi & Repository Farmasi Multi-Depo | Penambahan 9 tabel farmasi ke `SchemaMigrator` (MySQL 8.0 `VARCHAR` keys), `PdoDataBarangRepository` (mendukung keyword pendek `B6`/`Zn`), `PdoGudangBarangRepository` (isolasi depo & split batch atomik + `riwayat_barang_medis`), dan `PdoResepRepository`. 4 test PASS. | 16-11-2026 |
 | **PLN-17** | Use-Case Validasi E-Resep, Racikan +1s & Copy | `CreateResepUseCase` (`YYYYMMDD0001` atomik), `DispenseResepUseCase` (offset `+1 detik` via `DateTimeImmutable::modify('+1 second')` aman pada `23:59:59`, rollback ACID bila stok kurang), `DeleteResepUseCase` (blokir resep sudah diserahkan), & `SaveCopyResepUseCase`. 3 test PASS. | 16-11-16 |
 | **PLN-18** | UI/UX E-Resep & Validasi Apotek | `PharmacyController`, `pharmacy/index.php` & `pharmacy.js` (antrean E-Resep, pencarian obat debounce `200ms` + `AbortController`, `data-selected_klaim`, validasi/hapus resep), rute `/farmasi` & E2E integration test di `HttpApplicationTest`. 2 test PASS (Total 192 test, 682 assertions PASS). **FASE 3 SELESAI 100%**. | 16-11-2026 |
+| **PLN-19** | Value Objects & Entities Billing & Akuntansi | `ClaimType` (4-Pilar: `Tunai`, `Kapitasi`, `Non-Kapitasi`, `Piutang`), `LedgerStatus`, `PosPaymentMethod` (5 cara bayar), `BillingLedgerItem`, `JurnalEntry`/`JurnalDetail` (seimbang & `createReversal()`), `KamarInap`, & `PosApotekUmumSale` (`PO-APT-%`). 4 test PASS. | 16-11-2026 |
+| **PLN-20** | Migrasi & Repository Kasir/Ranap/POS | Penambahan 6 tabel billing/jurnal/ranap/POS ke `SchemaMigrator` (MySQL 8.0 `VARCHAR` keys), `PdoBillingLedgerRepository`, `PdoKamarInapRepository` (mengimplementasikan `RanapStatusCheckerInterface`), & `PdoPosApotekUmumRepository`. 3 test PASS. | 16-11-2026 |
+| **PLN-21** | Use-Case Split Billing, Void & POS Apotek | `ProcessSplitPaymentUseCase` (isolasi `1101.01` hanya untuk porsi `Tunai`, BPJS murni Rp 0), `VoidBillingTransactionUseCase` (jurnal pembalik seimbang & blokir bila ada layanan klinis), `ProcessPosApotekUmumUseCase` (isolasi Depo `APT`), & `ReconcilePendingOrderUseCase`. 5 test PASS. | 16-11-2026 |
+| **PLN-22** | UI/UX Kasir 4-Pilar & POS Apotek Umum | `BillingController`, `billing/index.php` & `billing.js` (Split Billing `[T]`/`[K]`/`[NK]`/`[P]`, hotkeys `F2`/`F8`/`F9`, Void stempel `FAKTUR / KUITANSI TIDAK BERLAKU`, POS Apotek Umum), rute `/kasir` & E2E integration test. 2 test PASS (Total 206 test, 766 assertions PASS). **FASE 4 SELESAI 100%**. | 16-11-2026 |
 
 ---
 

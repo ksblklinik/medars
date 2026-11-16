@@ -467,6 +467,71 @@ final class SchemaMigrator
                 no_faktur VARCHAR(30) NOT NULL DEFAULT '',
                 keterangan VARCHAR(255) NOT NULL DEFAULT ''
             ){$suffix}",
+
+            // 7. Kasir, Billing Ledger, Akuntansi & Rawat Inap (Fase 4)
+            "CREATE TABLE IF NOT EXISTS mlite_billing_ledger (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                item_code VARCHAR(30) NOT NULL,
+                item_name VARCHAR(150) NOT NULL,
+                category VARCHAR(30) NOT NULL,
+                qty DECIMAL(15,2) NOT NULL DEFAULT 1,
+                unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+                claim_type VARCHAR(20) NOT NULL DEFAULT 'Tunai',
+                status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                provider_id VARCHAR(30) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_jurnal (
+                no_jurnal VARCHAR(30) PRIMARY KEY,
+                tgl_jurnal VARCHAR(15) NOT NULL,
+                jam_jurnal VARCHAR(10) NOT NULL,
+                no_bukti VARCHAR(50) NOT NULL,
+                keterangan VARCHAR(255) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_jurnal_detail (
+                id {$bigAutoIncPk},
+                no_jurnal VARCHAR(30) NOT NULL,
+                kd_rek VARCHAR(20) NOT NULL,
+                debet DECIMAL(15,2) NOT NULL DEFAULT 0,
+                kredit DECIMAL(15,2) NOT NULL DEFAULT 0
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS kamar_inap (
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_kamar VARCHAR(20) NOT NULL,
+                tgl_masuk VARCHAR(15) NOT NULL,
+                jam_masuk VARCHAR(10) NOT NULL,
+                tgl_keluar VARCHAR(15) NOT NULL DEFAULT '0000-00-00',
+                jam_keluar VARCHAR(10) NOT NULL DEFAULT '00:00:00',
+                lama INT NOT NULL DEFAULT 1,
+                trf_kamar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                ttl_biaya DECIMAL(15,2) NOT NULL DEFAULT 0,
+                stts_pulang VARCHAR(50) NOT NULL DEFAULT '-',
+                PRIMARY KEY (no_rawat, kd_kamar, tgl_masuk, jam_masuk)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan_apotek_umum (
+                no_nota VARCHAR(30) PRIMARY KEY,
+                tgl_jual VARCHAR(15) NOT NULL,
+                jam_jual VARCHAR(10) NOT NULL,
+                payment_method VARCHAR(30) NOT NULL,
+                total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                petugas_nip VARCHAR(30) NOT NULL,
+                keterangan VARCHAR(255) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan_apotek_umum_detail (
+                id {$bigAutoIncPk},
+                no_nota VARCHAR(30) NOT NULL,
+                kode_brng VARCHAR(20) NOT NULL,
+                jml DECIMAL(15,2) NOT NULL,
+                harga_jual DECIMAL(15,2) NOT NULL,
+                subtotal DECIMAL(15,2) NOT NULL
+            ){$suffix}",
         ];
 
         foreach ($statements as $sql) {

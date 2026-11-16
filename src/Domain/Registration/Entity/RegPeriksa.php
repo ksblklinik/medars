@@ -78,6 +78,34 @@ final readonly class RegPeriksa
         );
     }
 
+    public function withPaymentStatus(string $newStatusBayar): self
+    {
+        return new self(
+            noRawat: $this->noRawat,
+            noReg: $this->noReg,
+            noRkmMedis: $this->noRkmMedis,
+            kdPoli: $this->kdPoli,
+            kdDokter: $this->kdDokter,
+            kdPj: $this->kdPj,
+            tglRegistrasi: $this->tglRegistrasi,
+            jamReg: $this->jamReg,
+            biayaReg: $this->biayaReg,
+            stts: $this->stts,
+            sttsDaftar: $this->sttsDaftar,
+            statusBayar: $newStatusBayar,
+            statusPoli: $this->statusPoli,
+            statusLanjut: $this->statusLanjut,
+            umurDaftar: $this->umurDaftar,
+            sttsUmur: $this->sttsUmur,
+            pJawab: $this->pJawab,
+            almtPj: $this->almtPj,
+            hubunganPj: $this->hubunganPj,
+            prefik: $this->prefik,
+            room: $this->room,
+            shift: $this->shift
+        );
+    }
+
     public function withNoRawat(NoRawat $newNoRawat): self
     {
         return new self(

@@ -276,4 +276,81 @@ class HttpApplicationTest extends TestCase
         $stok = (float) $this->pdo->query("SELECT stok FROM gudangbarang WHERE kode_brng = 'OBT001' AND kd_bangsal = 'FAR01'")->fetchColumn();
         $this->assertSame(15.0, $stok);
     }
+
+    public function testKasirSplitBillingAndPosApotekUmumEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $hash = password_hash('Kasir123!', PASSWORD_BCRYPT);
+        $this->pdo->exec("
+            INSERT INTO mlite_users (id, username, password, email, no_telp, fullname, role, cap, access, status)
+            VALUES (5, 'KASIR01', '{$hash}', 'kasir@medars.local', '', 'Siti Kasir', 'kasir', 'all', 'kasir', '1');
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Belum Bayar');
+            INSERT INTO databarang (kode_brng, nama_brng, kode_sat, dasar, h_beli, harga_tunai, jualbebas, status)
+            VALUES ('OBT001', 'Vitamin C', 'TAB', 500, 600, 1000, 2000, '1');
+            INSERT INTO gudangbarang (kode_brng, kd_bangsal, no_batch, no_faktur, stok)
+            VALUES ('OBT001', 'APT', 'B01', 'F01', 10);
+        ");
+
+        $this->session['user_id'] = 5;
+        $page = $this->app->handle('GET', '/kasir');
+        $this->assertSame(200, $page['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // Tambah item Tunai & Kapitasi
+        $this->app->handle(
+            'POST',
+            '/api/v1/kasir/item',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'item_code' => 'RJ002',
+                'item_name' => 'Konsultasi BPJS',
+                'category' => 'Tindakan',
+                'qty' => 1,
+                'unit_price' => 40000,
+                'claim_type' => 'Kapitasi',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->app->handle(
+            'POST',
+            '/api/v1/kasir/item',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'item_code' => 'OBT99',
+                'item_name' => 'Vitamin Tunai',
+                'category' => 'Obat',
+                'qty' => 1,
+                'unit_price' => 15000,
+                'claim_type' => 'Tunai',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+
+        // Pay
+        $pay = $this->app->handle(
+            'POST',
+            '/api/v1/kasir/pay',
+            rawBody: json_encode(['no_rawat' => '2026/11/16/000001']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $pay['status']);
+        $paidData = json_decode($pay['body'], true);
+        $this->assertSame(15000.0, (float) $paidData['data']['tunai_paid']);
+        $this->assertSame(40000.0, (float) $paidData['data']['bpjs_covered']);
+
+        // POS Apotek Umum
+        $pos = $this->app->handle(
+            'POST',
+            '/api/v1/apotek-umum/pos',
+            rawBody: json_encode([
+                'payment_method' => 'QRIS',
+                'items' => [['kode_brng' => 'OBT001', 'jml' => 2]],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $pos['status']);
+        $this->assertStringContainsString('PO-APT-', $pos['body']);
+    }
 }
