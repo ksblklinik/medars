@@ -361,6 +361,11 @@ final class HttpApplication
         );
 
         // --- RUTE PUBLIK / KIOSK HARDWARE ---
+        $router->get('/favicon.ico', fn(): array => [
+            'status' => 204,
+            'headers' => ['Content-Type' => 'image/x-icon'],
+            'body' => '',
+        ]);
         $router->get('/auth/login', fn(): Response => $authController->showLogin());
         $router->post('/auth/login', fn(): Response => $authController->postLogin($postData, $ipAddress));
         $router->get('/logout', fn(): Response => $authController->logout($ipAddress));

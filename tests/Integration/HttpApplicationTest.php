@@ -53,6 +53,9 @@ class HttpApplicationTest extends TestCase
         $loginRes = $this->app->handle('GET', '/auth/login');
         $this->assertSame(200, $loginRes['status']);
 
+        $favRes = $this->app->handle('GET', '/favicon.ico');
+        $this->assertSame(204, $favRes['status']);
+
         $displayRes = $this->app->handle('GET', '/display-antrean');
         $this->assertSame(200, $displayRes['status']);
 
