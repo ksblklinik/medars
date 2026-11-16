@@ -82,10 +82,7 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 ---
 
 ## ⏳ Rencana Tertunda / Antrean Kerja (PENDING)
-
-| Kode | Scope / Tindak Lanjut | Catatan Status |
-| :--- | :--- | :--- |
-| **STG-03** | Verifikasi Paritas Visual Modul Baru vs `ksmlite` | Cek layout & ergonomi UI Fase 5–8 terhadap `.ref/ksmlite/` di browser nyata. |
+*Tidak ada pekerjaan tertunda pada tahap implementasi & verifikasi lokal. Tahap berikutnya adalah deployment ke Linux Staging dengan kredensial sandbox eksternal (BPJS, SatuSehat, WA Gateway).*
 
 ---
 
@@ -126,3 +123,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-34..36** | Audit ACID, Security Hardening & Log Rotation | `DataIntegrityAuditService` (orphan, billing balance, stok), `LogRotationService` (min 90 hari, `mlite_logs` immutable), CSP CDN/Fonts + Security Headers, `AuditController` & UI. | 16-11-2026 |
 | **STG-01** | Uji Kompatibilitas MySQL 8.0 Strict Mode | `MySqlCompatibilityTest` terverifikasi di container `mysql:8.0` nyata (DDL idempoten, seeder, SOAP, Lab, Kasir, POS `PO-APT-`, Vedika, Laporan, & Audit). | 16-11-2026 |
 | **STG-02** | OAuth2 SatuSehat, Dekripsi BPJS & WA T5 | `SatuSehatAuthService` (`client_credentials`), `BpjsDecryptor` + `LzString` (AES-256-CBC + decompress), WA bulk whitelist-only, trip langsung `401/428/429/Banned`, `isOnWhatsApp`, & `WaSpintax::buildQrCheckinLinkText`. | 16-11-2026 |
+| **STG-03** | Paritas UI `ksmlite` & Mobile App Shell | Navbar 2-bar `ksmlite` + `#menuModal`, Dashboard KPI, `.ksmlite-toolbar` di semua modul, Mobile App Shell (`<768px` bottom nav bar, anti-overflow `360px`), `public/favicon.ico`, serta clean DevTools console (CSP & ARIA focus). | 17-11-2026 |
