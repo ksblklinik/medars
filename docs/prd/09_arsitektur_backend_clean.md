@@ -12,10 +12,11 @@ Domain ini mengatur fondasi arsitektur perangkat lunak sisi server, desain skema
    - Seluruh mutasi multi-tabel dibungkus transaksi database dengan blok `try-catch` dan otomatis `rollBack()`.
    - Whitelisting ketat seluruh payload input menggunakan DTO sebelum disimpan ke basis data.
    - Kualifikasi tabel eksplisit (`tabel.kolom`) pada seluruh query relasi.
-3. **Desain Basis Data Tanpa Utang Teknis:**
-   - Gunakan tipe data integer/bigint asli untuk nomor registrasi/antrean.
-   - Foreign key relasional dengan indeks performa tinggi pada kolom pencarian utama.
-   - Kolom audit otomatis pada setiap tabel: `created_at`, `updated_at`, `created_by`, `updated_by`.
+3. **Desain Basis Data & Kompatibilitas MySQL 8.0 Eksisting:**
+   - **Engine Database Wajib:** MySQL 8.0 (sesuai database live `ksmlite`).
+   - **Preservasi Kunci String & Composite Primary Keys:** Mengikuti kontrak baku [`00_database_schema_dictionary_mapping.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/00_database_schema_dictionary_mapping.md) dan DDL [`database_schema_oracle.sql`](file:///opt/app/ksmlite/starter-kit/docs/database_schema_oracle.sql).
+   - Kolom kunci `no_rawat`, `no_rkm_medis`, `no_reg`, `kode_brng` wajib berformat String (`VARCHAR`) agar kompatibel 100% saat diuji berdampingan dengan database eksisting di Linux Staging.
+   - Tabel komposit (`pemeriksaan_ralan`, `detail_pemberian_obat`) dipetakan dengan composite key handling di layer repository.
 
 ## 3. Kontrak Pengujian TDD Wajib (Test Cases)
 - `test_should_rollback_entire_transaction_when_any_sub_operation_fails()`

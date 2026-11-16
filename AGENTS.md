@@ -41,16 +41,17 @@ Sebelum menulis kode atau test suite untuk modul tertentu, Agen AI **WAJIB memba
 
 | Domain Sistem | Dokumen PRD Rujukan (`docs/prd/`) | Skill Domain Terkait (`.agents/skills/`) |
 | :--- | :--- | :--- |
-| **Pendaftaran, Pasien & Kiosk Antrean** | [`01_registrasi_dan_antrean.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/01_registrasi_dan_antrean.md) | `klinis-farmasi-klaim`, `bridging-ai-infra` |
-| **Rekam Medis Elektronik (RME) & SOAP** | [`02_rekam_medis_dan_soap.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/02_rekam_medis_dan_soap.md) | `knowledge-vault-icd`, `klinis-farmasi-klaim` |
-| **Farmasi, E-Resep & Gudang Obat** | [`03_farmasi_dan_e_resep.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/03_farmasi_dan_e_resep.md) | `klinis-farmasi-klaim`, `kasir-billing-akuntansi` |
-| **Kasir, Billing Ledger & Akuntansi** | [`04_kasir_billing_dan_akuntansi.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/04_kasir_billing_dan_akuntansi.md) | `kasir-billing-akuntansi` |
-| **Laboratorium & Radiologi** | [`05_laboratorium_dan_radiologi.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/05_laboratorium_dan_radiologi.md) | `klinis-farmasi-klaim`, `kasir-billing-akuntansi` |
-| **WhatsApp Gateway & Multi-Session CRM** | [`06_whatsapp_gateway_crm.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/06_whatsapp_gateway_crm.md) | `wa-gateway-pdf`, `bridging-ai-infra` |
-| **Bridging BPJS & SatuSehat Kemenkes** | [`07_bridging_bpjs_dan_satusehat.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/07_bridging_bpjs_dan_satusehat.md) | `bridging-ai-infra` |
-| **Layanan Homecare & Trias Preceptorship** | [`08_homecare_dan_pendidikan.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/08_homecare_dan_pendidikan.md) | `homecare-preceptorship` |
-| **Fondasi Backend, Database & Transaksi** | [`09_arsitektur_backend_clean.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/09_arsitektur_backend_clean.md) | `backend-architecture`, `audit` |
-| **Desain Antarmuka, Hotkeys & UI/UX** | [`10_arsitektur_frontend_ui_ux.md`](file:///opt/app/ksmlite/starter-kit/docs/prd/10_arsitektur_frontend_ui_ux.md) | `frontend-ui-ux` |
+| **Kamus Skema Basis Data & Kontrak Fisik** | [`00_database_schema_dictionary_mapping.md`](file:///c:/aplikasi/rea-mlite/docs/prd/00_database_schema_dictionary_mapping.md) | `backend-architecture`, `audit` |
+| **Pendaftaran, Pasien & Kiosk Antrean** | [`01_registrasi_dan_antrean.md`](file:///c:/aplikasi/rea-mlite/docs/prd/01_registrasi_dan_antrean.md) | `klinis-farmasi-klaim`, `bridging-ai-infra` |
+| **Rekam Medis Elektronik (RME) & SOAP** | [`02_rekam_medis_dan_soap.md`](file:///c:/aplikasi/rea-mlite/docs/prd/02_rekam_medis_dan_soap.md) | `knowledge-vault-icd`, `klinis-farmasi-klaim` |
+| **Farmasi, E-Resep & Gudang Obat** | [`03_farmasi_dan_e_resep.md`](file:///c:/aplikasi/rea-mlite/docs/prd/03_farmasi_dan_e_resep.md) | `klinis-farmasi-klaim`, `kasir-billing-akuntansi` |
+| **Kasir, Billing Ledger & Akuntansi** | [`04_kasir_billing_dan_akuntansi.md`](file:///c:/aplikasi/rea-mlite/docs/prd/04_kasir_billing_dan_akuntansi.md) | `kasir-billing-akuntansi` |
+| **Laboratorium & Radiologi** | [`05_laboratorium_dan_radiologi.md`](file:///c:/aplikasi/rea-mlite/docs/prd/05_laboratorium_dan_radiologi.md) | `klinis-farmasi-klaim`, `kasir-billing-akuntansi` |
+| **WhatsApp Gateway & Multi-Session CRM** | [`06_whatsapp_gateway_crm.md`](file:///c:/aplikasi/rea-mlite/docs/prd/06_whatsapp_gateway_crm.md) | `wa-gateway-pdf`, `bridging-ai-infra` |
+| **Bridging BPJS & SatuSehat Kemenkes** | [`07_bridging_bpjs_dan_satusehat.md`](file:///c:/aplikasi/rea-mlite/docs/prd/07_bridging_bpjs_dan_satusehat.md) | `bridging-ai-infra` |
+| **Layanan Homecare & Trias Preceptorship** | [`08_homecare_dan_pendidikan.md`](file:///c:/aplikasi/rea-mlite/docs/prd/08_homecare_dan_pendidikan.md) | `homecare-preceptorship` |
+| **Fondasi Backend, Database & Transaksi** | [`09_arsitektur_backend_clean.md`](file:///c:/aplikasi/rea-mlite/docs/prd/09_arsitektur_backend_clean.md) | `backend-architecture`, `audit` |
+| **Desain Antarmuka, Hotkeys & UI/UX** | [`10_arsitektur_frontend_ui_ux.md`](file:///c:/aplikasi/rea-mlite/docs/prd/10_arsitektur_frontend_ui_ux.md) | `frontend-ui-ux` |
 | **Audit Integritas Data & Anti-Fraud** | [`11_audit_acid_dan_keamanan.md`](file:///c:/aplikasi/rea-mlite/docs/prd/11_audit_acid_dan_keamanan.md) | `audit` |
 | **Manajemen Modul & Ekstensibilitas** | [`12_manajemen_modul_dan_ekstensibilitas.md`](file:///c:/aplikasi/rea-mlite/docs/prd/12_manajemen_modul_dan_ekstensibilitas.md) | `backend-architecture`, `audit` |
 

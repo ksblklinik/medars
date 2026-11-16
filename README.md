@@ -13,7 +13,9 @@ starter-kit/
 ├── AGENTS.md               <- Pedoman Arsitektur Baru, TDD-First & Rules Antigravity
 ├── README.md               <- Petunjuk Setup Langkah Demi Langkah
 ├── docs/
-│   └── prd/                <- 12 Dokumen PRD Spesifikasi Domain (99% Proses Bisnis Eksisting)
+│   ├── database_schema_oracle.sql  <- DDL Fisik Skema 19 Tabel Basis Data Eksisting
+│   └── prd/                        <- 13 Dokumen PRD Spesifikasi Domain & Database Oracle
+│       ├── 00_database_schema_dictionary_mapping.md
 │       ├── 01_registrasi_dan_antrean.md
 │       ├── 02_rekam_medis_dan_soap.md
 │       ├── 03_farmasi_dan_e_resep.md
