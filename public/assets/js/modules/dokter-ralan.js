@@ -181,6 +181,7 @@
             document.getElementById('btnCallPatient').disabled = false;
 
             this.loadSmartPeekHistory(row.no_rkm_medis);
+            this.loadOdontogram(row.no_rkm_medis);
         },
 
         loadSmartPeekHistory: function (noRkmMedis) {
@@ -222,7 +223,57 @@
                         `;
                         panel.appendChild(card);
                     });
+                })
+                .catch(() => {
+                    panel.innerHTML = '<div class="text-center text-danger small py-3">Gagal memuat riwayat medis.</div>';
                 });
+        },
+
+        loadOdontogram: function (noRkmMedis) {
+            const list = document.getElementById('odontogramHistoryList');
+            if (!list) return;
+
+            this.apiFetch('/api/v1/dokter-ralan/odontogram?no_rkm_medis=' + encodeURIComponent(noRkmMedis))
+                .then(res => res.json())
+                .then(rows => {
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                        list.innerHTML = '<div class="list-group-item text-muted">Belum ada catatan odontogram.</div>';
+                        return;
+                    }
+                    list.innerHTML = '';
+                    rows.forEach((item) => {
+                        const div = document.createElement('div');
+                        div.className = 'list-group-item d-flex justify-content-between align-items-center py-1';
+                        div.innerHTML = `
+                            <span>Gigi <strong>${this.escapeHtml(item.nomor_gigi)}</strong>: <span class="badge bg-info text-dark">${this.escapeHtml(item.kondisi)}</span> (${this.escapeHtml(item.tgl_pemeriksaan)})</span>
+                            <button type="button" class="btn btn-xs btn-outline-danger btn-del-odo" title="Hapus"><i class="fa fa-trash"></i></button>
+                        `;
+                        const delBtn = div.querySelector('.btn-del-odo');
+                        if (delBtn) {
+                            delBtn.addEventListener('click', () => this.deleteOdontogram(item.id, noRkmMedis));
+                        }
+                        list.appendChild(div);
+                    });
+                })
+                .catch(() => {
+                    list.innerHTML = '<div class="list-group-item text-danger">Gagal memuat odontogram.</div>';
+                });
+        },
+
+        deleteOdontogram: function (id, noRkmMedis) {
+            this.apiFetch('/api/v1/dokter-ralan/odontogram/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id }),
+            })
+            .then(res => res.json())
+            .then(res => {
+                this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message));
+                if (res.status === 'success') {
+                    this.loadOdontogram(noRkmMedis);
+                }
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat menghapus odontogram.'));
         },
 
         saveSoap: function () {
@@ -264,7 +315,8 @@
                 } else {
                     this.showAlert('danger', this.escapeHtml(res.message));
                 }
-            });
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat menyimpan SOAP.'));
         },
 
         searchIcd10: function (query) {
@@ -373,7 +425,8 @@
                 } else {
                     this.showAlert('danger', this.escapeHtml(res.message));
                 }
-            });
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat menyimpan SOAP.'));
         },
 
         saveOdontogram: function () {
@@ -394,7 +447,11 @@
             .then(res => res.json())
             .then(res => {
                 this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message));
-            });
+                if (res.status === 'success') {
+                    this.loadOdontogram(noRm);
+                }
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat menyimpan odontogram.'));
         },
 
         createSuratSakit: function () {
@@ -417,7 +474,8 @@
                 } else {
                     this.showAlert('danger', this.escapeHtml(res.message));
                 }
-            });
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat menyimpan SOAP.'));
         },
 
         callActivePatient: function () {
@@ -433,7 +491,8 @@
                 if (res.status === 'success') {
                     this.showAlert('info', `Memanggil antrean <strong>${this.escapeHtml(this._activePatient.no_reg)}</strong> ke Display TV.`);
                 }
-            });
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menghubungi server saat memanggil antrean TV.'));
         }
     };
 

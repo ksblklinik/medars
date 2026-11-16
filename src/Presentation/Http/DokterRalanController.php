@@ -222,6 +222,35 @@ final readonly class DokterRalanController
     }
 
     /**
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListOdontogram(array $queryParams = []): array
+    {
+        $rm = trim((string) ($queryParams['no_rkm_medis'] ?? ''));
+        if ($rm === '') {
+            return $this->jsonResponse([]);
+        }
+
+        try {
+            $items = $this->odoRepo->findByNoRkmMedis(new NoRkmMedis($rm));
+            $data = array_map(static fn(Odontogram $o): array => [
+                'id' => $o->id,
+                'no_rkm_medis' => $o->noRkmMedis->value(),
+                'no_rawat' => $o->noRawat->value(),
+                'tgl_pemeriksaan' => $o->tglPemeriksaan,
+                'nomor_gigi' => $o->nomorGigi,
+                'kondisi' => $o->kondisi,
+                'catatan' => $o->catatan,
+            ], $items);
+
+            return $this->jsonResponse($data);
+        } catch (\InvalidArgumentException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
      * @param array<string, mixed> $postData
      * @return array{status: int, headers: array<string, string>, body: string}
      */

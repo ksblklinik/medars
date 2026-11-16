@@ -362,6 +362,10 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             return $dokterRalanController->apiSearchIcd10($queryParams);
         });
+        $router->get('/api/v1/dokter-ralan/odontogram', function () use ($dokterRalanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->apiListOdontogram($queryParams);
+        });
         $router->post('/api/v1/dokter-ralan/soap', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
             $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             $this->assertCsrfHeaderOrPost($postData, $headers);

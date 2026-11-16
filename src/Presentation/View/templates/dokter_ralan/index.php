@@ -183,7 +183,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="button" id="btnSaveOdo" class="btn btn-sm btn-outline-primary">Simpan Odontogram</button>
+                                    <button type="button" id="btnSaveOdo" class="btn btn-sm btn-outline-primary mb-2">Simpan Odontogram</button>
+                                    <div id="odontogramHistoryList" class="list-group list-group-flush small border rounded" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="list-group-item text-muted">Belum ada catatan odontogram.</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
