@@ -16,12 +16,15 @@ use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
 use App\Infrastructure\Realtime\EventMessage;
 use App\Infrastructure\Realtime\SseStreamResponse;
+use App\Presentation\Http\DisplayQueueController;
 use App\Presentation\Http\RegistrationController;
 use App\Presentation\Http\Router;
 use App\Presentation\View\ViewRenderer;
+use App\Infrastructure\Realtime\InMemoryEventBroadcaster;
 
 $router = new Router();
 $renderer = new ViewRenderer();
+$broadcaster = new InMemoryEventBroadcaster();
 
 $getRegistrationController = static function () use ($renderer): RegistrationController {
     static $controller = null;
@@ -123,6 +126,66 @@ $router->post('/api/v1/registration/shift-queue', static function () use ($getRe
     $raw = file_get_contents('php://input');
     $data = json_decode($raw, true) ?: $_POST;
     return $getRegistrationController()->apiShiftQueue($data);
+});
+
+// Modul Display Antrean TV & Kiosk Mandiri (PLN-10)
+$getDisplayQueueController = static function () use ($renderer, $broadcaster): DisplayQueueController {
+    static $controller = null;
+    if ($controller !== null) {
+        return $controller;
+    }
+
+    $dbDriver = getenv('DB_DRIVER') ?: 'sqlite';
+    if ($dbDriver === 'sqlite') {
+        $dbDir = __DIR__ . '/../storage';
+        $pdo = new PDO("sqlite:{$dbDir}/medars.sqlite");
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } else {
+        $config = new ConnectionConfig(
+            driver: 'mysql',
+            host: getenv('DB_HOST') ?: '127.0.0.1',
+            port: (int) (getenv('DB_PORT') ?: 3306),
+            database: getenv('DB_DATABASE') ?: 'ksm_next',
+            username: getenv('DB_USERNAME') ?: 'root',
+            password: getenv('DB_PASSWORD') ?: ''
+        );
+        $pdo = ConnectionFactory::create($config);
+    }
+
+    $poliRepo = new PdoPoliklinikRepository($pdo);
+    $regRepo = new PdoRegPeriksaRepository($pdo);
+
+    $controller = new DisplayQueueController(
+        $pdo,
+        $poliRepo,
+        $regRepo,
+        $broadcaster,
+        $renderer
+    );
+
+    return $controller;
+};
+
+$router->get('/display-antrean', static function () use ($getDisplayQueueController): array {
+    return $getDisplayQueueController()->index();
+});
+
+$router->get('/antrean', static function () use ($getDisplayQueueController): array {
+    return $getDisplayQueueController()->index();
+});
+
+$router->get('/kiosk', static function () use ($getDisplayQueueController): array {
+    return $getDisplayQueueController()->kiosk();
+});
+
+$router->get('/api/v1/queue/summary', static function () use ($getDisplayQueueController): array {
+    return $getDisplayQueueController()->apiQueueSummary($_GET);
+});
+
+$router->post('/api/v1/queue/call', static function () use ($getDisplayQueueController): array {
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw, true) ?: $_POST;
+    return $getDisplayQueueController()->apiCallQueue($data);
 });
 
 // Endpoint Server-Sent Events (SSE)
