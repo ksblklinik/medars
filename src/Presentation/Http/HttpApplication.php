@@ -438,6 +438,10 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
             return $pharmacyController->apiQueueResep($queryParams);
         });
+        $router->get('/api/v1/farmasi/resep/detail', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
+            return $pharmacyController->apiResepDetail($queryParams);
+        });
         $router->get('/api/v1/farmasi/obat/search', function () use ($pharmacyController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
             return $pharmacyController->apiSearchObat($queryParams);

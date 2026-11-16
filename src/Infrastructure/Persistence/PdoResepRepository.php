@@ -41,7 +41,10 @@ final class PdoResepRepository implements ResepRepositoryInterface
 
     public function findByNoResep(NoResep $noResep): ?ResepObat
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM resep_obat WHERE no_resep = :nr LIMIT 1");
+        $driver = (string) $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $lock = ($driver === 'mysql' && $this->pdo->inTransaction()) ? ' FOR UPDATE' : '';
+
+        $stmt = $this->pdo->prepare("SELECT * FROM resep_obat WHERE no_resep = :nr LIMIT 1{$lock}");
         $stmt->execute([':nr' => $noResep->value()]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

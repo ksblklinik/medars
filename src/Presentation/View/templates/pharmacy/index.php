@@ -69,6 +69,12 @@
                     </div>
                 </div>
 
+                <!-- Rincian Item E-Resep Terpilih -->
+                <div class="mb-3 border rounded p-2 bg-white">
+                    <h6 class="small fw-bold text-medical-teal mb-2"><i class="fa fa-list-check me-1"></i> Rincian Obat Jadi & Racikan</h6>
+                    <div id="resepDetailContainer" class="small text-muted">Pilih salah satu E-Resep di sebelah kiri untuk melihat detail itemnya.</div>
+                </div>
+
                 <!-- Pencarian Obat Uniform Flat Pricing + Smart Claim Sorting -->
                 <div class="mb-2">
                     <div class="d-flex justify-content-between align-items-center mb-1">

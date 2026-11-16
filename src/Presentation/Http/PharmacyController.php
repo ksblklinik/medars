@@ -118,13 +118,69 @@ final readonly class PharmacyController
     }
 
     /**
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiResepDetail(array $queryParams = []): array
+    {
+        $nr = trim((string) ($queryParams['no_resep'] ?? ''));
+        if ($nr === '') {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Nomor resep wajib dipilih.'], 422);
+        }
+
+        $stmtNon = $this->pdo->prepare("
+            SELECT rdn.kode_brng, db.nama_brng, rdn.jml, rdn.aturan_pakai
+            FROM resep_dokter_nonracikan rdn
+            LEFT JOIN databarang db ON rdn.kode_brng = db.kode_brng
+            WHERE rdn.no_resep = :nr
+        ");
+        $stmtNon->execute([':nr' => $nr]);
+        $nonRacikan = $stmtNon->fetchAll(\PDO::FETCH_ASSOC);
+
+        $stmtRacik = $this->pdo->prepare("
+            SELECT rdr.no_racik, rdr.nama_racik, rdr.jml_dr, rdr.aturan_pakai
+            FROM resep_dokter_racikan rdr
+            WHERE rdr.no_resep = :nr
+            ORDER BY rdr.no_racik ASC
+        ");
+        $stmtRacik->execute([':nr' => $nr]);
+        $racikan = $stmtRacik->fetchAll(\PDO::FETCH_ASSOC);
+
+        if ($racikan !== []) {
+            $stmtDet = $this->pdo->prepare("
+                SELECT d.no_racik, d.kode_brng, db.nama_brng, d.jml, d.kandungan
+                FROM resep_dokter_racikan_detail d
+                LEFT JOIN databarang db ON d.kode_brng = db.kode_brng
+                WHERE d.no_resep = :nr
+            ");
+            $stmtDet->execute([':nr' => $nr]);
+            $allDet = $stmtDet->fetchAll(\PDO::FETCH_ASSOC);
+            $byRacik = [];
+            foreach ($allDet as $d) {
+                $byRacik[(string) $d['no_racik']][] = $d;
+            }
+            foreach ($racikan as &$r) {
+                $r['details'] = $byRacik[(string) $r['no_racik']] ?? [];
+            }
+        }
+
+        return $this->jsonResponse([
+            'no_resep' => $nr,
+            'non_racikan' => $nonRacikan,
+            'racikan' => $racikan,
+        ]);
+    }
+
+    /**
      * @param array<string, mixed> $postData
      * @return array{status: int, headers: array<string, string>, body: string}
      */
     public function apiCreateResep(?UserAccount $currentUser, array $postData = []): array
     {
         try {
-            $kdDokter = trim((string) ($postData['kd_dokter'] ?? ($currentUser?->getUsername() ?? '')));
+            $kdDokter = ($currentUser !== null && strtolower($currentUser->getRole()) === 'dokter')
+                ? $currentUser->getUsername()
+                : trim((string) ($postData['kd_dokter'] ?? ($currentUser?->getUsername() ?? '')));
             $resep = $this->createResepUseCase->execute(
                 noRawat: new NoRawat((string) ($postData['no_rawat'] ?? '')),
                 kdDokter: $kdDokter,

@@ -100,6 +100,12 @@ class PharmacyControllerTest extends TestCase
         $created = json_decode($createRes['body'], true);
         $noResep = $created['data']['no_resep'];
 
+        // Detail Resep
+        $detailRes = $this->controller->apiResepDetail(['no_resep' => $noResep]);
+        $this->assertSame(200, $detailRes['status']);
+        $detailData = json_decode($detailRes['body'], true);
+        $this->assertCount(1, $detailData['non_racikan']);
+
         // Dispense Resep
         $dispenseRes = $this->controller->apiDispenseResep($this->apoteker, [
             'no_resep' => $noResep,

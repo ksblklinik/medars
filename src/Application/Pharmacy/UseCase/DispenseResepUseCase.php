@@ -30,18 +30,6 @@ final readonly class DispenseResepUseCase
         string $petugasNip,
         ?\DateTimeImmutable $dispenseAt = null
     ): void {
-        $resep = $this->resepRepo->findByNoResep($noResep);
-        if ($resep === null) {
-            throw new \DomainException("Resep tidak ditemukan: {$noResep->value()}.");
-        }
-
-        if ($resep->isDispensed()) {
-            throw new \DomainException("Resep {$noResep->value()} sudah divalidasi/diserahkan sebelumnya.");
-        }
-
-        $nonRacikanItems = $this->resepRepo->findNonRacikan($noResep);
-        $racikanItems = $this->resepRepo->findRacikan($noResep);
-
         $baseTime = $dispenseAt ?? new \DateTimeImmutable();
         $baseTgl = $baseTime->format('Y-m-d');
         $baseJam = $baseTime->format('H:i:s');
@@ -51,13 +39,23 @@ final readonly class DispenseResepUseCase
         $compoundedTgl = $compoundedTime->format('Y-m-d');
         $compoundedJam = $compoundedTime->format('H:i:s');
 
-        $statusLanjut = strtolower($resep->status) === 'ranap' ? 'Ranap' : 'Ralan';
-
         $this->tx->transaction(function () use (
-            $resep, $noResep, $depo, $jenisKlaim, $petugasNip, $statusLanjut,
-            $nonRacikanItems, $racikanItems,
+            $noResep, $depo, $jenisKlaim, $petugasNip,
             $baseTgl, $baseJam, $compoundedTgl, $compoundedJam
         ): void {
+            // Baca & validasi status resep di dalam batas transaksi ACID (mencegah race condition double-dispense)
+            $resep = $this->resepRepo->findByNoResep($noResep);
+            if ($resep === null) {
+                throw new \DomainException("Resep tidak ditemukan: {$noResep->value()}.");
+            }
+
+            if ($resep->isDispensed()) {
+                throw new \DomainException("Resep {$noResep->value()} sudah divalidasi/diserahkan sebelumnya.");
+            }
+
+            $nonRacikanItems = $this->resepRepo->findNonRacikan($noResep);
+            $racikanItems = $this->resepRepo->findRacikan($noResep);
+            $statusLanjut = strtolower($resep->status) === 'ranap' ? 'Ranap' : 'Ralan';
             // 1. Proses Obat Jadi (Non-Racikan) pada timestamp dasar
             foreach ($nonRacikanItems as $item) {
                 $barang = $this->barangRepo->findByKode($item->kodeBrng);

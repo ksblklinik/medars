@@ -111,6 +111,45 @@
 
             document.getElementById('btnDispenseResep').disabled = !!row.is_dispensed;
             document.getElementById('btnDeleteResep').disabled = !!row.is_dispensed;
+            this.loadResepDetail(row.no_resep);
+        },
+
+        loadResepDetail: function (noResep) {
+            const c = document.getElementById('resepDetailContainer');
+            if (!c) return;
+            c.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Memuat rincian item resep...';
+
+            this.apiFetch('/api/v1/farmasi/resep/detail?no_resep=' + encodeURIComponent(noResep))
+                .then(res => res.json())
+                .then(data => {
+                    const non = Array.isArray(data.non_racikan) ? data.non_racikan : [];
+                    const racik = Array.isArray(data.racikan) ? data.racikan : [];
+                    if (non.length === 0 && racik.length === 0) {
+                        c.innerHTML = '<span class="text-muted">Tidak ada item di dalam resep ini.</span>';
+                        return;
+                    }
+
+                    let html = '<ul class="list-unstyled mb-0">';
+                    non.forEach((item) => {
+                        html += `<li><span class="badge bg-primary-subtle text-primary me-1">Obat Jadi</span> <strong>${this.escapeHtml(item.nama_brng || item.kode_brng)}</strong> &times; ${this.escapeHtml(item.jml)} (${this.escapeHtml(item.aturan_pakai)})</li>`;
+                    });
+                    racik.forEach((r) => {
+                        html += `<li class="mt-1"><span class="badge bg-warning-subtle text-warning-emphasis me-1">Racikan</span> <strong>${this.escapeHtml(r.nama_racik)}</strong> (${this.escapeHtml(r.jml_dr)} bungkus, ${this.escapeHtml(r.aturan_pakai)})`;
+                        if (Array.isArray(r.details) && r.details.length > 0) {
+                            html += '<ul class="ps-3 text-muted">';
+                            r.details.forEach((d) => {
+                                html += `<li>${this.escapeHtml(d.nama_brng || d.kode_brng)} &times; ${this.escapeHtml(d.jml)} (${this.escapeHtml(d.kandungan)})</li>`;
+                            });
+                            html += '</ul>';
+                        }
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                    c.innerHTML = html;
+                })
+                .catch(() => {
+                    c.innerHTML = '<span class="text-danger">Gagal memuat rincian item resep.</span>';
+                });
         },
 
         searchObat: function (q) {
