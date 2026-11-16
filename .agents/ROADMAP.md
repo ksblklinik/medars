@@ -62,7 +62,26 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - Modal pencarian pasien `F4` Single-Host (`#appModalHost`) dengan live AJAX search (No. RM / Nama / NIK / No. BPJS) dan auto-populate form.
   - Hotkeys operasional: <kbd>F2</kbd> (Daftarkan Pasien), <kbd>F4</kbd> (Buka Modal Cari Pasien), <kbd>F9</kbd> (Kosongkan Form), dan <kbd>Esc</kbd> (Tutup Modal).
   - Controller API: `/pendaftaran`, `/api/v1/registration/patients/search`, `/api/v1/registration/insite`, `/api/v1/registration/checkin`, `/api/v1/registration/today`, `/api/v1/registration/shift-queue`.
-- [ ] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE**
+- [x] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE (TDD)** (Selesai: 16-11-2026)
+  - Display TV Antrean Poliklinik Full-HD / 4K responsif (`/display-antrean`, `/antrean`) tanpa vertical scrolling, large queue font-monospace, audio chime dan pengumuman suara Web Speech Synthesis API bahasa Indonesia otomatis saat antrean dipanggil (`queue.called`).
+  - Layar Sentuh Kiosk Mandiri (`/kiosk`, `.kiosk-wrapper`) dengan virtual keypad layar sentuh, check-in cepat Mobile JKN, formulir Persetujuan Umum (*General Consent*) mandiri dengan digital signature canvas, serta simulasi cetak tiket antrean.
+  - Controller API: `/api/v1/queue/summary` (ringkasan antrean aktif & menunggu per poli) dan `/api/v1/queue/call` (siaran SSE panggilan antrean real-time).
+  - **FASE 1 (Pendaftaran, Pasien & Kiosk Antrean) TUNTAS 100% (86 Test PASS, 224 Assertions).**
+
+---
+
+## 🚧 Sedang Dikerjakan (IN PROGRESS)
+
+### [FASE-2] Rekam Medis Elektronik (RME) & SOAP Rawat Jalan (PRD 02)
+- [ ] **PLN-11: Value Objects & Composite Key RME (`pemeriksaan_ralan`)**
+  - Entitas `PemeriksaanRalan` (composite key: `no_rawat`, `tgl_perawatan`, `jam_rawat`).
+  - Strict types: Subjektif (`keluhan`), Objektif (`pemeriksaan`), Asesmen (`penilaian`), Planning (`instruksi`, `evaluasi`).
+  - Vital signs: `suhu_tubuh`, `tensi`, `nadi`, `respirasi`, `tinggi`, `berat`, `spo2`, `gcs`, `kesadaran`.
+- [ ] **PLN-12: Grounding ICD-10 SatuSehat & Riwayat Rekam Medis Pasien**
+  - Search & mapping diagnosa primer/sekunder ICD-10 (`penyakit`).
+  - Timeline riwayat medis longitudinal pasien lintas kunjungan (Medical History Smart Peek).
+- [ ] **PLN-13: UI/UX Form SOAP Dokter Dinamis & Template Resep Cepat**
+  - Antarmuka SOAP responsif identik ksmlite dengan hotkeys dokter.
 
 ---
 
@@ -70,7 +89,6 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 | Kode Fase | Domain / Modul Utama | PRD Rujukan | Target Luaran Kunci |
 | :--- | :--- | :--- | :--- |
-| **FASE-1** | Pendaftaran, Pasien & Kiosk Antrean | [`PRD 01`](file:///c:/aplikasi/rea-mlite/docs/prd/01_registrasi_dan_antrean.md) | Entity Pasien, Auto-Regenerate race condition `no_rawat`, Form Pendaftaran & Display TV Antrean SSE. |
 | **FASE-2** | RME & SOAP Rawat Jalan | [`PRD 02`](file:///c:/aplikasi/rea-mlite/docs/prd/02_rekam_medis_dan_soap.md) | Composite key `pemeriksaan_ralan` (3 kolom), Form SOAP dinamis, Grounding ICD-10 & Medical History. |
 | **FASE-3** | E-Resep, Gudang Farmasi & Apotek | [`PRD 03`](file:///c:/aplikasi/rea-mlite/docs/prd/03_farmasi_dan_e_resep.md) | Resep non-racik vs racik, Offset jam racikan `+1 detik`, mutasi stok `gudangbarang`, isolasi `PO-APT-%`. |
 | **FASE-4** | Kasir, Billing Ledger & Akuntansi | [`PRD 04`](file:///c:/aplikasi/rea-mlite/docs/prd/04_kasir_billing_dan_akuntansi.md) | Split Billing 4-Pilar (`[T]`, `[K]`, `[NK]`, `[P]`), Jurnal Keuangan anti-delete void, Hotkeys Kasir (`F2`,`F8`,`F9`). |
@@ -94,3 +112,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-07** | Repository Dual-Connection ACL & Concurrency | `PdoPasienRepository` (fallback legacy Read-Only via `ReadOnlyConnectionGuard`, `getNextNoRkmMedis` lintas DB), `PdoBookingRegistrasiRepository`, `PdoRegPeriksaRepository` (reservasi antrean Walk-In vs Mobile JKN, auto-regenerasi atomik `no_rawat` & `no_reg`, clinical guard check). 11 test PASS (Total 62 test PASS). | 16-11-2026 |
 | **PLN-08** | Use-Case Dua Jalur Registrasi & Clinical Guard | `RegisterInSiteUseCase` (Walk-In, validasi tarif/umur/penjamin, guard tunggakan & double-submit, route booking masa depan), `CheckInMobileJknUseCase` (preservasi `no_reg` booking asli, ACID tx konversi `Terdaftar`, dokter pengganti), `ClinicalGuardShieldUseCase` (blokir ubah antrean berstatus SOAP/tindakan/resep/lab/rad). 11 test PASS (Total 73 test PASS). | 16-11-2026 |
 | **PLN-09** | Form Registrasi & Modal Pasien F4 | Paritas 100% tampilan visual & ergonomi ksmlite (Medical Teal `#00897b`, panel `#form` & `#display`), modal cari pasien `F4` Single-Host (`#appModalHost`), hotkeys <kbd>F2</kbd>, <kbd>F4</kbd>, <kbd>F9</kbd>, endpoint REST API lengkap. 9 test PASS (Total 82 test PASS). | 16-11-2026 |
+| **PLN-10** | Display TV Antrean & Kiosk Mandiri | Layar Display TV Full-HD/4K audio chime & speech synthesis bahasa Indonesia real-time SSE (`/display-antrean`), Layar Kiosk Mandiri (`/kiosk`) virtual keypad & General Consent digital signature, endpoint `/api/v1/queue/summary` & `/api/v1/queue/call`. 4 test PASS (Total 86 test PASS). **FASE 1 SELESAI 100%**. | 16-11-2026 |
