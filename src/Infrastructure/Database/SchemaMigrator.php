@@ -532,6 +532,69 @@ final class SchemaMigrator
                 harga_jual DECIMAL(15,2) NOT NULL,
                 subtotal DECIMAL(15,2) NOT NULL
             ){$suffix}",
+
+            // 8. Laboratorium & Radiologi (Fase 5)
+            "CREATE TABLE IF NOT EXISTS permintaan_lab (
+                noorder VARCHAR(20) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_permintaan VARCHAR(15) NOT NULL,
+                jam_permintaan VARCHAR(10) NOT NULL,
+                tgl_sampel VARCHAR(15) NOT NULL DEFAULT '0000-00-00',
+                jam_sampel VARCHAR(10) NOT NULL DEFAULT '00:00:00',
+                tgl_hasil VARCHAR(15) NOT NULL DEFAULT '0000-00-00',
+                jam_hasil VARCHAR(10) NOT NULL DEFAULT '00:00:00',
+                dokter_perujuk VARCHAR(20) NOT NULL,
+                status VARCHAR(15) NOT NULL DEFAULT 'ralan',
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS permintaan_pemeriksaan_lab (
+                noorder VARCHAR(20) NOT NULL,
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                stts_bayar VARCHAR(15) NOT NULL DEFAULT 'Belum',
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai',
+                PRIMARY KEY (noorder, kd_jenis_prw)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS detail_periksa_lab (
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                tgl_periksa VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                pemeriksaan VARCHAR(100) NOT NULL,
+                nilai VARCHAR(50) NOT NULL,
+                nilai_rujukan VARCHAR(50) NOT NULL DEFAULT '-',
+                keterangan VARCHAR(30) NOT NULL DEFAULT 'Normal',
+                PRIMARY KEY (no_rawat, kd_jenis_prw, tgl_periksa, jam, pemeriksaan)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS permintaan_radiologi (
+                noorder VARCHAR(20) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_permintaan VARCHAR(15) NOT NULL,
+                jam_permintaan VARCHAR(10) NOT NULL,
+                tgl_hasil VARCHAR(15) NOT NULL DEFAULT '0000-00-00',
+                jam_hasil VARCHAR(10) NOT NULL DEFAULT '00:00:00',
+                dokter_perujuk VARCHAR(20) NOT NULL,
+                status VARCHAR(15) NOT NULL DEFAULT 'ralan',
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS permintaan_pemeriksaan_radiologi (
+                noorder VARCHAR(20) NOT NULL,
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                stts_bayar VARCHAR(15) NOT NULL DEFAULT 'Belum',
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai',
+                PRIMARY KEY (noorder, kd_jenis_prw)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS hasil_radiologi (
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_periksa VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                hasil TEXT NOT NULL,
+                PRIMARY KEY (no_rawat, tgl_periksa, jam)
+            ){$suffix}",
         ];
 
         foreach ($statements as $sql) {

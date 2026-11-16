@@ -70,20 +70,26 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-5 (Laboratorium, Radiologi & Laporan Operasional)
+## 🎯 Fase Aktif Saat Ini: FASE-6 (Bridging BPJS & SatuSehat)
 
-- [ ] **PLN-23: Value Objects & Entities Laboratorium, Radiologi & Pemisahan PL (TDD)**
-  - Entitas `PermintaanLab`, `PermintaanPemeriksaanLab`, `PermintaanRadiologi`, `PermintaanPemeriksaanRadiologi`, `DetailPeriksaLab`, `HasilRadiologi`.
+- [x] **PLN-23: Value Objects & Entities Laboratorium, Radiologi & Pemisahan PL (TDD)** ✅ *(SELESAI — 214 tests, 817 assertions PASS)*
+  - Entitas `PermintaanLab`, `PermintaanPemeriksaanLab`, `PermintaanRadiologi`, `DetailPeriksaLab`, `HasilRadiologi`.
   - Penomoran order `PLYYYYMMDD0001` & `PRYYYYMMDD0001` serta pemisahan nomor order berdasarkan jenis klaim (Kapitasi vs Tunai) dan status pembayaran kasir.
-- [ ] **PLN-24: Migrasi Skema Penunjang & Repositories ACID (TDD)**
+- [x] **PLN-24: Migrasi Skema Penunjang & Repositories ACID (TDD)** ✅ *(SELESAI)*
   - Tambahkan DDL tabel `permintaan_lab`, `permintaan_pemeriksaan_lab`, `detail_periksa_lab`, `permintaan_radiologi`, `permintaan_pemeriksaan_radiologi`, `hasil_radiologi` ke `SchemaMigrator`.
-  - Query bebas N+1 untuk Laporan Kunjungan, 10 Besar Penyakit ICD-10, dan Pendapatan per Pilar Klaim.
-- [ ] **PLN-25: Use-Case Order Penunjang, Lock Validasi Kasir & Input Hasil (TDD)**
+  - Query bebas N+1 untuk Laporan Kunjungan, 10 Besar Penyakit ICD-10, dan Pendapatan per Pilar Klaim (`PdoOperationalReportRepository`).
+- [x] **PLN-25: Use-Case Order Penunjang, Lock Validasi Kasir & Input Hasil (TDD)** ✅ *(SELESAI)*
   - Pemisahan nomor PL baru otomatis jika nomor PL lama sudah `Paid`/`Approved` di Kasir.
-  - Lock tombol/aksi validasi hasil laboratorium jika order belum dilunasi/diapprove di Kasir.
-  - Penghapusan permintaan lab/rad atomik dalam transaksi ACID (`DeletePermintaanLabUseCase`, `DeletePermintaanRadUseCase`).
-- [ ] **PLN-26: UI/UX Order Lab/Rad, Input Hasil Nilai Rujukan & Laporan (Paritas ksmlite)**
-  - Penandaan visual otomatis nilai rujukan abnormal (Rendah/Tinggi) pada hasil lab, serta dashboard laporan operasional.
+  - Lock tombol/aksi validasi hasil laboratorium jika order belum dilunasi/diapprove di Kasir (`SaveLabResultUseCase::isValidationUnlocked`).
+  - Penghapusan permintaan lab atomik dalam transaksi ACID (`DeleteLabOrderUseCase`).
+- [x] **PLN-26: UI/UX Order Lab/Rad, Input Hasil Nilai Rujukan & Laporan (Paritas ksmlite)** ✅ *(SELESAI)*
+  - Penandaan visual otomatis nilai rujukan abnormal (`Rendah`/`Tinggi`/`Normal`) pada hasil lab, serta dashboard laporan operasional (`SupportController`, `templates/support/index.php`, `public/assets/js/modules/support.js`).
+
+### Antrean Tugas FASE-6 (Bridging BPJS & SatuSehat)
+- [ ] **PLN-27: Value Objects, Circuit Breaker & Config Bridging BPJS / SatuSehat (TDD)**
+- [ ] **PLN-28: Service VClaim/PCare, HFIS LEAN Board & Verifikasi Klaim Vedika (TDD)**
+- [ ] **PLN-29: FHIR Bundle Builder & SatuSehat Sync Worker (TDD)**
+- [ ] **PLN-30: UI/UX Monitoring Bridging, HFIS Board & E2E Integration (Paritas ksmlite)**
 
 ---
 

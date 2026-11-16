@@ -81,6 +81,12 @@ final class PdoBillingLedgerRepository implements BillingLedgerRepositoryInterfa
         ]);
     }
 
+    public function markPendingAsPaid(NoRawat $noRawat): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE mlite_billing_ledger SET status = 'Paid' WHERE no_rawat = :nr AND status = 'Pending'");
+        $stmt->execute([':nr' => $noRawat->value()]);
+    }
+
     public function getNextJurnalNumber(\DateTimeInterface $date): string
     {
         $prefix = 'JRN-' . $date->format('Ymd') . '-';

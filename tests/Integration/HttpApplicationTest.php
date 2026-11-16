@@ -353,4 +353,82 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $pos['status']);
         $this->assertStringContainsString('PO-APT-', $pos['body']);
     }
+
+    public function testLabAndReportEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Belum Bayar');
+            INSERT INTO penyakit (kd_penyakit, nm_penyakit, nm_indonesia) VALUES ('J06.9', 'Acute URI', 'ISPA Akut');
+            INSERT INTO diagnosa_pasien (no_rawat, kd_penyakit, status, prioritas) VALUES ('2026/11/16/000001', 'J06.9', 'Ralan', 1);
+        ");
+
+        $this->session['user_id'] = 1;
+        $labPage = $this->app->handle('GET', '/laboratorium');
+        $this->assertSame(200, $labPage['status']);
+        $this->assertStringContainsString('Antrean Order Lab', $labPage['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Buat order lab Tunai
+        $createRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/lab/orders',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'dokter_perujuk' => 'DR001',
+                'items' => [
+                    ['kd_jenis_prw' => 'LAB01', 'nm_perawatan' => 'Hemoglobin', 'harga' => 45000, 'claim_type' => 'Tunai'],
+                ],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $createRes['status']);
+        $created = json_decode($createRes['body'], true);
+        $noOrder = $created['orders'][0]['no_order'];
+
+        // 2. Validasi terkunci sebelum Kasir lunas
+        $lockedRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/lab/results',
+            rawBody: json_encode([
+                'no_order' => $noOrder,
+                'results' => [['kd_jenis_prw' => 'LAB01', 'pemeriksaan' => 'Hb', 'nilai' => '9.2', 'nilai_rujukan' => '13.0 - 17.0']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(422, $lockedRes['status']);
+
+        // 3. Lunasi di Kasir
+        $payRes = $this->app->handle(
+            'POST',
+            '/api/v1/kasir/pay',
+            rawBody: json_encode(['no_rawat' => '2026/11/16/000001']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $payRes['status']);
+
+        // 4. Validasi hasil sekarang terbuka dan mendeteksi Rendah
+        $saveRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/lab/results',
+            rawBody: json_encode([
+                'no_order' => $noOrder,
+                'results' => [['kd_jenis_prw' => 'LAB01', 'pemeriksaan' => 'Hb', 'nilai' => '9.2', 'nilai_rujukan' => '13.0 - 17.0']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $saveRes['status']);
+        $saved = json_decode($saveRes['body'], true);
+        $this->assertSame('Rendah', $saved['results'][0]['keterangan']);
+
+        // 5. Laporan Operasional
+        $repRes = $this->app->handle('GET', '/api/v1/laporan/operasional', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $repRes['status']);
+        $rep = json_decode($repRes['body'], true);
+        $this->assertTrue($rep['ok']);
+        $this->assertCount(1, $rep['visits_by_poli']);
+        $this->assertSame('J06.9', $rep['top_diseases'][0]['kd_penyakit']);
+    }
 }

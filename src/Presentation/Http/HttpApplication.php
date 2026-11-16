@@ -20,6 +20,11 @@ use App\Application\Rme\UseCase\DeleteOdontogramUseCase;
 use App\Application\Rme\UseCase\SaveOdontogramUseCase;
 use App\Application\Rme\UseCase\SavePrbPrescriptionUseCase;
 use App\Application\Rme\UseCase\SaveSoapUseCase;
+use App\Application\Support\UseCase\CreateLabOrderUseCase;
+use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
+use App\Application\Support\UseCase\DeleteLabOrderUseCase;
+use App\Application\Support\UseCase\SaveLabResultUseCase;
+use App\Application\Support\UseCase\SaveRadiologyResultUseCase;
 use App\Domain\Security\Entity\UserAccount;
 use App\Domain\Security\Exception\ForbiddenException;
 use App\Domain\Security\Exception\UnauthorizedException;
@@ -31,7 +36,9 @@ use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
+use App\Infrastructure\Persistence\PdoLabRadiologyRepository;
 use App\Infrastructure\Persistence\PdoOdontogramRepository;
+use App\Infrastructure\Persistence\PdoOperationalReportRepository;
 use App\Infrastructure\Persistence\PdoPasienRepository;
 use App\Infrastructure\Persistence\PdoPemeriksaanRalanRepository;
 use App\Infrastructure\Persistence\PdoPoliklinikRepository;
@@ -258,6 +265,20 @@ final class HttpApplication
             new VoidBillingTransactionUseCase($ledgerRepo, $regRepo, $this->auditRepo, $tx),
             new ReconcilePendingOrderUseCase($ledgerRepo, $this->auditRepo, $tx),
             new ProcessPosApotekUmumUseCase($barangRepo, $gudangRepo, $posRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $labRepo = new PdoLabRadiologyRepository($this->pdo);
+        $reportRepo = new PdoOperationalReportRepository($this->pdo);
+        $supportController = new SupportController(
+            $labRepo,
+            $reportRepo,
+            new CreateLabOrderUseCase($labRepo, $ledgerRepo, $tx),
+            new SaveLabResultUseCase($labRepo, $ledgerRepo, $tx),
+            new DeleteLabOrderUseCase($labRepo, $tx),
+            new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx),
+            new SaveRadiologyResultUseCase($labRepo, $tx),
             $this->renderer,
             $this->navBuilder
         );
@@ -536,6 +557,65 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $billingController->apiPosApotekUmum($user, $data);
+        });
+
+        // Laboratorium, Radiologi & Laporan Operasional (PLN-26)
+        $router->get('/laboratorium', function () use ($supportController): array {
+            $user = $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            return $supportController->index($user, $this->csrfGuard->getToken(), 'lab');
+        });
+        $router->get('/radiologi', function () use ($supportController): array {
+            $user = $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            return $supportController->index($user, $this->csrfGuard->getToken(), 'radiologi');
+        });
+        $router->get('/laporan', function () use ($supportController): array {
+            $user = $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);
+            return $supportController->index($user, $this->csrfGuard->getToken(), 'laporan');
+        });
+
+        $router->get('/api/v1/penunjang/lab/orders', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            return $supportController->listLabOrders($queryParams);
+        });
+        $router->post('/api/v1/penunjang/lab/orders', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $supportController->createLabOrder($data);
+        });
+        $router->post('/api/v1/penunjang/lab/results', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $supportController->saveLabResult($data);
+        });
+        $router->post('/api/v1/penunjang/lab/delete', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $supportController->deleteLabOrder($data);
+        });
+
+        $router->get('/api/v1/penunjang/radiologi/orders', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            return $supportController->listRadiologyOrders($queryParams);
+        });
+        $router->post('/api/v1/penunjang/radiologi/orders', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $supportController->createRadiologyOrder($data);
+        });
+        $router->post('/api/v1/penunjang/radiologi/results', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['radiologi']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $supportController->saveRadiologyResult($data);
+        });
+
+        $router->get('/api/v1/laporan/operasional', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);
+            return $supportController->operationalReports($queryParams);
         });
 
         return $router->dispatch($method, $path);

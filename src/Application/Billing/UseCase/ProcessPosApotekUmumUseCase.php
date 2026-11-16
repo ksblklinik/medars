@@ -30,7 +30,8 @@ final readonly class ProcessPosApotekUmumUseCase
         PosPaymentMethod $paymentMethod,
         string $petugasNip,
         string $keterangan = '',
-        ?\DateTimeImmutable $saleAt = null
+        ?\DateTimeImmutable $saleAt = null,
+        int $maxRetries = 5
     ): PosApotekUmumSale {
         if ($items === []) {
             throw new \InvalidArgumentException('Keranjang POS Apotek Umum tidak boleh kosong.');
@@ -41,59 +42,72 @@ final readonly class ProcessPosApotekUmumUseCase
         $jam = $now->format('H:i:s');
         $depoApt = new DepoBangsal('APT');
 
-        return $this->tx->transaction(function () use ($items, $paymentMethod, $petugasNip, $keterangan, $now, $tgl, $jam, $depoApt): PosApotekUmumSale {
-            $noNota = $this->posRepo->getNextNoNota($now);
-            $total = 0.0;
-            $saleItems = [];
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                return $this->tx->transaction(function () use ($items, $paymentMethod, $petugasNip, $keterangan, $now, $tgl, $jam, $depoApt): PosApotekUmumSale {
+                    $noNota = $this->posRepo->getNextNoNota($now);
+                    $total = 0.0;
+                    $saleItems = [];
 
-            foreach ($items as $item) {
-                $kode = trim((string) ($item['kode_brng'] ?? ''));
-                $qty = (float) ($item['jml'] ?? 0);
-                if ($kode === '' || $qty <= 0) {
-                    throw new \InvalidArgumentException('Kode barang dan jumlah POS harus valid.');
+                    foreach ($items as $item) {
+                        $kode = trim((string) ($item['kode_brng'] ?? ''));
+                        $qty = (float) ($item['jml'] ?? 0);
+                        if ($kode === '' || $qty <= 0) {
+                            throw new \InvalidArgumentException('Kode barang dan jumlah POS harus valid.');
+                        }
+
+                        $barang = $this->barangRepo->findByKode($kode);
+                        if ($barang === null) {
+                            throw new \DomainException("Barang tidak ditemukan: {$kode}.");
+                        }
+
+                        // Isolasi stok mutlak ke Depo 'APT'
+                        $this->gudangRepo->deductStock(
+                            kodeBrng: $kode,
+                            depo: $depoApt,
+                            qty: $qty,
+                            tanggal: $tgl,
+                            jam: $jam,
+                            petugas: $petugasNip,
+                            keterangan: "POS Apotek Umum {$noNota}"
+                        );
+
+                        $hargaJual = $barang->pricing->jualBebas > 0 ? $barang->pricing->jualBebas : $barang->pricing->hargaTunai;
+                        $subtotal = $hargaJual * $qty;
+                        $total += $subtotal;
+
+                        $saleItems[] = [
+                            'kode_brng' => $kode,
+                            'jml' => $qty,
+                            'harga_jual' => $hargaJual,
+                            'subtotal' => $subtotal,
+                        ];
+                    }
+
+                    $sale = new PosApotekUmumSale(
+                        noNota: $noNota,
+                        tglJual: $tgl,
+                        jamJual: $jam,
+                        paymentMethod: $paymentMethod,
+                        total: $total,
+                        petugasNip: $petugasNip,
+                        keterangan: $keterangan
+                    );
+
+                    $this->posRepo->saveSale($sale, $saleItems);
+
+                    return $sale;
+                });
+            } catch (\PDOException $e) {
+                $isUnique = str_contains($e->getMessage(), 'UNIQUE')
+                    || str_contains($e->getMessage(), 'Duplicate entry')
+                    || $e->getCode() === '23000';
+                if (!$isUnique || $attempt >= $maxRetries) {
+                    throw $e;
                 }
-
-                $barang = $this->barangRepo->findByKode($kode);
-                if ($barang === null) {
-                    throw new \DomainException("Barang tidak ditemukan: {$kode}.");
-                }
-
-                // Isolasi stok mutlak ke Depo 'APT'
-                $this->gudangRepo->deductStock(
-                    kodeBrng: $kode,
-                    depo: $depoApt,
-                    qty: $qty,
-                    tanggal: $tgl,
-                    jam: $jam,
-                    petugas: $petugasNip,
-                    keterangan: "POS Apotek Umum {$noNota}"
-                );
-
-                $hargaJual = $barang->pricing->jualBebas > 0 ? $barang->pricing->jualBebas : $barang->pricing->hargaTunai;
-                $subtotal = $hargaJual * $qty;
-                $total += $subtotal;
-
-                $saleItems[] = [
-                    'kode_brng' => $kode,
-                    'jml' => $qty,
-                    'harga_jual' => $hargaJual,
-                    'subtotal' => $subtotal,
-                ];
             }
+        }
 
-            $sale = new PosApotekUmumSale(
-                noNota: $noNota,
-                tglJual: $tgl,
-                jamJual: $jam,
-                paymentMethod: $paymentMethod,
-                total: $total,
-                petugasNip: $petugasNip,
-                keterangan: $keterangan
-            );
-
-            $this->posRepo->saveSale($sale, $saleItems);
-
-            return $sale;
-        });
+        throw new \RuntimeException('Gagal menerbitkan nomor nota POS Apotek Umum.');
     }
 }

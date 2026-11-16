@@ -90,7 +90,7 @@ final readonly class ProcessSplitPaymentUseCase
                 $this->ledgerRepo->saveJurnal($jurnal);
             }
 
-            $this->ledgerRepo->updateStatusByNoRawat($noRawat, LedgerStatus::fromString('Paid'));
+            $this->ledgerRepo->markPendingAsPaid($noRawat);
 
             $reg = $this->regRepo->findByNoRawat($noRawat);
             if ($reg !== null) {

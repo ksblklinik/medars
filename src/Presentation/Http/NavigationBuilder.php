@@ -45,6 +45,24 @@ final class NavigationBuilder
                 'modules' => ['kasir', 'kasir_rawat_jalan'],
             ],
             [
+                'title' => 'Laboratorium',
+                'icon' => 'fa-flask',
+                'route' => '/laboratorium',
+                'modules' => ['laboratorium'],
+            ],
+            [
+                'title' => 'Radiologi',
+                'icon' => 'fa-x-ray',
+                'route' => '/radiologi',
+                'modules' => ['radiologi'],
+            ],
+            [
+                'title' => 'Laporan',
+                'icon' => 'fa-chart-bar',
+                'route' => '/laporan',
+                'modules' => ['laporan'],
+            ],
+            [
                 'title' => 'Pengguna',
                 'icon' => 'fa-users',
                 'route' => '/users',
