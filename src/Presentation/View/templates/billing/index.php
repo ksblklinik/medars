@@ -1,3 +1,21 @@
+<!-- Toolbar Paritas ksmlite (Cari Tagihan, Filter Status Bayar, Periode) -->
+<div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: 240px;">
+            <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+            <input type="search" class="form-control" placeholder="Cari No. Reg / Pasien..." data-ksmlite-search="billingQueueBody">
+        </div>
+        <select class="form-select form-select-sm" style="width: 160px;" data-ksmlite-status-filter="billingQueueBody">
+            <option value="">Semua Status</option>
+            <option value="belum">Belum Bayar</option>
+            <option value="sudah">Sudah Bayar</option>
+        </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode Kasir: <?= date('d-m-Y') ?></span>
+    </div>
+</div>
+
 <div class="row g-3" id="billingWorkspace">
     <!-- Kolom Kiri: Daftar Tagihan Kunjungan -->
     <div class="col-lg-5">

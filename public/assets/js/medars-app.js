@@ -233,12 +233,49 @@
         }
     };
 
+    function initKsmliteToolbars() {
+        document.querySelectorAll('[data-ksmlite-search]').forEach((input) => {
+            const targetId = input.getAttribute('data-ksmlite-search');
+            const applyFilter = () => {
+                const tbody = document.getElementById(targetId);
+                if (!tbody) return;
+                const q = input.value.trim().toLowerCase();
+                const statusSelect = document.querySelector(`[data-ksmlite-status-filter="${targetId}"]`);
+                const st = statusSelect ? statusSelect.value.trim().toLowerCase() : '';
+                tbody.querySelectorAll('tr').forEach((tr) => {
+                    const text = (tr.textContent || '').toLowerCase();
+                    const matchQ = q === '' || text.includes(q);
+                    const matchS = st === '' || text.includes(st);
+                    tr.style.display = (matchQ && matchS) ? '' : 'none';
+                });
+            };
+            input.addEventListener('input', applyFilter);
+            const statusSelect = document.querySelector(`[data-ksmlite-status-filter="${targetId}"]`);
+            if (statusSelect) {
+                statusSelect.addEventListener('change', applyFilter);
+            }
+        });
+
+        document.querySelectorAll('[data-ksmlite-toggle-form]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const formId = btn.getAttribute('data-ksmlite-toggle-form');
+                const formCol = document.getElementById(formId)?.closest('[class*="col-"]');
+                if (!formCol) return;
+                const isHidden = formCol.classList.toggle('d-none');
+                btn.innerHTML = isHidden
+                    ? '<i class="fa fa-plus-circle me-1"></i> Buka Form'
+                    : '<i class="fa fa-minus-circle me-1"></i> Tutup Form';
+            });
+        });
+    }
+
     // Inisialisasi saat DOM siap
     document.addEventListener('DOMContentLoaded', () => {
         AppModal.init();
         AppHotkeys.init();
         startLiveClock();
         AppSSE.init('/api/stream');
+        initKsmliteToolbars();
     });
 
     const apiFetch = function (url, options) {

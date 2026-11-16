@@ -1,3 +1,21 @@
+<!-- Toolbar Paritas ksmlite (Cari Order Penunjang, Filter Status/Klaim) -->
+<div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: 240px;">
+            <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+            <input type="search" class="form-control" placeholder="Cari No. Order / Pasien..." data-ksmlite-search="labOrdersBody">
+        </div>
+        <select class="form-select form-select-sm" style="width: 160px;" data-ksmlite-status-filter="labOrdersBody">
+            <option value="">Semua Status</option>
+            <option value="terbuka">Siap Validasi</option>
+            <option value="terkunci">Terkunci Kasir</option>
+        </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode: <?= date('d-m-Y') ?></span>
+    </div>
+</div>
+
 <div class="row g-3" id="supportWorkspace" data-active-tab="<?= htmlspecialchars((string) ($active_tab ?? 'lab'), ENT_QUOTES, 'UTF-8') ?>">
     <div class="col-12">
         <ul class="nav nav-tabs mb-3" id="supportTabs" role="tablist">

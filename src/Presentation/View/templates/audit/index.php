@@ -1,3 +1,16 @@
+<!-- Toolbar Paritas ksmlite (Audit ACID & Security) -->
+<div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: 240px;">
+            <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+            <input type="search" class="form-control" placeholder="Cari Nama Tabel Orphan..." data-ksmlite-search="orphanTableBody">
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark border"><i class="fa fa-lock me-1 text-medical-teal"></i>Audit Trail Immutable</span>
+    </div>
+</div>
+
 <div class="row g-3" id="auditWorkspace">
     <div class="col-lg-6">
         <div class="card shadow-sm border-0 mb-3">

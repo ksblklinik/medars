@@ -31,16 +31,37 @@ body {
     color: var(--medical-teal) !important;
 }
 
-.btn-medical-teal {
+.btn-medical-teal, .btn-teal {
     background-color: var(--medical-teal);
     border-color: var(--medical-teal);
     color: #ffffff;
 }
 
-.btn-medical-teal:hover, .btn-medical-teal:focus {
+.btn-medical-teal:hover, .btn-medical-teal:focus,
+.btn-teal:hover, .btn-teal:focus {
     background-color: var(--medical-teal-dark);
     border-color: var(--medical-teal-dark);
     color: #ffffff;
+}
+
+.btn-outline-teal {
+    color: var(--medical-teal);
+    border-color: var(--medical-teal);
+    background-color: transparent;
+}
+
+.btn-outline-teal:hover, .btn-outline-teal:focus {
+    background-color: var(--medical-teal);
+    border-color: var(--medical-teal);
+    color: #ffffff;
+}
+
+.ksmlite-toolbar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
 }
 
 .btn-xs {

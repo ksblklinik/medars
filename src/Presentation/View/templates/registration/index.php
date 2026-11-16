@@ -1,4 +1,27 @@
 <div class="container-fluid px-0">
+    <!-- Toolbar Paritas ksmlite (Toggle Form, Cari Pasien Antrean, Filter Status, Periode) -->
+    <div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-medical-teal" id="bukaform" data-ksmlite-toggle-form="formRegistration">
+                <i class="fa fa-minus-circle me-1"></i> Tutup Form
+            </button>
+            <div class="input-group input-group-sm" style="width: 240px;">
+                <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+                <input type="search" class="form-control" placeholder="Cari RM / Nama / No. Rawat..." data-ksmlite-search="tbodyRegistrations">
+            </div>
+            <select class="form-select form-select-sm" style="width: 150px;" data-ksmlite-status-filter="tbodyRegistrations">
+                <option value="">Semua Status</option>
+                <option value="belum">Belum Diperiksa</option>
+                <option value="sudah">Sudah Diperiksa</option>
+                <option value="batal">Batal</option>
+            </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode: <?= date('d-m-Y') ?></span>
+            <a href="/display-antrean" target="_blank" class="btn btn-sm btn-outline-teal"><i class="fa fa-tv me-1"></i>Display TV</a>
+        </div>
+    </div>
+
     <div class="row g-3">
         <!-- Panel Kiri: Form Registrasi Pasien (Identik ksmlite #form) -->
         <div class="col-lg-6 col-12">
