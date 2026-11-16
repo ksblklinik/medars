@@ -1,10 +1,10 @@
-<div class="container-fluid py-2">
+<div class="container-fluid px-0">
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="card-title m-0 text-medical-teal fw-bold">
-                <i class="fa fa-users-gear me-2"></i>Manajemen Pengguna & Hak Akses
-            </h5>
-            <button type="button" id="btnAddUser" class="btn btn-sm btn-primary" style="background-color: #00897b; border-color: #00897b;" data-bs-toggle="modal" data-bs-target="#modalUser">
+        <div class="card-header bg-white border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h6 class="card-title m-0 text-medical-teal fw-bold">
+                <i class="fa fa-users-gear me-2"></i>Daftar Pengguna &amp; Hak Akses
+            </h6>
+            <button type="button" id="btnAddUser" class="btn btn-sm btn-medical-teal" data-bs-toggle="modal" data-bs-target="#modalUser">
                 <i class="fa fa-user-plus me-1"></i> Tambah Pengguna
             </button>
         </div>

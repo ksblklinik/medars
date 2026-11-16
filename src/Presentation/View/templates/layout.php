@@ -26,19 +26,20 @@
         $activeMod = (string) ($current_module ?? 'dashboard');
     ?>
 
-    <!-- Topbar Header Identik 2-Bar ksmlite -->
+    <!-- Topbar Header: Mobile App Bar (<768px) + Desktop 2-Bar ksmlite (>=768px) -->
     <header id="navbar-wrapper" class="sticky-top">
-        <!-- Bar 1: .menu-top (Medical Teal + Kategori Dropdown + Quick Pills + Power-Off) -->
-        <nav class="menu-top px-3 py-1">
-            <div class="container-fluid px-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-1 flex-wrap">
-                    <a href="/" class="nav-link-top fw-bold me-1">
-                        <i class="fa fa-hospital-user"></i>
-                        <span><?= $this->e($klinik_nama ?? 'SIMRS Medars') ?></span>
+        <!-- Bar 1: .menu-top -->
+        <nav class="menu-top px-2 px-md-3 py-1">
+            <div class="container-fluid px-0 d-flex justify-content-between align-items-center flex-nowrap gap-2">
+                <div class="d-flex align-items-center gap-1 min-w-0 flex-grow-1">
+                    <a href="/" class="nav-link-top fw-bold text-truncate">
+                        <i class="fa fa-hospital-user flex-shrink-0"></i>
+                        <span class="d-none d-md-inline"><?= $this->e($klinik_nama ?? 'SIMRS Medars') ?></span>
+                        <span class="d-md-none text-truncate"><?= $this->e($judul ?? ($klinik_nama ?? 'SIMRS Medars')) ?></span>
                     </a>
 
-                    <button type="button" class="btn btn-sm btn-outline-light py-1 px-2 me-1" data-bs-toggle="modal" data-bs-target="#menuModal" title="Menu Utama (Grid)">
-                        <i class="fa fa-th-large me-1"></i><span class="d-none d-sm-inline">Menu</span>
+                    <button type="button" class="btn btn-sm btn-outline-light py-1 px-2 d-none d-md-inline-flex align-items-center flex-shrink-0" data-bs-toggle="modal" data-bs-target="#menuModal" title="Menu Utama (Grid)">
+                        <i class="fa fa-th-large me-1"></i><span>Menu</span>
                     </button>
 
                     <div class="d-none d-md-flex align-items-center gap-1">
@@ -62,15 +63,15 @@
                     </div>
                 </div>
 
-                <!-- Kanan: Quick Pills (Display TV, Kiosk, Booking), Jam Server, SSE & Power-Off Logout -->
-                <div class="d-flex align-items-center gap-2">
+                <!-- Kanan: Quick Pills, Jam Server, SSE & User/Logout -->
+                <div class="d-flex align-items-center gap-1 gap-md-2 flex-shrink-0">
                     <a href="/display-antrean" target="_blank" class="btn btn-warning pill-quick d-none d-lg-inline-flex align-items-center gap-1" title="Buka Display TV Antrean">
                         <i class="fa fa-tv"></i><span>Display TV</span>
                     </a>
                     <a href="/kiosk" target="_blank" class="btn btn-info text-dark pill-quick d-none d-lg-inline-flex align-items-center gap-1" title="Buka Kiosk Mandiri">
                         <i class="fa fa-tablet-screen-button"></i><span>Kiosk</span>
                     </a>
-                    <a href="/pendaftaran" class="btn btn-success pill-quick d-none d-sm-inline-flex align-items-center gap-1" title="Pendaftaran & Booking">
+                    <a href="/pendaftaran" class="btn btn-success pill-quick d-none d-md-inline-flex align-items-center gap-1" title="Pendaftaran & Booking">
                         <i class="fa fa-calendar-check"></i><span>Booking</span>
                     </a>
 
@@ -98,15 +99,15 @@
                         </ul>
                     </div>
 
-                    <a href="/logout" class="text-decoration-none d-flex flex-column align-items-center px-1" style="color: #ff6b6b;" title="Keluar (Logout)">
+                    <a href="/logout" class="text-decoration-none d-none d-sm-flex flex-column align-items-center px-1" style="color: #ff6b6b;" title="Keluar (Logout)">
                         <i class="fa fa-power-off"></i>
                     </a>
                 </div>
             </div>
         </nav>
 
-        <!-- Bar 2: Menu Ikon Cepat Atas (.navbar-icon-top .menu-icon) Identik ksmlite -->
-        <nav class="top-icon-menu px-2 py-1 overflow-x-auto">
+        <!-- Bar 2: Menu Ikon Cepat Atas (Desktop & Tablet >=768px saja; di Mobile diganti Bottom Nav) -->
+        <nav class="top-icon-menu px-2 py-1 overflow-x-auto d-none d-md-block">
             <ul class="nav nav-pills flex-nowrap gap-1 align-items-center">
                 <?php if ($navList !== []): ?>
                     <?php foreach ($navList as $nav): ?>
@@ -131,19 +132,19 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="container-fluid px-3 py-3" id="content-wrapper">
+    <main class="container-fluid px-2 px-md-3 py-2 py-md-3" id="content-wrapper">
         <div id="alertContainer"></div>
 
         <!-- Area Kerja Utama dengan Dynamic Viewport Slot -->
         <section id="manage" data-module="<?= $this->e($current_module ?? 'core') ?>" class="module-container">
             <div class="card panel-ksmlite">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-none d-md-flex justify-content-between align-items-center">
                     <h5 class="card-title m-0 text-medical-teal fw-bold fs-6">
                         <i class="fa <?= $this->e($module_icon ?? 'fa-cube') ?> me-2"></i><?= $this->e($judul ?? 'Workspace') ?>
                     </h5>
                     <div class="card-actions d-flex gap-2" id="moduleActions"></div>
                 </div>
-                <div class="card-body p-3">
+                <div class="card-body p-0 p-md-3">
                     <div id="moduleViewportSlot">
                         <?= $content ?? '' ?>
                     </div>
@@ -151,6 +152,30 @@
             </div>
         </section>
     </main>
+
+    <!-- Mobile App Bottom Navigation Bar (< 768px) -->
+    <nav class="mobile-bottom-nav d-md-none" aria-label="Navigasi Mobile">
+        <a href="/" class="mobile-nav-item <?= $activeMod === 'dashboard' ? 'active' : '' ?>">
+            <i class="fa fa-gauge"></i>
+            <span>Beranda</span>
+        </a>
+        <a href="/pendaftaran" class="mobile-nav-item <?= $activeMod === 'pendaftaran' ? 'active' : '' ?>">
+            <i class="fa fa-user-plus"></i>
+            <span>Daftar</span>
+        </a>
+        <a href="/dokter-ralan" class="mobile-nav-item <?= $activeMod === 'dokter_ralan' ? 'active' : '' ?>">
+            <i class="fa fa-stethoscope"></i>
+            <span>Dokter</span>
+        </a>
+        <a href="/kasir" class="mobile-nav-item <?= $activeMod === 'kasir' ? 'active' : '' ?>">
+            <i class="fa fa-cash-register"></i>
+            <span>Kasir</span>
+        </a>
+        <button type="button" class="mobile-nav-item border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#menuModal">
+            <i class="fa fa-th-large"></i>
+            <span>Menu</span>
+        </button>
+    </nav>
 
     <!-- Menu Grid Modal (#menuModal) Identik ksmlite -->
     <div class="modal fade" id="menuModal" tabindex="-1" aria-hidden="true">
