@@ -3,6 +3,15 @@
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+    function escapeHtml(val) {
+        return String(val ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     async function apiFetch(url, options = {}) {
         const headers = Object.assign(
             { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
@@ -24,10 +33,10 @@
             const lockBadge = o.validation_unlocked
                 ? '<span class="badge bg-success">Terbuka</span>'
                 : '<span class="badge bg-warning text-dark">Terkunci Kasir</span>';
-            return `<tr class="cursor-pointer lab-order-row" data-noorder="${o.noorder}" data-unlocked="${o.validation_unlocked ? '1' : '0'}">
-                <td class="ps-2 fw-semibold">${o.noorder}</td>
-                <td>${o.nm_pasien || o.no_rawat}</td>
-                <td><span class="badge bg-secondary">${o.jenis_klaim}</span></td>
+            return `<tr class="cursor-pointer lab-order-row" data-noorder="${escapeHtml(o.noorder)}" data-unlocked="${o.validation_unlocked ? '1' : '0'}">
+                <td class="ps-2 fw-semibold">${escapeHtml(o.noorder)}</td>
+                <td>${escapeHtml(o.nm_pasien || o.no_rawat)}</td>
+                <td><span class="badge bg-secondary">${escapeHtml(o.jenis_klaim)}</span></td>
                 <td>${lockBadge}</td>
             </tr>`;
         }).join('');
@@ -52,10 +61,10 @@
             return;
         }
         tbody.innerHTML = data.orders.map((o) => `
-            <tr class="cursor-pointer rad-order-row" data-noorder="${o.noorder}">
-                <td class="ps-2 fw-semibold">${o.noorder}</td>
-                <td>${o.nm_pasien || o.no_rawat}</td>
-                <td><span class="badge bg-secondary">${o.jenis_klaim}</span></td>
+            <tr class="cursor-pointer rad-order-row" data-noorder="${escapeHtml(o.noorder)}">
+                <td class="ps-2 fw-semibold">${escapeHtml(o.noorder)}</td>
+                <td>${escapeHtml(o.nm_pasien || o.no_rawat)}</td>
+                <td><span class="badge bg-secondary">${escapeHtml(o.jenis_klaim)}</span></td>
             </tr>
         `).join('');
 
@@ -74,17 +83,17 @@
 
         const visitsBody = document.getElementById('repVisitsBody');
         visitsBody.innerHTML = data.visits_by_poli.length
-            ? data.visits_by_poli.map((v) => `<tr><td class="ps-2">${v.nm_poli}</td><td class="text-end pe-2 fw-bold">${v.total_kunjungan}</td></tr>`).join('')
+            ? data.visits_by_poli.map((v) => `<tr><td class="ps-2">${escapeHtml(v.nm_poli)}</td><td class="text-end pe-2 fw-bold">${escapeHtml(v.total_kunjungan)}</td></tr>`).join('')
             : '<tr><td class="text-center text-muted p-2 small">Tidak ada data</td></tr>';
 
         const icdBody = document.getElementById('repIcdBody');
         icdBody.innerHTML = data.top_diseases.length
-            ? data.top_diseases.map((d) => `<tr><td class="ps-2"><code>${d.kd_penyakit}</code> ${d.nm_indonesia}</td><td class="text-end pe-2 fw-bold">${d.total}</td></tr>`).join('')
+            ? data.top_diseases.map((d) => `<tr><td class="ps-2"><code>${escapeHtml(d.kd_penyakit)}</code> ${escapeHtml(d.nm_indonesia)}</td><td class="text-end pe-2 fw-bold">${escapeHtml(d.total)}</td></tr>`).join('')
             : '<tr><td class="text-center text-muted p-2 small">Tidak ada data</td></tr>';
 
         const revBody = document.getElementById('repRevenueBody');
         revBody.innerHTML = data.revenue_by_claim.length
-            ? data.revenue_by_claim.map((r) => `<tr><td class="ps-2">${r.claim_type} (${r.total_items})</td><td class="text-end pe-2 fw-bold">Rp ${Number(r.total_amount).toLocaleString('id-ID')}</td></tr>`).join('')
+            ? data.revenue_by_claim.map((r) => `<tr><td class="ps-2">${escapeHtml(r.claim_type)} (${escapeHtml(r.total_items)})</td><td class="text-end pe-2 fw-bold">Rp ${Number(r.total_amount).toLocaleString('id-ID')}</td></tr>`).join('')
             : '<tr><td class="text-center text-muted p-2 small">Tidak ada data</td></tr>';
     }
 
@@ -109,8 +118,8 @@
             body: JSON.stringify(payload),
         });
         fb.innerHTML = data.ok
-            ? `<div class="alert alert-success py-2 small">Hasil tersimpan (${data.results[0].keterangan}).</div>`
-            : `<div class="alert alert-danger py-2 small">${data.error}</div>`;
+            ? `<div class="alert alert-success py-2 small">Hasil tersimpan (${escapeHtml(data.results[0].keterangan)}).</div>`
+            : `<div class="alert alert-danger py-2 small">${escapeHtml(data.error)}</div>`;
         loadLabOrders();
     });
 
@@ -123,8 +132,8 @@
         });
         const fb = document.getElementById('labResultFeedback');
         fb.innerHTML = data.ok
-            ? `<div class="alert alert-info py-2 small">Order ${noOrder} dihapus.</div>`
-            : `<div class="alert alert-danger py-2 small">${data.error}</div>`;
+            ? `<div class="alert alert-info py-2 small">Order ${escapeHtml(noOrder)} dihapus.</div>`
+            : `<div class="alert alert-danger py-2 small">${escapeHtml(data.error)}</div>`;
         loadLabOrders();
     });
 

@@ -22,6 +22,8 @@ interface BillingLedgerRepositoryInterface
 
     public function markPendingAsPaid(NoRawat $noRawat): void;
 
+    public function cancelPendingByProviderId(string $providerId): void;
+
     public function getNextJurnalNumber(\DateTimeInterface $date): string;
 
     public function saveJurnal(JurnalEntry $entry): void;

@@ -276,7 +276,7 @@ final class HttpApplication
             $reportRepo,
             new CreateLabOrderUseCase($labRepo, $ledgerRepo, $tx),
             new SaveLabResultUseCase($labRepo, $ledgerRepo, $tx),
-            new DeleteLabOrderUseCase($labRepo, $tx),
+            new DeleteLabOrderUseCase($labRepo, $tx, $ledgerRepo),
             new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx),
             new SaveRadiologyResultUseCase($labRepo, $tx),
             $this->renderer,

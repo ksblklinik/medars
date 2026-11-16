@@ -87,6 +87,12 @@ final class PdoBillingLedgerRepository implements BillingLedgerRepositoryInterfa
         $stmt->execute([':nr' => $noRawat->value()]);
     }
 
+    public function cancelPendingByProviderId(string $providerId): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE mlite_billing_ledger SET status = 'Cancelled' WHERE provider_id = :prov AND status = 'Pending'");
+        $stmt->execute([':prov' => $providerId]);
+    }
+
     public function getNextJurnalNumber(\DateTimeInterface $date): string
     {
         $prefix = 'JRN-' . $date->format('Ymd') . '-';

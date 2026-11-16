@@ -49,7 +49,7 @@ class SupportControllerTest extends TestCase
             $reportRepo,
             new CreateLabOrderUseCase($labRepo, $this->ledgerRepo, $this->tx),
             new SaveLabResultUseCase($labRepo, $this->ledgerRepo, $this->tx),
-            new DeleteLabOrderUseCase($labRepo, $this->tx),
+            new DeleteLabOrderUseCase($labRepo, $this->tx, $this->ledgerRepo),
             new CreateRadiologyOrderUseCase($labRepo, $this->ledgerRepo, $this->tx),
             new SaveRadiologyResultUseCase($labRepo, $this->tx),
             $renderer,
@@ -114,8 +114,18 @@ class SupportControllerTest extends TestCase
         $saved = json_decode($unlockedRes['body'], true);
         $this->assertSame('Rendah', $saved['results'][0]['keterangan']);
 
-        // Hapus order Kapitasi yang belum ada hasilnya
-        $delRes = $this->controller->deleteLabOrder(['no_order' => $kapitasiOrder]);
+        // Order Kapitasi yang sudah diselesaikan di Kasir tidak boleh dihapus sembarangan (422)
+        $blockedDelRes = $this->controller->deleteLabOrder(['no_order' => $kapitasiOrder]);
+        $this->assertSame(422, $blockedDelRes['status']);
+
+        // Order baru yang masih Pending dapat dihapus dan membatalkan ledger pending-nya (200)
+        $pendingCreate = $this->controller->createLabOrder([
+            'no_rawat' => '2026/11/16/000001',
+            'dokter_perujuk' => 'DR001',
+            'items' => [['kd_jenis_prw' => 'LAB03', 'nm_perawatan' => 'Asam Urat', 'harga' => 30000, 'claim_type' => 'Tunai']],
+        ]);
+        $pendingData = json_decode($pendingCreate['body'], true);
+        $delRes = $this->controller->deleteLabOrder(['no_order' => $pendingData['orders'][0]['no_order']]);
         $this->assertSame(200, $delRes['status']);
     }
 

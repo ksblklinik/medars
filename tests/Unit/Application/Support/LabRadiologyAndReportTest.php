@@ -148,7 +148,7 @@ class LabRadiologyAndReportTest extends TestCase
     public function testDeleteLabOrderAtomicAndOperationalReports(): void
     {
         $createLab = new CreateLabOrderUseCase($this->labRepo, $this->ledgerRepo, $this->tx);
-        $deleteLab = new DeleteLabOrderUseCase($this->labRepo, $this->tx);
+        $deleteLab = new DeleteLabOrderUseCase($this->labRepo, $this->tx, $this->ledgerRepo);
         $noRawat = new NoRawat('2026/11/16/000001');
 
         $orders = $createLab->execute(
@@ -160,6 +160,11 @@ class LabRadiologyAndReportTest extends TestCase
 
         $deleteLab->execute($orders[0]->noOrder);
         $this->assertNull($this->labRepo->findLabOrder($orders[0]->noOrder));
+
+        // Pastikan item ledger pending ikut dibatalkan (tidak jadi tagihan yatim)
+        $ledgerItems = $this->ledgerRepo->findByNoRawat($noRawat);
+        $this->assertCount(1, $ledgerItems);
+        $this->assertSame('Cancelled', $ledgerItems[0]->status->value());
 
         // Laporan Operasional
         $reportRepo = new PdoOperationalReportRepository($this->pdo);
