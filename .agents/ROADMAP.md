@@ -16,8 +16,12 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - PdoTransactionManager: Transaksi atomik ACID + Nested Savepoints (`SAVEPOINT sp_n`) lolos pengujian TDD.
   - ReadOnlyConnectionGuard: Proteksi mutlak database legacy (memblokir seluruh mutasi INSERT, UPDATE, DELETE, DROP, ALTER).
   - ConnectionFactory & ConnectionConfig: Strict PDO parameters (`ATTR_EMULATE_PREPARES => false`, UTF8MB4).
-- [ ] **PLN-03: Module Loader & Registry Kernel (PRD 12)**
-  - Schema registry modul (`mlite_modules`) & lifecycle (install, activate, deactivate, uninstall).
+- [x] **PLN-03: Module Loader & Registry Kernel (PRD 12)** (Selesai: 16-11-2026)
+  - `ModuleManifest` (validasi strict slug kebab-case & semver).
+  - `DependencyResolver` (Topological sort & deteksi circular dependency).
+  - `ModuleLoader` lifecycle (`install`, `activate`, `deactivate`, `safe uninstall`).
+  - Dinamisasi navigasi menu antarmuka dari modul-modul aktif.
+  - Lolos 8 skenario pengujian TDD Unit Test.
 - [ ] **PLN-04: Master Layout Shell Paritas Eksisting (PRD 10)**
   - Bootstrap 5 dengan warna Medical Teal (`#00897b`), Topbar, Menu Ikon Atas, dan Sidebar.
   - Dynamic Viewport Slot (`#moduleViewportSlot`) & Single-Host Modal (`#appModalHost`).
@@ -47,3 +51,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | :--- | :--- | :--- | :--- |
 | **PLN-01** | Fondasi Repositori & Spesifikasi | Inisialisasi Git, remote GitHub, 13 PRD domain, DDL oracle database, clone pustaka referensi `.ref/ksmlite/`, konfigurasi PHP 8.3 & PHPUnit 11 test harness. | 16-11-2026 |
 | **PLN-02** | Dual-Connection & Transaction Manager | Implementasi `PdoTransactionManager` (ACID + Nested Savepoints), `ReadOnlyConnectionGuard` (proteksi mutlak database eksisting), `ConnectionFactory` (strict flags & anti-cast), terverifikasi 13 unit test PASS. | 16-11-2026 |
+| **PLN-03** | Module Loader & Registry Kernel | Implementasi arsitektur modular PRD 12 (`ModuleManifest`, `DependencyResolver`, `ModuleLoader` lifecycle, menu navigation dinamis, safe uninstall), terverifikasi 8 unit test PASS (Total 21 test PASS). | 16-11-2026 |
