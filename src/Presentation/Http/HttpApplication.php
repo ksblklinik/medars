@@ -31,6 +31,8 @@ use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
 use App\Application\Support\UseCase\DeleteLabOrderUseCase;
 use App\Application\Support\UseCase\SaveLabResultUseCase;
 use App\Application\Support\UseCase\SaveRadiologyResultUseCase;
+use App\Domain\Audit\Service\DataIntegrityAuditService;
+use App\Domain\Audit\Service\LogRotationService;
 use App\Domain\Bridging\Service\BpjsGatewayService;
 use App\Domain\Bridging\Service\HfisLeanCalculator;
 use App\Domain\Bridging\ValueObject\BridgingCredentials;
@@ -336,6 +338,13 @@ final class HttpApplication
             new SendWhatsAppMessageUseCase($waRepo, $waClient),
             new ProcessInboundWaWebhookUseCase($this->pdo, $waRepo, $waClient),
             new AssignHomeCarePreceptorUseCase($homeCareRepo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $auditController = new AuditController(
+            new DataIntegrityAuditService($this->pdo),
+            new LogRotationService($this->pdo),
             $this->renderer,
             $this->navBuilder
         );
@@ -758,6 +767,30 @@ final class HttpApplication
             return $communicationController->apiSupervisorVisits($queryParams);
         });
 
+        // Audit ACID, Integritas Relasi & Rotasi Log (PLN-36)
+        $router->get('/audit', function () use ($auditController): array {
+            $user = $this->requireAnyServiceModuleAccess(['audit', 'admin']);
+            return $auditController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/audit/integrity/orphans', function () use ($auditController): array {
+            $this->requireAnyServiceModuleAccess(['audit', 'admin']);
+            return $auditController->apiOrphanCheck();
+        });
+        $router->get('/api/v1/audit/integrity/billing-balance', function () use ($auditController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['audit', 'admin', 'kasir']);
+            return $auditController->apiBillingBalance($queryParams);
+        });
+        $router->get('/api/v1/audit/integrity/stock-balance', function () use ($auditController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['audit', 'admin', 'farmasi']);
+            return $auditController->apiStockBalance($queryParams);
+        });
+        $router->post('/api/v1/audit/logs/rotate', function () use ($auditController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['audit', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $auditController->apiRotateLogs($data);
+        });
+
         return $router->dispatch($method, $path);
     }
 
@@ -856,6 +889,8 @@ final class HttpApplication
             'X-Frame-Options' => 'SAMEORIGIN',
             'X-Content-Type-Options' => 'nosniff',
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' data:; frame-ancestors 'self';",
+            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
         ]);
 
         return $response;

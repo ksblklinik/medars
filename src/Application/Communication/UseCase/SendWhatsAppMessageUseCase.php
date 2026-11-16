@@ -25,6 +25,10 @@ final readonly class SendWhatsAppMessageUseCase
         string $message,
         string $preferredSession = 'system',
     ): array {
+        if (trim($message) === '') {
+            throw new \InvalidArgumentException('Pesan WhatsApp tidak boleh kosong.');
+        }
+
         $phoneStr = $phone->value();
 
         // 10-Lapis Rule: Admin bebas kirim; Non-admin WAJIB nomor Whitelist

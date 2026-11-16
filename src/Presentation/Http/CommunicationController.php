@@ -146,6 +146,9 @@ final readonly class CommunicationController
         try {
             $phone = new IndonesianPhoneNumber((string) ($payload['phone'] ?? ''));
             $nama = trim((string) ($payload['nama'] ?? ''));
+            if ($nama === '') {
+                throw new \InvalidArgumentException('Nama kontak whitelist tidak boleh kosong.');
+            }
             $kategori = trim((string) ($payload['kategori'] ?? 'Pegawai')) ?: 'Pegawai';
 
             $this->waRepo->addToWhitelist($phone->value(), $nama, $kategori);
@@ -162,6 +165,12 @@ final readonly class CommunicationController
     public function apiCreateHomeCare(array $payload): array
     {
         try {
+            $nr = trim((string) ($payload['no_rawat'] ?? ''));
+            $dpjp = trim((string) ($payload['kd_dokter_dpjp'] ?? ''));
+            if ($nr === '' || $dpjp === '') {
+                throw new \InvalidArgumentException('Nomor rawat dan Dokter DPJP wajib diisi.');
+            }
+
             $created = $this->homeCareRepo->createKunjungan($payload);
             return $this->json(['ok' => true, 'kunjungan' => $created], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {

@@ -572,4 +572,40 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, $supData['visits']);
         $this->assertSame('Ny. S*** (56 Th, P)', $supData['visits'][0]['pseudonym_pasien']);
     }
+
+    public function testAuditIntegrityAndLogRotationEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $auditPage = $this->app->handle('GET', '/audit');
+        $this->assertSame(200, $auditPage['status']);
+        $this->assertStringContainsString('Audit Keamanan &amp; Integritas Data', $auditPage['body']);
+        $this->assertArrayHasKey('Content-Security-Policy', $auditPage['headers']);
+        $this->assertArrayHasKey('Permissions-Policy', $auditPage['headers']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Audit Orphan Records via API
+        $orphanRes = $this->app->handle('GET', '/api/v1/audit/integrity/orphans');
+        $this->assertSame(200, $orphanRes['status']);
+        $orphanData = json_decode($orphanRes['body'], true);
+        $this->assertTrue($orphanData['ok']);
+        $this->assertTrue($orphanData['audit']['healthy']);
+
+        // 2. Rotasi Log via API
+        $rotateRes = $this->app->handle(
+            'POST',
+            '/api/v1/audit/logs/rotate',
+            rawBody: json_encode(['retention_days' => 30]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $rotateRes['status']);
+        $rotateData = json_decode($rotateRes['body'], true);
+        $this->assertTrue($rotateData['ok']);
+    }
 }

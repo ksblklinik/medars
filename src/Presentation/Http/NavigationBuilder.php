@@ -81,6 +81,12 @@ final class NavigationBuilder
                 'modules' => ['home_care', 'homecare'],
             ],
             [
+                'title' => 'Audit ACID',
+                'icon' => 'fa-shield-halved',
+                'route' => '/audit',
+                'modules' => ['audit', 'admin'],
+            ],
+            [
                 'title' => 'Pengguna',
                 'icon' => 'fa-users',
                 'route' => '/users',

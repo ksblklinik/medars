@@ -70,23 +70,19 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-8 (Audit ACID, OWASP Hardening & Linux Staging Drop-in)
+## 🎯 Status Proyek: SEMUA FASE 0 s/d FASE 8 SELESAI (100% COMPLETED)
 
-- [x] **PLN-31: Dual-Session WA Gateway (`system` vs `cs`), Whitelist & Anti-Banned Spintax (TDD)** ✅ *(SELESAI — 237 tests, 937 assertions PASS)*
-  - `IndonesianPhoneNumber` (regex `628[1-9]`), `WaSpintax`, `WaSessionManager` (`system` vs `cs`, bot dilarang di sesi `system`, graceful `skip_qr` saat offline), `SendWhatsAppMessageUseCase` (Whitelist gate non-admin & circuit breaker 3x failure abort), `ProcessInboundWaWebhookUseCase` (Zero-Reply QR check-in).
-- [x] **PLN-32: Homecare PWA Mandiri & Trias Preceptorship Privacy Shield (TDD)** ✅ *(SELESAI)*
-  - `HomeCarePrivacyShield::pseudonymize` (`Ny. S*** (56 Th, P)` untuk Supervisor CI Dosen), `AssignHomeCarePreceptorUseCase` (validasi SK aktif institusi & larangan DPJP merangkap grading), tabel `mlite_homecare_kunjungan` & `mlite_homecare_preceptor_sk`.
-- [x] **PLN-33: UI/UX WA CRM & Homecare + E2E Integration (Paritas ksmlite)** ✅ *(SELESAI)*
-  - `CommunicationController`, `templates/communication/wa_index.php`, `templates/communication/homecare_index.php`, `wagateway.js`, `homecare.js`, routes `/wagateway`, `/homecare`, `/api/v1/wagateway/*`, `/api/v1/homecare/*`, serta E2E `testWaGatewayAndHomeCareEndToEnd`.
-
-### Antrean Tugas FASE-8 (Audit ACID, OWASP Hardening & Linux Staging Drop-in)
-- [ ] **PLN-34: Multi-Table ACID Transaction Audit & Data Integrity Checkers (TDD)**
-- [ ] **PLN-35: OWASP Hardening (Strict CSRF, SQLi Parameterization, Scoped XSS, Header Isolation) (TDD)**
-- [ ] **PLN-36: Verification & Final Polish across Linux/MySQL Staging Compatibility**
+- [x] **PLN-34: Multi-Table ACID Transaction Audit & Data Integrity Checkers (TDD)** ✅ *(SELESAI — 244 tests, 972 assertions PASS)*
+  - `DataIntegrityAuditService` (deteksi orphan records multi-tabel anak vs `reg_periksa`, audit konsistensi saldo split billing 4-pilar, verifikasi konsistensi stok `gudangbarang` vs mutasi `riwayat_barang_medis`).
+- [x] **PLN-35: OWASP Hardening (Strict CSRF, SQLi Parameterization, Scoped XSS, Header Isolation) (TDD)** ✅ *(SELESAI)*
+  - Strict parameterization pada seluruh kueri SQL, XSS escaping & `escapeHtml`, `Content-Security-Policy` & `Permissions-Policy` security headers, serta `LogRotationService` pemangkas log kadaluarsa.
+- [x] **PLN-36: Verification & Final Polish across Linux/MySQL Staging Compatibility** ✅ *(SELESAI)*
+  - `AuditController`, `templates/audit/index.php`, `public/assets/js/modules/audit.js`, rute `/audit`, `/api/v1/audit/*`, dan E2E `testAuditIntegrityAndLogRotationEndToEnd`. Seluruh 244 pengujian PHPUnit lulus 100%.
 
 ---
 
 ## ⏳ Rencana Tertunda / Antrean Kerja (PENDING)
+*Tidak ada pekerjaan tertunda. Seluruh 8 Fase Rekayasa Sistem ksm-next (medars) telah tuntas 100% dan terverifikasi secara ketat.*
 
 | Kode Fase | Domain / Modul Utama | PRD Rujukan | Target Luaran Kunci |
 | :--- | :--- | :--- | :--- |
