@@ -169,6 +169,8 @@
             document.getElementById('soapJamRawat').value = timeStr;
             document.getElementById('soapIsMetaDirty').value = '0';
             document.getElementById('soapMetaKey').value = '';
+            const icdList = document.getElementById('icdSearchResults');
+            if (icdList) icdList.innerHTML = '';
 
             const banner = document.getElementById('activePatientBanner');
             if (banner) {
@@ -361,9 +363,12 @@
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success' && res.data) {
-                    // Selaraskan triplet form SOAP utama agar tidak membuat baris duplikat
+                    // Selaraskan triplet & teks RTL form SOAP utama agar tidak menimpa atau membuat baris duplikat
                     document.getElementById('soapTglPerawatan').value = res.data.tgl_perawatan;
                     document.getElementById('soapJamRawat').value = res.data.jam_rawat;
+                    if (res.data.rtl) {
+                        document.getElementById('soapRtl').value = res.data.rtl;
+                    }
                     this.showAlert('success', this.escapeHtml(res.message));
                 } else {
                     this.showAlert('danger', this.escapeHtml(res.message));

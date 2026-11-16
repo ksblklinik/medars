@@ -25,7 +25,7 @@ final readonly class SavePrbPrescriptionUseCase
     }
 
     /**
-     * @return array{tgl_perawatan: string, jam_rawat: string}
+     * @return array{tgl_perawatan: string, jam_rawat: string, rtl: string}
      */
     public function execute(SavePrbCommand $cmd, UserAccount $actor): array
     {
@@ -45,7 +45,7 @@ final readonly class SavePrbPrescriptionUseCase
         }
         $prbSummary = "[Resep PRB 30 Hari - {$cmd->diagnosaKronis}]\n" . implode("\n", $prbLines);
 
-        $resultTriplet = ['tgl_perawatan' => '', 'jam_rawat' => ''];
+        $resultTriplet = ['tgl_perawatan' => '', 'jam_rawat' => '', 'rtl' => ''];
 
         $this->tx->transaction(function () use ($cmd, $actor, $prbSummary, &$resultTriplet): void {
             $existing = null;
@@ -121,6 +121,7 @@ final readonly class SavePrbPrescriptionUseCase
             $resultTriplet = [
                 'tgl_perawatan' => $tgl,
                 'jam_rawat' => $jam,
+                'rtl' => $soap->rtl,
             ];
         });
 

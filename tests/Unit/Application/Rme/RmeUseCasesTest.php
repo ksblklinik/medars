@@ -167,6 +167,8 @@ class RmeUseCasesTest extends TestCase
         // Auto-created base SOAP dan mengembalikan triplet agar tidak duplikat
         $this->assertArrayHasKey('tgl_perawatan', $triplet);
         $this->assertArrayHasKey('jam_rawat', $triplet);
+        $this->assertArrayHasKey('rtl', $triplet);
+        $this->assertStringContainsString('Amlodipine 10mg', $triplet['rtl']);
 
         $soap = $this->ralanRepo->findByTriplet(
             new NoRawat('2026/11/16/000001'),
