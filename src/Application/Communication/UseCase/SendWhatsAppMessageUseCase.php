@@ -39,11 +39,22 @@ final readonly class SendWhatsAppMessageUseCase
         }
 
         // Cek status sesi & failover
+        $onlineStatuses = ['ONLINE', 'CONNECTED', 'READY'];
         $targetSession = $preferredSession;
-        $status = strtoupper(trim($this->waClient->getSessionStatus($targetSession)));
-        if (!in_array($status, ['ONLINE', 'CONNECTED', 'READY'], true)) {
-            // Failover to cs
-            $targetSession = $preferredSession === 'system' ? 'cs' : 'system';
+        $primaryStatus = strtoupper(trim($this->waClient->getSessionStatus($targetSession)));
+        if (!in_array($primaryStatus, $onlineStatuses, true)) {
+            $fallbackSession = $preferredSession === 'system' ? 'cs' : 'system';
+            $fallbackStatus = strtoupper(trim($this->waClient->getSessionStatus($fallbackSession)));
+            if (!in_array($fallbackStatus, $onlineStatuses, true)) {
+                $errorMsg = 'Semua sesi WA sedang OFFLINE.';
+                $this->waRepo->recordOutbox($targetSession, $phoneStr, $message, 'Failed', $errorMsg);
+                return [
+                    'status' => 'Failed',
+                    'message_id' => null,
+                    'error' => $errorMsg,
+                ];
+            }
+            $targetSession = $fallbackSession;
         }
 
         $res = $this->waClient->sendMessage($targetSession, $phoneStr, $message);

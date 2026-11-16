@@ -642,6 +642,14 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS wagateway_checkin (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                sender_phone VARCHAR(30) NOT NULL,
+                session_name VARCHAR(20) NOT NULL,
+                verified_at VARCHAR(30) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_homecare_kunjungan (
                 id {$bigAutoIncPk},
                 no_rawat VARCHAR(20) NOT NULL,

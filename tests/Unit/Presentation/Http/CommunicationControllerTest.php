@@ -60,7 +60,7 @@ class CommunicationControllerTest extends TestCase
             $this->waRepo,
             $this->homeCareRepo,
             new SendWhatsAppMessageUseCase($this->waRepo, $fakeClient),
-            new ProcessInboundWaWebhookUseCase($this->pdo, $this->waRepo, $fakeClient),
+            new ProcessInboundWaWebhookUseCase($this->waRepo, $fakeClient),
             new AssignHomeCarePreceptorUseCase($this->homeCareRepo),
             $renderer,
         );

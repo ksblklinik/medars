@@ -74,9 +74,9 @@
             <div class="card-body">
                 <form id="formRotateLogs" class="row g-2 mb-2">
                     <div class="col-md-8">
-                        <label class="form-label small">Retensi Log (Hari)</label>
-                        <input type="number" class="form-control form-control-sm" id="rotDays" value="30" min="1" required>
-                        <div class="form-text small">Log audit lebih tua dari hari retensi akan dipangkas.</div>
+                        <label class="form-label small">Retensi Log Operasional (Min 90 Hari)</label>
+                        <input type="number" class="form-control form-control-sm" id="rotDays" value="90" min="90" required>
+                        <div class="form-text small">Log komunikasi/antrean lebih tua dari retensi dipangkas (Audit trail `mlite_logs` permanen).</div>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
                         <button type="submit" class="btn btn-sm btn-outline-danger w-100">Pangkas Log</button>

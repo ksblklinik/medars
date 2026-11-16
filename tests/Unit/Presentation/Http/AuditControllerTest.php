@@ -58,7 +58,7 @@ class AuditControllerTest extends TestCase
         $this->assertTrue($orphanData['ok']);
         $this->assertTrue($orphanData['audit']['healthy']);
 
-        $rotateRes = $this->controller->apiRotateLogs(['retention_days' => 30]);
+        $rotateRes = $this->controller->apiRotateLogs(['retention_days' => 90]);
         $this->assertSame(200, $rotateRes['status']);
         $rotateData = json_decode($rotateRes['body'], true);
         $this->assertTrue($rotateData['ok']);

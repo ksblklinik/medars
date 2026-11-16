@@ -60,6 +60,28 @@ final readonly class PdoWaGatewayRepository implements WaGatewayRepositoryInterf
         return (int) $this->pdo->lastInsertId();
     }
 
+    public function recordQrCheckin(string $noRawat, string $senderPhone, string $sessionName): bool
+    {
+        $check = $this->pdo->prepare('SELECT COUNT(*) FROM reg_periksa WHERE no_rawat = :nr');
+        $check->execute([':nr' => $noRawat]);
+        if ((int) $check->fetchColumn() === 0) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO wagateway_checkin (no_rawat, sender_phone, session_name, verified_at)
+             VALUES (:nr, :phone, :sess, :at)'
+        );
+        $stmt->execute([
+            ':nr' => $noRawat,
+            ':phone' => $senderPhone,
+            ':sess' => $sessionName,
+            ':at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return true;
+    }
+
     public function listRecentOutbox(int $limit = 50): array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM wagateway_outbox ORDER BY id DESC LIMIT :lim');

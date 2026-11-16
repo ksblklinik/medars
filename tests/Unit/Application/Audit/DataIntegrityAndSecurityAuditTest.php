@@ -97,26 +97,26 @@ class DataIntegrityAndSecurityAuditTest extends TestCase
 
     public function testRotatesAndPrunesStaleLogsOlderThanRetentionDays(): void
     {
-        $oldDate = date('Y-m-d H:i:s', strtotime('-40 days'));
+        $oldDate = date('Y-m-d H:i:s', strtotime('-120 days'));
         $recentDate = date('Y-m-d H:i:s', strtotime('-5 days'));
 
         $this->pdo->exec("
-            INSERT INTO mlite_logs (user_id, username, action, details, ip_address, created_at)
-            VALUES (1, 'admin', 'login', 'User logged in', '127.0.0.1', '{$oldDate}');
-            INSERT INTO mlite_logs (user_id, username, action, details, ip_address, created_at)
-            VALUES (1, 'admin', 'login', 'User logged in', '127.0.0.1', '{$oldDate}');
-            INSERT INTO mlite_logs (user_id, username, action, details, ip_address, created_at)
-            VALUES (1, 'admin', 'pay', 'Billing paid', '127.0.0.1', '{$recentDate}');
+            INSERT INTO wagateway_outbox (session_name, no_hp, pesan, status, error_message, created_at)
+            VALUES ('system', '6281234567890', 'Lama 1', 'Sent', NULL, '{$oldDate}');
+            INSERT INTO wagateway_outbox (session_name, no_hp, pesan, status, error_message, created_at)
+            VALUES ('system', '6281234567890', 'Lama 2', 'Sent', NULL, '{$oldDate}');
+            INSERT INTO wagateway_outbox (session_name, no_hp, pesan, status, error_message, created_at)
+            VALUES ('system', '6281234567890', 'Baru', 'Sent', NULL, '{$recentDate}');
         ");
 
-        $countBefore = (int) $this->pdo->query('SELECT COUNT(*) FROM mlite_logs')->fetchColumn();
+        $countBefore = (int) $this->pdo->query('SELECT COUNT(*) FROM wagateway_outbox')->fetchColumn();
         $this->assertSame(3, $countBefore);
 
-        // Pangkas log lebih tua dari 30 hari
-        $prunedCount = $this->rotationService->pruneLogs(30);
+        // Pangkas log operasional lebih tua dari 90 hari
+        $prunedCount = $this->rotationService->pruneLogs(90);
         $this->assertSame(2, $prunedCount);
 
-        $countAfter = (int) $this->pdo->query('SELECT COUNT(*) FROM mlite_logs')->fetchColumn();
+        $countAfter = (int) $this->pdo->query('SELECT COUNT(*) FROM wagateway_outbox')->fetchColumn();
         $this->assertSame(1, $countAfter);
     }
 }

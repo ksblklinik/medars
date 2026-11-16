@@ -106,7 +106,7 @@ class WaAndHomeCareTest extends TestCase
             public function getSessionStatus(string $session): string { return 'ONLINE'; }
         };
 
-        $inboundUseCase = new ProcessInboundWaWebhookUseCase($this->pdo, $this->waRepo, $fakeClient);
+        $inboundUseCase = new ProcessInboundWaWebhookUseCase($this->waRepo, $fakeClient);
 
         // Pasien scan QR pendaftaran: sistem catat verifikasi, tapi ZERO outbound reply (0 kirim WA keluar)
         $result = $inboundUseCase->execute(

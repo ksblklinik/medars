@@ -91,14 +91,18 @@ final readonly class AuditController
      */
     public function apiRotateLogs(array $payload): array
     {
-        $days = (int) ($payload['retention_days'] ?? 30);
-        $pruned = $this->rotationService->pruneLogs(max(1, $days));
+        try {
+            $days = (int) ($payload['retention_days'] ?? LogRotationService::MIN_RETENTION_DAYS);
+            $pruned = $this->rotationService->pruneLogs($days);
 
-        return $this->json([
-            'ok' => true,
-            'pruned_count' => $pruned,
-            'retention_days' => $days,
-        ]);
+            return $this->json([
+                'ok' => true,
+                'pruned_count' => $pruned,
+                'retention_days' => $days,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
+        }
     }
 
     /**

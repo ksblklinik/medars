@@ -517,18 +517,33 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $sendRes['status']);
         $sendData = json_decode($sendRes['body'], true);
-        $this->assertSame('Sent', $sendData['result']['status']);
+        // K5: gateway WA belum dikonfigurasi -> wajib jujur 'Failed', bukan palsu 'Sent'
+        $this->assertSame('Failed', $sendData['result']['status']);
 
         // 2. Inbound Webhook QR check-in (Zero-Reply Policy)
+        $hookPayload = json_encode([
+            'session' => 'system',
+            'phone' => '6281234567890',
+            'message' => 'CHECKIN 2026/11/16/000001',
+        ]);
+
+        // K2: tanpa secret terkonfigurasi -> fail-closed 403
+        $noSecretRes = $this->app->handle('POST', '/api/v1/wagateway/webhook', rawBody: $hookPayload, headers: ['Content-Type' => 'application/json', 'X-Webhook-Token' => 'apa-saja']);
+        $this->assertSame(403, $noSecretRes['status']);
+
+        $this->pdo->exec("INSERT INTO mlite_settings (module, field, value) VALUES ('wagateway', 'webhook_secret', 'rahasia-webhook-123')");
+
+        // K2: token salah / tidak ada -> 403
+        $badTokenRes = $this->app->handle('POST', '/api/v1/wagateway/webhook', rawBody: $hookPayload, headers: ['Content-Type' => 'application/json', 'X-Webhook-Token' => 'salah']);
+        $this->assertSame(403, $badTokenRes['status']);
+        $missingTokenRes = $this->app->handle('POST', '/api/v1/wagateway/webhook', rawBody: $hookPayload, headers: ['Content-Type' => 'application/json']);
+        $this->assertSame(403, $missingTokenRes['status']);
+
         $hookRes = $this->app->handle(
             'POST',
             '/api/v1/wagateway/webhook',
-            rawBody: json_encode([
-                'session' => 'system',
-                'phone' => '6281234567890',
-                'message' => 'CHECKIN 2026/11/16/000001',
-            ]),
-            headers: ['Content-Type' => 'application/json']
+            rawBody: $hookPayload,
+            headers: ['Content-Type' => 'application/json', 'X-Webhook-Token' => 'rahasia-webhook-123']
         );
         $this->assertSame(200, $hookRes['status']);
         $hookData = json_decode($hookRes['body'], true);
@@ -571,6 +586,35 @@ class HttpApplicationTest extends TestCase
         $supData = json_decode($supRes['body'], true);
         $this->assertCount(1, $supData['visits']);
         $this->assertSame('Ny. S*** (56 Th, P)', $supData['visits'][0]['pseudonym_pasien']);
+        // K3: tidak boleh ada identifier pasien yang lolos ke pihak kampus
+        foreach (['nm_pasien', 'no_rkm_medis', 'tgl_lahir', 'jk', 'no_rawat'] as $forbidden) {
+            $this->assertArrayNotHasKey($forbidden, $supData['visits'][0]);
+        }
+    }
+
+    public function testContentSecurityPolicyAllowsOnlyTheCdnAssetsUsedByLayout(): void
+    {
+        $res = $this->app->handle('GET', '/auth/login');
+        $csp = $res['headers']['Content-Security-Policy'] ?? '';
+
+        // K1: CDN yang dipakai layout.php/login.php/display wajib diizinkan, kalau tidak UI rusak total
+        $this->assertStringContainsString('https://cdn.jsdelivr.net', $csp);
+        $this->assertStringContainsString('https://cdnjs.cloudflare.com', $csp);
+        $this->assertStringContainsString("frame-ancestors 'self'", $csp);
+        $this->assertStringContainsString("object-src 'none'", $csp);
+
+        // Setiap host eksternal di template harus tercakup oleh CSP
+        $templateDir = dirname(__DIR__, 2) . '/src/Presentation/View/templates';
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($templateDir));
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+            preg_match_all('#(?:src|href)="(https://[^/"]+)#', (string) file_get_contents($file->getPathname()), $m);
+            foreach ($m[1] as $host) {
+                $this->assertStringContainsString($host, $csp, "Host {$host} di {$file->getFilename()} diblokir CSP.");
+            }
+        }
     }
 
     public function testAuditIntegrityAndLogRotationEndToEnd(): void
@@ -601,7 +645,7 @@ class HttpApplicationTest extends TestCase
         $rotateRes = $this->app->handle(
             'POST',
             '/api/v1/audit/logs/rotate',
-            rawBody: json_encode(['retention_days' => 30]),
+            rawBody: json_encode(['retention_days' => 90]),
             headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
         );
         $this->assertSame(200, $rotateRes['status']);

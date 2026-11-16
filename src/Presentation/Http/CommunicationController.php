@@ -240,8 +240,8 @@ final readonly class CommunicationController
 
             $pseudonym = HomeCarePrivacyShield::pseudonymize($name, $age, $jk);
 
-            // Strip sensitive clinical identifiers
-            unset($visit['nm_pasien'], $visit['no_rkm_medis']);
+            // Strip sensitive clinical identifiers (Privacy Shield)
+            unset($visit['nm_pasien'], $visit['no_rkm_medis'], $visit['tgl_lahir'], $visit['jk'], $visit['no_rawat']);
             $visit['pseudonym_pasien'] = $pseudonym;
             $shielded[] = $visit;
         }

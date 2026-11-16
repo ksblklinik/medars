@@ -336,7 +336,7 @@ final class HttpApplication
             $waRepo,
             $homeCareRepo,
             new SendWhatsAppMessageUseCase($waRepo, $waClient),
-            new ProcessInboundWaWebhookUseCase($this->pdo, $waRepo, $waClient),
+            new ProcessInboundWaWebhookUseCase($waRepo, $waClient),
             new AssignHomeCarePreceptorUseCase($homeCareRepo),
             $this->renderer,
             $this->navBuilder
@@ -731,7 +731,18 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $communicationController->apiSendWa($user, $data);
         });
-        $router->post('/api/v1/wagateway/webhook', function () use ($communicationController, $postData, $rawBody, $headers): array {
+        $router->post('/api/v1/wagateway/webhook', function () use ($communicationController, $settingService, $postData, $rawBody, $headers): array {
+            $expectedSecret = trim((string) $settingService->get('wagateway', 'webhook_secret', ''));
+            $providedToken = '';
+            foreach ($headers as $k => $v) {
+                if (strcasecmp($k, 'X-Webhook-Token') === 0) {
+                    $providedToken = trim($v);
+                    break;
+                }
+            }
+            if ($expectedSecret === '' || $providedToken === '' || !hash_equals($expectedSecret, $providedToken)) {
+                throw new ForbiddenException('Webhook signature/token tidak valid atau belum dikonfigurasi.');
+            }
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $communicationController->apiInboundWebhook($data);
         });
@@ -889,7 +900,7 @@ final class HttpApplication
             'X-Frame-Options' => 'SAMEORIGIN',
             'X-Content-Type-Options' => 'nosniff',
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
-            'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' data:; frame-ancestors 'self';",
+            'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; object-src 'none';",
             'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
         ]);
 

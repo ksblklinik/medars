@@ -78,6 +78,7 @@ class SchemaMigratorTest extends TestCase
             'mlite_vedika',
             'wagateway_whitelist',
             'wagateway_outbox',
+            'wagateway_checkin',
             'mlite_homecare_kunjungan',
             'mlite_homecare_preceptor_sk',
         ];

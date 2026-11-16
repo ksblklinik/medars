@@ -18,6 +18,8 @@ interface WaGatewayRepositoryInterface
         ?string $error = null,
     ): int;
 
+    public function recordQrCheckin(string $noRawat, string $senderPhone, string $sessionName): bool;
+
     /**
      * @return list<array<string, mixed>>
      */
