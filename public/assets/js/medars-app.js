@@ -271,6 +271,13 @@
 
     // Inisialisasi saat DOM siap
     document.addEventListener('DOMContentLoaded', () => {
+        // Cegah warning WAI-ARIA "Blocked aria-hidden on an element because its descendant retained focus" di Bootstrap 5.3
+        document.addEventListener('hide.bs.modal', (e) => {
+            if (document.activeElement instanceof HTMLElement && e.target instanceof HTMLElement && e.target.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+        });
+
         AppModal.init();
         AppHotkeys.init();
         startLiveClock();
