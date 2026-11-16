@@ -1,27 +1,69 @@
-# PRD 10: Desain Antarmuka, Hotkeys Operasional & Pengalaman Pengguna (UI/UX)
+# PRD 10: Desain Antarmuka, Hotkeys Operasional & Arsitektur Frontend Modern (UI/UX)
 
 ## 1. Ikhtisar Domain
-Domain ini menetapkan standar desain visual, tata kelola komponen antarmuka, responsivitas multi-perangkat (Desktop, Mobile, Kiosk, Display TV), dan konvensi pintasan keyboard untuk kecepatan layanan klinik.
+Domain ini menetapkan standar desain visual, tata kelola komponen antarmuka, responsivitas multi-perangkat (Desktop, Mobile, Kiosk, Display TV), konvensi pintasan keyboard, serta arsitektur rendering komponen yang bersih bebas dari masalah penumpukan DOM tersembunyi (*zero hidden-show DOM bloat*).
 
-## 2. Aturan Desain & Spesifikasi Kunci
-1. **Pencegahan Double-Submission & Feedback Loading:**
-   - Tombol transaksi (Simpan, Bayar, Validasi) wajib otomatis dinonaktifkan (`disabled`) dan menampilkan indikator loading spinner saat request berlangsung.
-2. **Standar Pintasan Keyboard (Hotkeys Cepat POS & Kasir):**
-   - `F2`: Bayar / Simpan Transaksi.
-   - `F4`: Buka Modal Pencarian Pasien / E-Resep.
-   - `F8`: Pending / Simpan Draf Transaksi.
-   - `F9`: Batal / Reset Formulir.
-   - `Esc`: Menutup modal aktif.
-   - Kursor otomatis fokus (*auto-focus*) ke kolom pencarian utama saat modal terbuka.
-3. **Supresi Autofill Peramban:**
-   - Seluruh input form klinis dan administratif menyertakan atribut anti-autofill (`autocomplete="off"`) agar balon riwayat isian browser tidak menutupi antarmuka.
-4. **Desain Multi-Device (4 Tipe Layar):**
-   - *Desktop:* Lebar optimal, tabel responsif dengan scroll horizontal aman.
-   - *Mobile / Tablet:* Komponen ringkas dengan tombol aksi yang mudah dijangkau satu tangan.
-   - *Kiosk Mandiri:* Target sentuh besar (minimal 48px), visual kontras tinggi, navigasi ramah pasien lansia.
-   - *Display TV Antrean:* Tipografi besar, keterbacaan dari jarak 5–10 meter, tanpa elemen interaktif yang memblokir tampilan antrean.
+---
 
-## 3. Kontrak Pengujian TDD Wajib (Test Cases)
+## 2. Pilihan Arsitektur: Opsi 3 (Modern Bootstrap 5 Foundation with Familiar Ergonomics)
+
+Sistem baru **ksm-next** mengadopsi fondasi **Bootstrap 5 modern** yang mempertahankan 100% tata letak ergonomis yang sudah dihafal oleh staf klinik (*muscle memory*), namun menyingkirkan pustaka usang (*end-of-life*) Bootstrap 3.
+
+---
+
+## 3. Solusi Terhadap Masalah Arsitektur Eksisting ("Tumpuk-Tumpuk Hidden-Show")
+
+Pada sistem lama, satu halaman memuat puluhan sub-form, modal, dan tabel tersembunyi (`display: none` / `.hidden`). Hal ini menimbulkan:
+- **DOM Bloat & Memory Leak:** Ribuan node DOM mengendap di RAM browser, menyebabkan aplikasi melambat seiring bertambahnya pasien yang dilayani.
+- **Konflik ID & Duplikasi Event:** Selector JavaScript salah sasaran ke elemen tersembunyi, atau event listener terikat berulang kali (*duplicate submissions*).
+- **Cemaran Data Form (*Dirty Form State*):** Field input yang tersembunyi tidak sengaja ikut terkirim saat form disubmit.
+
+### 🛡️ Arsitektur Solusi Baru di `ksm-next`:
+
+1. **Dynamic Viewport Slot (Mount & Unmount Bersih):**
+   - Area kerja modul (`#workspace`) hanya memiliki **satu container aktif**.
+   - Sub-view (Form SOAP, Riwayat Pasien, E-Resep, Lab/Rad) **hanya dimuat (mount) ke DOM saat dipilih**.
+   - Ketika pengguna berpindah tab/tampilan, komponen lama di-**unmount total** (elemen DOM dihapus dan event listener dilepas dari memori). Tidak ada lagi tumpukan elemen tersembunyi di latar belakang.
+
+2. **Single-Host Dynamic Modal (`#appModalHost`):**
+   - Dilarang membuat puluhan modal statis di HTML halaman.
+   - Sistem hanya menyediakan **satu modal host universal** (`#appModalHost`).
+   - Konten modal di-inject secara dinamis sesuai kebutuhan (misal saat tekan `F4` cari pasien), dan saat modal ditutup (`Esc` / backdrop), isi modal otomatis di-destroy (`empty()`) dan memori dibebaskan seketika.
+
+3. **Client-Side State & Route Awareness (Hash Router):**
+   - Setiap pergantian tampilan modul dikaitkan dengan hash URL (contoh: `#rawat-jalan/soap`, `#rawat-jalan/resep`).
+   - Tombol *Back / Forward* browser berfungsi normal, dan jika halaman di-refresh, konteks pasien dan sub-tab aktif otomatis pulih.
+
+---
+
+## 4. Standar Desain Visual & Token Palet Warna Medis
+
+Warna antarmuka mencerminkan indikator status klinis dan finansial baku:
+
+| Token Warna | Nilai Hex | Penggunaan Operasional SIMRS |
+| :--- | :--- | :--- |
+| **Primary (Medical Teal)** | `#00897b` | Tombol utama, header aktif, navigasi modul. |
+| **Danger (Triase Merah / Void)** | `#dc2626` | Status Gawat Darurat (IGD), Alergi Berat, Void Kasir. |
+| **Warning (Triase Kuning / Pending)**| `#d97706` | Menunggu Dokter, Resep Belum Diracik, Order Pending Kasir. |
+| **Success (Triase Hijau / Lunas)** | `#16a34a` | Pemeriksaan Selesai, Billing Lunas, Obat Sudah Diberikan. |
+| **Kapitasi BPJS (Blue Badge)** | `#0284c7` | Badge tagihan `[K]` (Kapitasi) di Kasir dan E-Resep. |
+| **Non-Kapitasi / Umum (Indigo)** | `#6366f1` | Badge tagihan `[NK]` (Non-Kapitasi) / Klaim Terpisah. |
+| **Tunai Mandiri (Emerald)** | `#059669` | Badge tagihan `[T]` (Tunai). |
+
+---
+
+## 5. Standar Pintasan Keyboard (Hotkeys Cepat POS & Kasir)
+- `F2`: Bayar / Simpan Transaksi.
+- `F4`: Buka Modal Pencarian Pasien / E-Resep (auto-focus ke input pencarian).
+- `F8`: Pending / Simpan Draf Transaksi.
+- `F9`: Batal / Reset Formulir.
+- `Esc`: Menutup modal aktif dan membersihkan host modal.
+
+---
+
+## 6. Kontrak Pengujian TDD Wajib (Test Cases)
+- `test_should_mount_view_component_on_demand_and_unmount_previous_component()`
+- `test_should_clean_modal_host_dom_and_listeners_when_modal_is_closed()`
 - `test_should_disable_action_button_and_display_spinner_during_async_request()`
 - `test_should_trigger_expected_actions_on_f2_f4_f8_f9_keyboard_events()`
-- `test_should_auto_focus_primary_input_upon_modal_rendered()`
+- `test_should_prevent_hidden_form_inputs_from_contaminating_payload()`

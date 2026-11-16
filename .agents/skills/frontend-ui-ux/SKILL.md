@@ -34,34 +34,38 @@ Seluruh berkas tampilan (`plugins/<modul>/view/admin/*.html` & `themes/admin/*.h
 
 ---
 
-## 2. Struktur Layout, Isolasi DOM & Manajemen Modal (`view/admin/`)
+## 2. Struktur Layout, Isolasi DOM & Eliminasi Tumpukan "Hidden-Show"
 
-Aplikasi `ksmlite` menggunakan AdminLTE / Bootstrap 3 dengan pemuatan partial AJAX yang berdampingan. Mencegah tabrakan DOM adalah keharusan mutlak:
+Aplikasi `ksm-next` mengadopsi **Opsi 3 (Modern Bootstrap 5 Foundation + Familiar Ergonomics)** dengan arsitektur rendering bersih:
 
-*   **Hirarki Kontainer Modul Baku:**
+*   **Pemberantasan Anti-Pattern Tumpuk-Tumpuk `display:none`:**
+    *   **Dilarang Keras:** Memuat puluhan sub-form atau tab tersembunyi sekaligus di dalam satu halaman lalu menampilkannya secara bergantian hanya dengan `.show()` dan `.hide()`.
+    *   **Wajib:** Terapkan **Dynamic Viewport Slot (Mount & Unmount)**:
+        - Kontainer kerja hanya memuat 1 komponen aktif di dalam slot viewport.
+        - Komponen sub-fitur di-mount secara on-demand saat dibuka, dan di-**unmount total** (elemen DOM dihapus dan event listener dicopot) saat berpindah tampilan.
+*   **Single-Host Dynamic Modal (`#appModalHost`):**
+    *   **Dilarang:** Menuliskan puluhan `<div class="modal fade">` statis di markup halaman.
+    *   **Wajib:** Menggunakan satu shell modal universal di layout utama (`#appModalHost`). Konten modal di-inject saat dipanggil (misal `F4`), dan wajib di-`empty()` dari DOM saat ditutup (`hidden.bs.modal`) untuk membebaskan RAM browser.
+*   **Hirarki Kontainer Modul Modern (Bootstrap 5):**
     ```html
-    <div class="row" id="manage" data-module="nama_modul">
-      <div class="col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">...</div>
-          <div class="panel-body">
-            <div id="form"></div>
-            <div id="display">...</div>
+    <div class="row g-3" id="manage" data-module="nama_modul">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-medical-teal text-white d-flex justify-content-between align-items-center">...</div>
+          <div class="card-body">
+            <!-- Dynamic Slot Container -->
+            <div id="moduleViewportSlot">
+              <div id="formSlot"></div>
+              <div id="displaySlot">...</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
     ```
-    *   Selalu seleksi sub-elemen melalui kontainer induk: `$('#manage #display')`, `$('#manage #form')`. Jangan memakai `#display` telanjang.
+    *   Selalu seleksi sub-elemen melalui kontainer induk: `$('#manage #displaySlot')`, `$('#manage #formSlot')`.
 *   **Penamaan ID Unik Berprefiks Modul:**
-    *   Seluruh ID modal, form, dan tabel **wajib berprefiks spesifik modul** (contoh: `#modalPasienBaruIgd`, `#dokter_ralan_odontogram_modal`, `#tabel_stok_apotek_umum`). Dilarang menggunakan ID generik seperti `#myModal`, `#modal`, atau `#tabelData`.
-*   **Pembersihan Siklus Hidup Modal (*Clean Modal Lifecycle*):**
-    *   Setiap modal remote/AJAX wajib membersihkan isinya saat ditutup agar tidak meninggalkan duplikasi ID di DOM:
-        ```javascript
-        $('#modal_nama_modul').on('hidden.bs.modal', function () {
-            $(this).find('.modal-content').empty();
-        });
-        ```
+    *   Seluruh ID form, tabel, dan komponen **wajib berprefiks spesifik modul** (contoh: `#modalPasienBaruIgd`, `#dokter_ralan_odontogram_modal`, `#tabel_stok_apotek_umum`). Dilarang menggunakan ID generik seperti `#myModal`, `#modal`, atau `#tabelData`.
 
 ---
 

@@ -67,3 +67,7 @@ storage/media/
 
 # Local Reference Oracle (Read-Only)
 .ref/
+
+# PHPUnit Cache
+.phpunit.cache/
+.phpunit.result.cache
