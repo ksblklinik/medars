@@ -30,8 +30,26 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - Single-Host Dynamic Modal (`#appModalHost`) dengan auto-focus & cleanup DOM.
   - Hotkeys operasional klinik (`F2`, `F4`, `F8`, `F9`, `Esc`).
   - `ViewRenderer` dengan sanitasi XSS aman lolos pengujian TDD.
-- [ ] **PLN-05: Real-Time SSE Stream Engine**
-  - Endpoint `GET /api/stream` untuk push antrean dan notifikasi real-time.
+- [x] **PLN-05: Real-Time SSE Stream Engine** (Selesai: 16-11-2026)
+  - `EventMessage` value object (event, data payload, event-id, retry).
+  - `InMemoryEventBroadcaster` channel pub/sub publisher.
+  - `SseStreamResponse` formatter sesuai standar W3C (headers, event, ping heartbeat).
+  - Lolos 5 skenario pengujian TDD Unit Test.
+
+---
+
+## 🚧 Sedang Dikerjakan (IN PROGRESS)
+
+### [FASE-1] Pendaftaran, Pasien & Kiosk Antrean (PRD 01)
+- [ ] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)**
+  - `NoRkmMedis` (string format leading zeros `000123`).
+  - `NoRawat` (string format `YYYY/MM/DD/000001`).
+  - `PasienEntity` & `RegPeriksaEntity` (mapping DDL fisik).
+- [ ] **PLN-07: Repository & Auto-Regenerasi Race Condition No Rawat**
+  - TDD concurrency test auto-regenerasi nomor rawat bertabrakan di detik yang sama.
+- [ ] **PLN-08: Use-Case Pendaftaran Pasien Baru & Pasien Lama (Ralan & IGD)**
+- [ ] **PLN-09: Tampilan Form Registrasi & Modal Cari Pasien F4 Identik ksmlite**
+- [ ] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE**
 
 ---
 
@@ -58,3 +76,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-02** | Dual-Connection & Transaction Manager | Implementasi `PdoTransactionManager` (ACID + Nested Savepoints), `ReadOnlyConnectionGuard` (proteksi mutlak database eksisting), `ConnectionFactory` (strict flags & anti-cast), terverifikasi 13 unit test PASS. | 16-11-2026 |
 | **PLN-03** | Module Loader & Registry Kernel | Implementasi arsitektur modular PRD 12 (`ModuleManifest`, `DependencyResolver`, `ModuleLoader` lifecycle, menu navigation dinamis, safe uninstall), terverifikasi 8 unit test PASS (Total 21 test PASS). | 16-11-2026 |
 | **PLN-04** | Master Layout Shell Paritas 100% | Master layout Bootstrap 5 bertema Medical Teal (`#00897b`), Topbar, menu-icon, `ViewRenderer` XSS-safe, Dynamic Viewport Slot (`#moduleViewportSlot`), Single-Host Modal (`#appModalHost`), dan hotkeys operasional (`F2`-`F9`). Total 23 test PASS. | 16-11-2026 |
+| **PLN-05** | Real-Time SSE Stream Engine | Implementasi engine Server-Sent Events (`EventMessage`, `InMemoryEventBroadcaster`, `SseStreamResponse`, heartbeat ping, SSE headers W3C), terverifikasi 5 test PASS (Total 28 test PASS). Seluruh Fase 0 Tuntas 100%. | 16-11-2026 |
