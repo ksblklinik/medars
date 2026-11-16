@@ -1,11 +1,11 @@
 <!-- Toolbar Paritas ksmlite (Cari Order Penunjang, Filter Status/Klaim) -->
 <div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
-        <div class="input-group input-group-sm" style="width: 240px;">
+        <div class="input-group input-group-sm toolbar-search">
             <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
             <input type="search" class="form-control" placeholder="Cari No. Order / Pasien..." data-ksmlite-search="labOrdersBody">
         </div>
-        <select class="form-select form-select-sm" style="width: 160px;" data-ksmlite-status-filter="labOrdersBody">
+        <select class="form-select form-select-sm toolbar-filter" data-ksmlite-status-filter="labOrdersBody">
             <option value="">Semua Status</option>
             <option value="terbuka">Siap Validasi</option>
             <option value="terkunci">Terkunci Kasir</option>

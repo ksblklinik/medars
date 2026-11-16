@@ -5,11 +5,11 @@
             <button type="button" class="btn btn-sm btn-medical-teal" id="bukaform" data-ksmlite-toggle-form="formRegistration">
                 <i class="fa fa-minus-circle me-1"></i> Tutup Form
             </button>
-            <div class="input-group input-group-sm" style="width: 240px;">
+            <div class="input-group input-group-sm toolbar-search">
                 <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
                 <input type="search" class="form-control" placeholder="Cari RM / Nama / No. Rawat..." data-ksmlite-search="tbodyRegistrations">
             </div>
-            <select class="form-select form-select-sm" style="width: 150px;" data-ksmlite-status-filter="tbodyRegistrations">
+            <select class="form-select form-select-sm toolbar-filter" data-ksmlite-status-filter="tbodyRegistrations">
                 <option value="">Semua Status</option>
                 <option value="belum">Belum Diperiksa</option>
                 <option value="sudah">Sudah Diperiksa</option>

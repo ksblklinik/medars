@@ -64,6 +64,62 @@ body {
     margin-bottom: 10px;
 }
 
+.toolbar-search {
+    width: 240px;
+}
+
+.toolbar-filter {
+    width: 160px;
+}
+
+/* Mobile & Tablet Responsiveness (< 768px) */
+.top-icon-menu {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.card-body.p-0 {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767.98px) {
+    #content-wrapper {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        padding-top: 10px !important;
+    }
+
+    .panel-ksmlite > .card-body {
+        padding: 10px !important;
+    }
+
+    .ksmlite-toolbar {
+        padding: 8px;
+    }
+
+    .ksmlite-toolbar > div {
+        width: 100%;
+    }
+
+    .toolbar-search,
+    .toolbar-filter {
+        width: 100% !important;
+        flex: 1 1 100%;
+    }
+
+    .table th,
+    .table td {
+        white-space: nowrap;
+        font-size: 0.78rem;
+    }
+
+    .menu-icon a {
+        font-size: 11.5px;
+        padding: 4px 8px !important;
+    }
+}
+
 .btn-xs {
     padding: 0.15rem 0.45rem;
     font-size: 0.75rem;

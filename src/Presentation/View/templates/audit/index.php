@@ -1,7 +1,7 @@
 <!-- Toolbar Paritas ksmlite (Audit ACID & Security) -->
 <div class="ksmlite-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
-        <div class="input-group input-group-sm" style="width: 240px;">
+        <div class="input-group input-group-sm toolbar-search">
             <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
             <input type="search" class="form-control" placeholder="Cari Nama Tabel Orphan..." data-ksmlite-search="orphanTableBody">
         </div>
