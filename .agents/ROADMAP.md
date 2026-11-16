@@ -41,13 +41,14 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 ## 🚧 Sedang Dikerjakan (IN PROGRESS)
 
 ### [FASE-1] Pendaftaran, Pasien & Kiosk Antrean (PRD 01)
-- [ ] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)**
-  - `NoRkmMedis` (string format leading zeros `000123`).
-  - `NoRawat` (string format `YYYY/MM/DD/000001`).
-  - `PasienEntity` & `RegPeriksaEntity` (mapping DDL fisik).
+- [x] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)** (Selesai: 16-11-2026)
+  - `NoRkmMedis` (string format leading zeros `000123`), `NoRawat` (`YYYY/MM/DD/000001`), `NoReg` (`001`).
+  - `PoliklinikSetting` (aturan data-driven `allowBpjs` per poli, tanpa hardcode `PEX`).
+  - `Pasien` (perhitungan umur `Th`/`Bl`/`Hr`) & `RegPeriksa` (immutable entity).
+  - Lolos 8 skenario pengujian TDD Unit Test.
 - [ ] **PLN-07: Repository & Auto-Regenerasi Race Condition No Rawat**
   - TDD concurrency test auto-regenerasi nomor rawat bertabrakan di detik yang sama.
-- [ ] **PLN-08: Use-Case Pendaftaran Pasien Baru & Pasien Lama (Ralan & IGD)**
+- [ ] **PLN-08: Use-Case Pendaftaran In-Site vs Check-In Booking Mobile JKN + Clinical Guard**
 - [ ] **PLN-09: Tampilan Form Registrasi & Modal Cari Pasien F4 Identik ksmlite**
 - [ ] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE**
 
