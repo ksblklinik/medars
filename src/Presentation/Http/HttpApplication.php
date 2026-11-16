@@ -368,6 +368,12 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $dokterRalanController->apiSaveSoap($user, $data);
         });
+        $router->post('/api/v1/dokter-ralan/diagnosa', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $dokterRalanController->apiSaveDiagnosa($user, $data);
+        });
         $router->post('/api/v1/dokter-ralan/prb', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
             $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
@@ -381,16 +387,16 @@ final class HttpApplication
             return $dokterRalanController->apiSaveOdontogram($user, $data);
         });
         $router->post('/api/v1/dokter-ralan/odontogram/delete', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
-            $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
-            return $dokterRalanController->apiDeleteOdontogram($data);
+            return $dokterRalanController->apiDeleteOdontogram($user, $data);
         });
         $router->post('/api/v1/dokter-ralan/surat-sakit', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
-            $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
-            return $dokterRalanController->apiCreateSuratSakit($data);
+            return $dokterRalanController->apiCreateSuratSakit($user, $data);
         });
 
         return $router->dispatch($method, $path);

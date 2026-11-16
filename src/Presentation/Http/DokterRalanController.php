@@ -169,11 +169,14 @@ final readonly class DokterRalanController
      * @param array<string, mixed> $postData
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    public function apiSaveDiagnosa(array $postData = []): array
+    public function apiSaveDiagnosa(?UserAccount $currentUser, array $postData = []): array
     {
         try {
+            $noRawatStr = (string) ($postData['no_rawat'] ?? '');
+            $this->assertCanAccessNoRawat($currentUser, $noRawatStr);
+
             $dx = new DiagnosaPasien(
-                noRawat: new NoRawat((string) ($postData['no_rawat'] ?? '')),
+                noRawat: new NoRawat($noRawatStr),
                 kdPenyakit: (string) ($postData['kd_penyakit'] ?? ''),
                 status: (string) ($postData['status'] ?? 'Ralan'),
                 prioritas: (int) ($postData['prioritas'] ?? 1),
@@ -185,7 +188,9 @@ final readonly class DokterRalanController
                 'status' => 'success',
                 'message' => "Diagnosa {$dx->kdPenyakit} berhasil disimpan.",
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (ForbiddenException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 403);
+        } catch (\DomainException|\InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -223,10 +228,13 @@ final readonly class DokterRalanController
     public function apiSaveOdontogram(?UserAccount $currentUser, array $postData = []): array
     {
         try {
+            $noRawatStr = (string) ($postData['no_rawat'] ?? '');
+            $this->assertCanAccessNoRawat($currentUser, $noRawatStr);
+
             $odo = new Odontogram(
                 id: null,
                 noRkmMedis: new NoRkmMedis((string) ($postData['no_rkm_medis'] ?? '')),
-                noRawat: new NoRawat((string) ($postData['no_rawat'] ?? '')),
+                noRawat: new NoRawat($noRawatStr),
                 tglPemeriksaan: (string) ($postData['tgl_pemeriksaan'] ?? date('Y-m-d')),
                 nomorGigi: (string) ($postData['nomor_gigi'] ?? ''),
                 kondisi: (string) ($postData['kondisi'] ?? ''),
@@ -236,7 +244,9 @@ final readonly class DokterRalanController
             $this->saveOdoUseCase->execute($odo);
 
             return $this->jsonResponse(['status' => 'success', 'message' => 'Odontogram berhasil dicatat.']);
-        } catch (\InvalidArgumentException $e) {
+        } catch (ForbiddenException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 403);
+        } catch (\DomainException|\InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -245,12 +255,24 @@ final readonly class DokterRalanController
      * @param array<string, mixed> $postData
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    public function apiDeleteOdontogram(array $postData = []): array
+    public function apiDeleteOdontogram(?UserAccount $currentUser, array $postData = []): array
     {
         try {
-            $this->deleteOdoUseCase->execute((int) ($postData['id'] ?? 0));
+            $id = (int) ($postData['id'] ?? 0);
+            if ($id > 0 && $currentUser !== null) {
+                $stmt = $this->pdo->prepare('SELECT no_rawat FROM mlite_odontogram WHERE id = :id LIMIT 1');
+                $stmt->execute([':id' => $id]);
+                $nr = $stmt->fetchColumn();
+                if (is_string($nr) && $nr !== '') {
+                    $this->assertCanAccessNoRawat($currentUser, $nr);
+                }
+            }
+
+            $this->deleteOdoUseCase->execute($id);
             return $this->jsonResponse(['status' => 'success', 'message' => 'Riwayat odontogram berhasil dihapus.']);
-        } catch (\InvalidArgumentException $e) {
+        } catch (ForbiddenException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 403);
+        } catch (\DomainException|\InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -259,9 +281,12 @@ final readonly class DokterRalanController
      * @param array<string, mixed> $postData
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    public function apiCreateSuratSakit(array $postData = []): array
+    public function apiCreateSuratSakit(?UserAccount $currentUser, array $postData = []): array
     {
         try {
+            $noRawatStr = (string) ($postData['no_rawat'] ?? '');
+            $this->assertCanAccessNoRawat($currentUser, $noRawatStr);
+
             $t1Str = (string) ($postData['tanggal_awal'] ?? '');
             $t2Str = (string) ($postData['tanggal_akhir'] ?? '');
 
@@ -273,7 +298,7 @@ final readonly class DokterRalanController
             }
 
             $surat = $this->suratUseCase->createSuratSakit(
-                new NoRawat((string) ($postData['no_rawat'] ?? '')),
+                new NoRawat($noRawatStr),
                 $t1,
                 $t2
             );
@@ -286,8 +311,33 @@ final readonly class DokterRalanController
                     'lama_sakit' => $surat->lamaSakit,
                 ],
             ]);
-        } catch (\InvalidArgumentException $e) {
+        } catch (ForbiddenException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 403);
+        } catch (\DomainException|\InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    private function assertCanAccessNoRawat(?UserAccount $actor, string $noRawat): void
+    {
+        if ($actor === null) {
+            throw new ForbiddenException('Autentikasi diperlukan.');
+        }
+
+        $nr = (new NoRawat($noRawat))->value();
+        $stmt = $this->pdo->prepare('SELECT kd_poli, kd_dokter FROM reg_periksa WHERE no_rawat = :nr LIMIT 1');
+        $stmt->execute([':nr' => $nr]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            throw new \DomainException("Data registrasi kunjungan tidak ditemukan: {$nr}.");
+        }
+
+        $kdPoli = (string) ($row['kd_poli'] ?? '');
+        $kdDokter = (string) ($row['kd_dokter'] ?? '');
+
+        if (!$actor->canAccessPoli($kdPoli) && $actor->getUsername() !== $kdDokter) {
+            throw new ForbiddenException("Anda tidak memiliki izin melayani poliklinik {$kdPoli}.");
         }
     }
 

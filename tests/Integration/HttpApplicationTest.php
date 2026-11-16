@@ -178,4 +178,52 @@ class HttpApplicationTest extends TestCase
         $res = $this->app->handle('GET', '/api/stream?channel=dokter_DR001');
         $this->assertSame(403, $res['status']);
     }
+
+    public function testDokterRalanEndToEndSoapDiagnosaAndCrossPoliIdorProtection(): void
+    {
+        $today = date('Y-m-d');
+        $hash = password_hash('Dokter123!', PASSWORD_BCRYPT);
+        $this->pdo->exec("
+            INSERT INTO mlite_users (id, username, password, email, no_telp, fullname, role, cap, access, status)
+            VALUES (3, 'DR001', '{$hash}', 'dr001@medars.local', '', 'dr. Jaga Umum', 'dokter', 'UMU01', 'dokter_ralan', '1');
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Budi', '1990-01-01', 'L');
+            INSERT INTO dokter (kd_dokter, nm_dokter) VALUES ('DR002', 'drg. Gigi');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'UMU', 'Belum');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts)
+            VALUES ('002', '2026/11/16/000002', '{$today}', '08:10:00', 'DR002', '000001', 'GIG01', 'UMU', 'Belum');
+        ");
+
+        $this->session['user_id'] = 3;
+        $pageRes = $this->app->handle('GET', '/dokter-ralan');
+        $this->assertSame(200, $pageRes['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Simpan diagnosa via HTTP POST /api/v1/dokter-ralan/diagnosa
+        $dxRes = $this->app->handle(
+            'POST',
+            '/api/v1/dokter-ralan/diagnosa',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'kd_penyakit' => 'J06.9',
+                'status' => 'Ralan',
+                'prioritas' => 1,
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $dxRes['status']);
+
+        // 2. Anti-IDOR lintas-poli pada surat-sakit (DR001 mencoba terbitkan surat untuk pasien GIG01 milik DR002)
+        $idorRes = $this->app->handle(
+            'POST',
+            '/api/v1/dokter-ralan/surat-sakit',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000002',
+                'tanggal_awal' => $today,
+                'tanggal_akhir' => $today,
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(403, $idorRes['status']);
+    }
 }

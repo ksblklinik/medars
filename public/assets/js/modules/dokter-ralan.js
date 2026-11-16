@@ -155,8 +155,18 @@
 
         selectPatient: function (row) {
             this._activePatient = row;
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+            const form = document.getElementById('soapForm');
+            if (form) form.reset();
+
             document.getElementById('soapNoRawat').value = row.no_rawat;
             document.getElementById('soapNoRkmMedis').value = row.no_rkm_medis;
+            document.getElementById('soapTglPerawatan').value = todayStr;
+            document.getElementById('soapJamRawat').value = timeStr;
             document.getElementById('soapIsMetaDirty').value = '0';
             document.getElementById('soapMetaKey').value = '';
 
@@ -295,7 +305,29 @@
                                 rtl.value = (rtl.value ? rtl.value + '\n' : '') + item.referral_suggestion;
                             }
                         }
-                        this.showAlert('info', `Diagnosa <strong>${this.escapeHtml(item.kd_penyakit)}</strong> dipilih.`);
+
+                        const noRawat = document.getElementById('soapNoRawat').value;
+                        if (noRawat) {
+                            this.apiFetch('/api/v1/dokter-ralan/diagnosa', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    no_rawat: noRawat,
+                                    kd_penyakit: item.kd_penyakit,
+                                    status: 'Ralan',
+                                    prioritas: 1,
+                                }),
+                            })
+                            .then(res => res.json())
+                            .then(res => {
+                                this.showAlert(
+                                    res.status === 'success' ? 'success' : 'warning',
+                                    res.status === 'success' ? this.escapeHtml(res.message) : this.escapeHtml(res.message)
+                                );
+                            });
+                        } else {
+                            this.showAlert('info', `Diagnosa <strong>${this.escapeHtml(item.kd_penyakit)}</strong> dipilih.`);
+                        }
                     });
                     list.appendChild(btn);
                 });
