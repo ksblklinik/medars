@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Registration;
 
+use App\Domain\Registration\Entity\BookingRegistrasi;
 use App\Domain\Registration\Entity\Pasien;
 use App\Domain\Registration\Entity\PoliklinikSetting;
 use App\Domain\Registration\Entity\RegPeriksa;
@@ -146,5 +147,41 @@ final class RegistrationEntitiesTest extends TestCase
         $this->assertSame('A', $updatedRawat->prefik);
         $this->assertSame('1', $updatedRawat->room);
         $this->assertSame('07:00:00', $updatedRawat->shift);
+    }
+
+    public function test_booking_registrasi_tracks_state_and_today_validity(): void
+    {
+        $today = new \DateTimeImmutable('2026-11-16');
+        $booking = new BookingRegistrasi(
+            noRkmMedis: new NoRkmMedis('000123'),
+            tanggalPeriksa: $today,
+            kdPoli: 'U01',
+            kdDokter: 'DR001',
+            noReg: new NoReg('005'),
+            kdPj: 'BPJ',
+            status: 'Belum',
+            shift: '07:00:00'
+        );
+
+        $this->assertTrue($booking->isToday($today));
+        $this->assertTrue($booking->isPending());
+        $this->assertFalse($booking->isRegistered());
+        $this->assertSame('005', $booking->noReg->value());
+
+        $registered = $booking->withStatus('Terdaftar');
+        $this->assertTrue($registered->isRegistered());
+        $this->assertFalse($registered->isPending());
+
+        // Booking untuk besok
+        $tomorrowBooking = new BookingRegistrasi(
+            noRkmMedis: new NoRkmMedis('000123'),
+            tanggalPeriksa: new \DateTimeImmutable('2026-11-17'),
+            kdPoli: 'U01',
+            kdDokter: 'DR001',
+            noReg: new NoReg('001'),
+            kdPj: 'BPJ',
+            status: 'Belum'
+        );
+        $this->assertFalse($tomorrowBooking->isToday($today));
     }
 }
