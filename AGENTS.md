@@ -16,7 +16,7 @@ Dokumen ini adalah pedoman teknis resmi dan kontrak mutlak bagi Agen AI (Antigra
 ### 2. Clean Architecture / Hexagonal Pattern
 * **Domain Layer (Entities & Rules):** Murni aturan bisnis klinik, bebas dari dependensi framework, ORM, atau library HTTP.
 * **Application Layer (Use Cases / Services):** Mengorkestrasi aliran data antar-entitas, memvalidasi DTO (*Data Transfer Object*), dan mengelola batas transaksi database.
-* **Infrastructure Layer:** Implementasi konkret database repository, bridging HTTP eksternal (BPJS/SatuSehat), WhatsApp Gateway, dan Redis cache.
+* **Infrastructure Layer:** Implementasi konkret database repository dengan arsitektur Dual-Connection (`legacy` Read-Only via Anti-Corruption Layer vs `next` Read-Write), bridging HTTP eksternal (BPJS/SatuSehat), WhatsApp Gateway, dan Redis cache.
 * **Presentation Layer:** Controller API (REST/gRPC) dan antarmuka pengguna (Frontend/PWA).
 
 ### 3. Strict Type-Safety & Zero Technical Debt

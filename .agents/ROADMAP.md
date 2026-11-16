@@ -11,9 +11,11 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - Remote origin GitHub terhubung: `https://github.com/ksblklinik/medars.git`.
   - PHPUnit 11 terpasang dan lolos pengujian smoke test.
   - Mandat paritas visual 100% dan eliminasi hidden-show tercatat di PRD 10 & AGENTS.md.
-- [ ] **PLN-02: Database Connection & Transaction Manager (PRD 09)**
-  - Native PDO connection MySQL 8.0 terparameter (`utf8mb4`).
-  - Unit & Integration Test untuk rollback otomatis transaksi saat sub-query gagal.
+- [ ] **PLN-02: Dual-Connection, Transaction Manager & ACL Adapter (PRD 00 & PRD 09)**
+  - Dual-Connection: `legacy` (Read-Only SELECT ke database lama) vs `next` (Read-Write ke database baru).
+  - PdoTransactionManager: Transaksi atomik ACID + Nested Savepoints (`SAVEPOINT sp_n`).
+  - Anti-Corruption Layer (ACL) Adapter: Interface pembacaan aman data master eksisting (pasien, obat, SOAP) tanpa risiko korupsi data.
+  - Unit & Integration Test TDD untuk rollback otomatis dan proteksi read-only connection.
 - [ ] **PLN-03: Module Loader & Registry Kernel (PRD 12)**
   - Schema registry modul (`mlite_modules`) & lifecycle (install, activate, deactivate, uninstall).
 - [ ] **PLN-04: Master Layout Shell Paritas Eksisting (PRD 10)**
