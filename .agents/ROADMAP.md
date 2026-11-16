@@ -72,16 +72,19 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ## 🚧 Sedang Dikerjakan (IN PROGRESS)
 
-### [FASE-2] Rekam Medis Elektronik (RME) & SOAP Rawat Jalan (PRD 02)
-- [ ] **PLN-11: Value Objects & Composite Key RME (`pemeriksaan_ralan`)**
-  - Entitas `PemeriksaanRalan` (composite key: `no_rawat`, `tgl_perawatan`, `jam_rawat`).
-  - Strict types: Subjektif (`keluhan`), Objektif (`pemeriksaan`), Asesmen (`penilaian`), Planning (`instruksi`, `evaluasi`).
-  - Vital signs: `suhu_tubuh`, `tensi`, `nadi`, `respirasi`, `tinggi`, `berat`, `spo2`, `gcs`, `kesadaran`.
-- [ ] **PLN-12: Grounding ICD-10 SatuSehat & Riwayat Rekam Medis Pasien**
-  - Search & mapping diagnosa primer/sekunder ICD-10 (`penyakit`).
-  - Timeline riwayat medis longitudinal pasien lintas kunjungan (Medical History Smart Peek).
-- [ ] **PLN-13: UI/UX Form SOAP Dokter Dinamis & Template Resep Cepat**
-  - Antarmuka SOAP responsif identik ksmlite dengan hotkeys dokter.
+### [FASE-1B] Fondasi Autentikasi, RBAC, Kepegawaian, Master Data & Pengaturan (PRD 13)
+- [ ] **PLN-10A: Autentikasi, Keamanan Sesi, CSRF & RBAC Middleware (TDD)**
+  - `UserAccount` entity (`mlite_users`), `AuthService` (`password_verify()`, `session_regenerate_id(true)`), dan rate-limiter brute-force.
+  - Middleware `CsrfGuard` & `RbacGuard` (`role`, `access` per modul, `cap` cakupan poliklinik).
+  - `AuditLogService` (*append-only* `mlite_logs` untuk login, gagal login, dan mutasi sensitif).
+- [ ] **PLN-10B: Manajemen Pengguna & Kepegawaian (TDD)**
+  - CRUD User (`mlite_users`, `mlite_user_roles`) dengan proteksi Anti-Lockout (blokir hapus superadmin ID 1 atau hapus diri sendiri).
+  - Master SDM (`pegawai`, `dokter`, `petugas` termasuk NIP/SIP/STR) dengan *Soft-Deactivation* (`status = '0'`) agar histori RME/billing tetap utuh.
+- [ ] **PLN-10C: Master Data Operasional & Pengaturan Global (TDD)**
+  - CRUD `poliklinik` (termasuk pengaturan *data-driven* `allow_bpjs`, tarif baru/lama), `jadwal` dokter multi-shift (anti-overlap hari & jam), `penjab`, dan `jns_perawatan`.
+  - `SettingsService` (`mlite_settings` key-value per modul untuk identitas klinik & parameter fitur).
+- [ ] **PLN-10D: UI/UX Login, Manajemen Users, Kepegawaian, Master & Settings (Paritas ksmlite)**
+  - Halaman Login bersih, panel Manajemen User & Role/Cap, Master Poliklinik/Jadwal Dokter, dan Pengaturan Sistem dengan proteksi CSRF & XSS.
 
 ---
 
@@ -89,11 +92,12 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 | Kode Fase | Domain / Modul Utama | PRD Rujukan | Target Luaran Kunci |
 | :--- | :--- | :--- | :--- |
-| **FASE-2** | RME & SOAP Rawat Jalan | [`PRD 02`](file:///c:/aplikasi/rea-mlite/docs/prd/02_rekam_medis_dan_soap.md) | Composite key `pemeriksaan_ralan` (3 kolom), Form SOAP dinamis, Grounding ICD-10 & Medical History. |
-| **FASE-3** | E-Resep, Gudang Farmasi & Apotek | [`PRD 03`](file:///c:/aplikasi/rea-mlite/docs/prd/03_farmasi_dan_e_resep.md) | Resep non-racik vs racik, Offset jam racikan `+1 detik`, mutasi stok `gudangbarang`, isolasi `PO-APT-%`. |
-| **FASE-4** | Kasir, Billing Ledger & Akuntansi | [`PRD 04`](file:///c:/aplikasi/rea-mlite/docs/prd/04_kasir_billing_dan_akuntansi.md) | Split Billing 4-Pilar (`[T]`, `[K]`, `[NK]`, `[P]`), Jurnal Keuangan anti-delete void, Hotkeys Kasir (`F2`,`F8`,`F9`). |
-| **FASE-5** | Laboratorium & Radiologi | [`PRD 05`](file:///c:/aplikasi/rea-mlite/docs/prd/05_laboratorium_dan_radiologi.md) | Order penunjang dari RME dokter, input hasil & nilai rujukan, posting tarif otomatis ke billing. |
-| **FASE-6** | Bridging BPJS & SatuSehat | [`PRD 07`](file:///c:/aplikasi/rea-mlite/docs/prd/07_bridging_bpjs_dan_satusehat.md) | Zero-Latency Circuit Breaker, Antrean BPJS HFIS, VClaim/PCare, dan Bundle FHIR SatuSehat Kemenkes. |
+| **FASE-1B** | Auth, Users/RBAC, Kepegawaian, Master & Settings | [`PRD 13`](file:///c:/aplikasi/rea-mlite/docs/prd/13_pengguna_rbac_kepegawaian_master_settings.md) | Login, RBAC (`role`/`access`/`cap`), `pegawai`/`dokter`, Master Poliklinik (`allow_bpjs`) & Jadwal anti-overlap, `mlite_settings` & `mlite_logs`. |
+| **FASE-2** | RME, SOAP (Ralan/IGD/Ranap) & Surat Medis | [`PRD 02`](file:///c:/aplikasi/rea-mlite/docs/prd/02_rekam_medis_dan_soap.md) | Composite key `pemeriksaan_ralan`/`ranap`, Triase IGD, Form SOAP dinamis, Grounding ICD-10, Medical History Smart Peek, dan Cetak Surat Medis (`surat`). |
+| **FASE-3** | E-Resep, Gudang Farmasi & Apotek | [`PRD 03`](file:///c:/aplikasi/rea-mlite/docs/prd/03_farmasi_dan_e_resep.md) | Resep non-racik vs racik (Ralan/IGD/Ranap), Offset jam racikan `+1 detik`, mutasi stok `gudangbarang`, isolasi `PO-APT-%`. |
+| **FASE-4** | Kasir, Billing Ledger, Akuntansi & Rawat Inap | [`PRD 04`](file:///c:/aplikasi/rea-mlite/docs/prd/04_kasir_billing_dan_akuntansi.md) | Split Billing 4-Pilar (`[T]`, `[K]`, `[NK]`, `[P]`) untuk Ralan/IGD/Ranap (`kamar_inap`), Jurnal Keuangan anti-delete void, Hotkeys Kasir (`F2`,`F8`,`F9`). |
+| **FASE-5** | Laboratorium, Radiologi & Laporan Operasional | [`PRD 05`](file:///c:/aplikasi/rea-mlite/docs/prd/05_laboratorium_dan_radiologi.md) | Order penunjang dari RME dokter, input hasil & nilai rujukan, posting tarif otomatis ke billing, serta Laporan Kunjungan, 10 Besar Penyakit & Pendapatan. |
+| **FASE-6** | Bridging BPJS & SatuSehat | [`PRD 07`](file:///c:/aplikasi/rea-mlite/docs/prd/07_bridging_bpjs_dan_satusehat.md) | Zero-Latency Circuit Breaker, Antrean BPJS HFIS, VClaim/PCare, Verifikasi Klaim (`vedika`), dan Bundle FHIR SatuSehat Kemenkes. |
 | **FASE-7** | WA Gateway CRM & Homecare PWA | [`PRD 06`](file:///c:/aplikasi/rea-mlite/docs/prd/06_whatsapp_gateway_crm.md), [`PRD 08`](file:///c:/aplikasi/rea-mlite/docs/prd/08_homecare_dan_pendidikan.md) | WA Dual-Session (`system` vs `cs`) anti-banned whitelist, Homecare PWA mandiri & Trias Preceptorship. |
 | **FASE-8** | Audit ACID & Hardening Linux Staging | [`PRD 11`](file:///c:/aplikasi/rea-mlite/docs/prd/11_audit_acid_dan_keamanan.md) | Audit integritas multi-tabel, OWASP hardening (SQLi, XSS, CSRF), Uji drop-in di Linux Staging MySQL 8.0. |
 
