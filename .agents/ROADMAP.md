@@ -53,10 +53,10 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - Auto-regenerasi atomik untuk **`no_rawat` DAN `no_reg`** (`tgl_registrasi + kd_poli + kd_dokter + shift`) saat race condition insert.
   - Deteksi tunggakan biaya kunjungan sebelumnya (`hasUnpaidPreviousVisit`) & guard double-submit (`hasActiveRegistrationToday`).
   - Clinical Guard check (`hasClinicalRecords` mendeteksi SOAP, tindakan medis/paramedis, resep obat, lab, radiologi).
-- [ ] **PLN-08: Use-Case Dua Jalur (In-Site vs Mobile JKN Check-In) & Clinical Guard**
-  - Jalur A (In-Site): Reservasi `no_reg` terhadap `booking_registrasi`, cek setting poli, tunggakan kasir, idempotency guard (anti double-submit).
-  - Jalur B (Mobile JKN Check-In): Validasi tanggal & status booking, konversi ke `reg_periksa` dengan mempertahankan `no_reg` asli.
-  - Clinical Guard Shield & pengalihan tindakan awal ke dokter pengganti.
+- [x] **PLN-08: Use-Case Dua Jalur (In-Site vs Mobile JKN Check-In) & Clinical Guard (TDD)** (Selesai: 16-11-2026)
+  - Jalur A (In-Site Walk-In): Reservasi `no_reg` terhadap `booking_registrasi`, validasi pengaturan izin penjamin poli, blokir tunggakan kasir kunjungan sebelumnya, idempotency guard (anti double-submit), dan routing otomatis tanggal masa depan ke booking.
+  - Jalur B (Mobile JKN Check-In): Validasi tanggal hari ini & status booking belum terdaftar, eksekusi transaksi atomik konversi ke `reg_periksa` dengan mempertahankan `no_reg` asli dari booking, dan penanganan dokter pengganti.
+  - Clinical Guard Shield: Pencegahan manipulasi antrean/dokter bagi pasien yang sudah tercatat SOAP dokter, tindakan medis/paramedis, resep obat, atau order penunjang, serta pengalihan otomatis tindakan awal konsultasi ke dokter pengganti.
 - [ ] **PLN-09: Tampilan Form Registrasi & Modal Cari Pasien F4 Identik ksmlite**
 - [ ] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE**
 
@@ -88,3 +88,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-05** | Real-Time SSE Stream Engine | Implementasi engine Server-Sent Events (`EventMessage`, `InMemoryEventBroadcaster`, `SseStreamResponse`, heartbeat ping, SSE headers W3C), terverifikasi 5 test PASS (Total 28 test PASS). Seluruh Fase 0 Tuntas 100%. | 16-11-2026 |
 | **PLN-06** | Value Objects & Entities Registrasi | Implementasi `NoRkmMedis`, `NoRawat`, `NoReg` (digit validation & anti-000), `Pasien` (umur SIMRS & guard lahir masa depan), `PoliklinikSetting` (data-driven penjamin), `RegPeriksa` (`prefik`/`room`/`shift`), dan `BookingRegistrasi`. 13 test PASS. | 16-11-2026 |
 | **PLN-07** | Repository Dual-Connection ACL & Concurrency | `PdoPasienRepository` (fallback legacy Read-Only via `ReadOnlyConnectionGuard`, `getNextNoRkmMedis` lintas DB), `PdoBookingRegistrasiRepository`, `PdoRegPeriksaRepository` (reservasi antrean Walk-In vs Mobile JKN, auto-regenerasi atomik `no_rawat` & `no_reg`, clinical guard check). 11 test PASS (Total 62 test PASS). | 16-11-2026 |
+| **PLN-08** | Use-Case Dua Jalur Registrasi & Clinical Guard | `RegisterInSiteUseCase` (Walk-In, validasi tarif/umur/penjamin, guard tunggakan & double-submit, route booking masa depan), `CheckInMobileJknUseCase` (preservasi `no_reg` booking asli, ACID tx konversi `Terdaftar`, dokter pengganti), `ClinicalGuardShieldUseCase` (blokir ubah antrean berstatus SOAP/tindakan/resep/lab/rad). 11 test PASS (Total 73 test PASS). | 16-11-2026 |
