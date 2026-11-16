@@ -11,6 +11,11 @@ interface HomeCareRepositoryInterface
     public function hasActivePreceptorSk(string $nip, string $institusi): bool;
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function findKunjunganByNoRawat(NoRawat $noRawat): ?array;
+
+    /**
      * @return array<string, mixed>
      */
     public function assignPreceptor(

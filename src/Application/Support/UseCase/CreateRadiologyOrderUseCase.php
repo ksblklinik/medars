@@ -48,50 +48,64 @@ final readonly class CreateRadiologyOrderUseCase
             $grouped[$claimType][] = $item;
         }
 
-        return $this->tx->transaction(function () use ($noRawat, $dokterPerujuk, $grouped, $dateYmd, $tgl, $jam, $status): array {
-            $createdOrders = [];
-            foreach ($grouped as $claimTypeStr => $groupItems) {
-                $claimType = ClaimType::fromString($claimTypeStr);
-                $noOrder = $this->labRepo->getNextOrderNumber('PR', $dateYmd);
+        $maxRetries = 5;
+        $attempt = 0;
 
-                $order = new PermintaanRadiologi(
-                    noOrder: $noOrder,
-                    noRawat: $noRawat,
-                    tglPermintaan: $tgl,
-                    jamPermintaan: $jam,
-                    dokterPerujuk: $dokterPerujuk,
-                    jenisKlaim: $claimType,
-                    status: $status,
-                );
-                $this->labRepo->saveRadiologiOrder($order);
+        while (true) {
+            try {
+                return $this->tx->transaction(function () use ($noRawat, $dokterPerujuk, $grouped, $dateYmd, $tgl, $jam, $status): array {
+                    $createdOrders = [];
+                    foreach ($grouped as $claimTypeStr => $groupItems) {
+                        $claimType = ClaimType::fromString($claimTypeStr);
+                        $noOrder = $this->labRepo->getNextOrderNumber('PR', $dateYmd);
 
-                foreach ($groupItems as $item) {
-                    $kdJenisPrw = (string) $item['kd_jenis_prw'];
-                    $nmPerawatan = (string) $item['nm_perawatan'];
-                    $harga = (float) $item['harga'];
+                        $order = new PermintaanRadiologi(
+                            noOrder: $noOrder,
+                            noRawat: $noRawat,
+                            tglPermintaan: $tgl,
+                            jamPermintaan: $jam,
+                            dokterPerujuk: $dokterPerujuk,
+                            jenisKlaim: $claimType,
+                            status: $status,
+                        );
+                        $this->labRepo->saveRadiologiOrder($order);
 
-                    $this->labRepo->saveRadiologiItem($noOrder, $kdJenisPrw, $claimType->value());
+                        foreach ($groupItems as $item) {
+                            $kdJenisPrw = (string) $item['kd_jenis_prw'];
+                            $nmPerawatan = (string) $item['nm_perawatan'];
+                            $harga = (float) $item['harga'];
 
-                    $this->ledgerRepo->addItem(new BillingLedgerItem(
-                        id: null,
-                        noRawat: $noRawat,
-                        itemCode: $kdJenisPrw,
-                        itemName: $nmPerawatan,
-                        category: 'Radiologi',
-                        qty: 1.0,
-                        unitPrice: $harga,
-                        totalAmount: $harga,
-                        claimType: $claimType,
-                        status: LedgerStatus::fromString('Pending'),
-                        providerId: $noOrder,
-                        createdAt: $tgl . ' ' . $jam,
-                    ));
+                            $this->labRepo->saveRadiologiItem($noOrder, $kdJenisPrw, $claimType->value());
+
+                            $this->ledgerRepo->addItem(new BillingLedgerItem(
+                                id: null,
+                                noRawat: $noRawat,
+                                itemCode: $kdJenisPrw,
+                                itemName: $nmPerawatan,
+                                category: 'Radiologi',
+                                qty: 1.0,
+                                unitPrice: $harga,
+                                totalAmount: $harga,
+                                claimType: $claimType,
+                                status: LedgerStatus::fromString('Pending'),
+                                providerId: $noOrder,
+                                createdAt: $tgl . ' ' . $jam,
+                            ));
+                        }
+
+                        $createdOrders[] = $order;
+                    }
+
+                    return $createdOrders;
+                });
+            } catch (\PDOException $e) {
+                $sqlState = $e->errorInfo[0] ?? $e->getCode();
+                $attempt++;
+                if ($sqlState === '23000' && $attempt < $maxRetries) {
+                    continue;
                 }
-
-                $createdOrders[] = $order;
+                throw $e;
             }
-
-            return $createdOrders;
-        });
+        }
     }
 }

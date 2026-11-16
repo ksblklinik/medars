@@ -153,6 +153,18 @@ final readonly class PdoLabRadiologyRepository implements LabRadiologyRepository
 
     public function saveLabResult(DetailPeriksaLab $detail): void
     {
+        $del = $this->pdo->prepare(
+            'DELETE FROM detail_periksa_lab
+             WHERE no_rawat = :no_rawat AND kd_jenis_prw = :kd_jenis_prw AND tgl_periksa = :tgl_periksa AND jam = :jam AND pemeriksaan = :pemeriksaan'
+        );
+        $del->execute([
+            ':no_rawat' => $detail->noRawat->value(),
+            ':kd_jenis_prw' => $detail->kdJenisPrw,
+            ':tgl_periksa' => $detail->tglPeriksa,
+            ':jam' => $detail->jam,
+            ':pemeriksaan' => $detail->pemeriksaan,
+        ]);
+
         $stmt = $this->pdo->prepare(
             'INSERT INTO detail_periksa_lab (no_rawat, kd_jenis_prw, tgl_periksa, jam, pemeriksaan, nilai, nilai_rujukan, keterangan)
              VALUES (:no_rawat, :kd_jenis_prw, :tgl_periksa, :jam, :pemeriksaan, :nilai, :nilai_rujukan, :keterangan)'

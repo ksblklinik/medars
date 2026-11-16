@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Application\Bridging\UseCase;
 
 use App\Domain\Registration\ValueObject\NoRawat;
+use App\Infrastructure\Database\PdoTransactionManager;
+use App\Infrastructure\Database\TransactionManagerInterface;
 use PDO;
 
 final readonly class VerifyVedikaClaimUseCase
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(
+        private PDO $pdo,
+        private ?TransactionManagerInterface $tx = null,
+    ) {}
 
     /**
      * @return array{no_rawat: string, no_sep: string, status: string, catatan: string}
@@ -52,23 +57,25 @@ final readonly class VerifyVedikaClaimUseCase
         $catatan = $issues === [] ? 'Berkas klaim lengkap' : implode('; ', $issues);
         $now = date('Y-m-d H:i:s');
 
-        // Portable upsert (DELETE + INSERT in or single check) compatible with both SQLite and MySQL 8.0
-        $del = $this->pdo->prepare('DELETE FROM mlite_vedika WHERE no_rawat = :nr');
-        $del->execute([':nr' => $nr]);
+        $tx = $this->tx ?? new PdoTransactionManager($this->pdo);
+        $tx->transaction(function () use ($nr, $trimmedSep, $jenisPelayanan, $status, $catatan, $verifiedBy, $now): void {
+            $del = $this->pdo->prepare('DELETE FROM mlite_vedika WHERE no_rawat = :nr');
+            $del->execute([':nr' => $nr]);
 
-        $ins = $this->pdo->prepare(
-            'INSERT INTO mlite_vedika (no_rawat, no_sep, jenis_pelayanan, status, catatan, verified_by, verified_at)
-             VALUES (:nr, :sep, :jp, :stts, :cat, :by, :at)'
-        );
-        $ins->execute([
-            ':nr' => $nr,
-            ':sep' => $trimmedSep,
-            ':jp' => $jenisPelayanan,
-            ':stts' => $status,
-            ':cat' => $catatan,
-            ':by' => $verifiedBy,
-            ':at' => $now,
-        ]);
+            $ins = $this->pdo->prepare(
+                'INSERT INTO mlite_vedika (no_rawat, no_sep, jenis_pelayanan, status, catatan, verified_by, verified_at)
+                 VALUES (:nr, :sep, :jp, :stts, :cat, :by, :at)'
+            );
+            $ins->execute([
+                ':nr' => $nr,
+                ':sep' => $trimmedSep,
+                ':jp' => $jenisPelayanan,
+                ':stts' => $status,
+                ':cat' => $catatan,
+                ':by' => $verifiedBy,
+                ':at' => $now,
+            ]);
+        });
 
         return [
             'no_rawat' => $nr,

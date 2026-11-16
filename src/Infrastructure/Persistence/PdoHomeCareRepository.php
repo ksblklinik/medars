@@ -25,6 +25,16 @@ final readonly class PdoHomeCareRepository implements HomeCareRepositoryInterfac
         return ((int) $stmt->fetchColumn()) > 0;
     }
 
+    public function findKunjunganByNoRawat(NoRawat $noRawat): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM mlite_homecare_kunjungan WHERE no_rawat = :nr ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute([':nr' => $noRawat->value()]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return is_array($row) ? $row : null;
+    }
+
     public function assignPreceptor(
         NoRawat $noRawat,
         string $nip,

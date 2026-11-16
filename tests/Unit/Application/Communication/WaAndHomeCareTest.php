@@ -197,6 +197,12 @@ class WaAndHomeCareTest extends TestCase
             INSERT INTO mlite_homecare_preceptor_sk (nip, nama_nakes, institusi, no_sk, status)
             VALUES ('NIP001', 'Ns. Rina, S.Kep', 'STIKES Harapan', 'SK/2026/001', 'Aktif');
         ");
+        $this->homeCareRepo->createKunjungan([
+            'no_rawat' => '2026/11/16/000001',
+            'tgl_kunjungan' => date('Y-m-d'),
+            'jam_kunjungan' => '09:00:00',
+            'kd_dokter_dpjp' => 'DR001',
+        ]);
 
         $useCase = new AssignHomeCarePreceptorUseCase($this->homeCareRepo);
 

@@ -23,6 +23,13 @@ final readonly class AssignHomeCarePreceptorUseCase
         string $mahasiswaNim,
         string $supervisorId,
     ): array {
+        $visit = $this->homeCareRepo->findKunjunganByNoRawat($noRawat);
+        if ($visit === null) {
+            throw new \DomainException("Kunjungan Home Care untuk '{$noRawat->value()}' tidak ditemukan.");
+        }
+
+        $this->assertDpjpNotAssignedPreceptorTask((string) ($visit['kd_dokter_dpjp'] ?? ''), $preceptorNip);
+
         if (!$this->homeCareRepo->hasActivePreceptorSk($preceptorNip, $institusi)) {
             throw new \DomainException(
                 "Nakes preceptor '{$preceptorNip}' tidak memiliki SK Penugasan resmi yang aktif untuk institusi '{$institusi}'."
