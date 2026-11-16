@@ -73,15 +73,15 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 ## 🎯 Fase Aktif Saat Ini: FASE-3 (E-Resep, Gudang Farmasi & Apotek)
 
 - [ ] **PLN-15: Value Objects, Entities Farmasi & Uniform Flat Pricing SSOT (TDD)**
-  - Entitas `ResepObat`, `ResepDokterNonRacikan` (tabel fisik `resep_dokter_nonracikan`), `ResepDokterRacikan`, `ResepDokterRacikanDetail`, `ObatRacikan`, `DetailPemberianObat`, dan `GudangBarang`.
+  - Entitas `ResepObat` (`no_resep` `YYYYMMDD0001`), `ResepDokterNonRacikan` (tabel fisik `resep_dokter_nonracikan`), `ResepDokterRacikan`, `ResepDokterRacikanDetail`, `ObatRacikan`, `DetailPemberianObat` (**composite key 6 kolom: `tgl_perawatan`, `jam`, `no_rawat`, `kode_brng`, `no_batch`, `no_faktur`**), dan `GudangBarang` (`kode_brng`, `kd_bangsal`, `no_batch`, `no_faktur`, `stok`).
   - Nilai tarif seragam (*Uniform Flat Pricing SSOT*): `harga_tunai`, `harga_kapitasi`, `harga_nonkapitasi`, `jualbebas`, `dasar`/`h_beli` (tanpa kolom tarif kelas kamar).
   - Penentuan *SSOT Jenis Klaim* murni dari nilai tarif non-zero (`harga_* > 0`) tanpa pembatasan gate `kd_pj`.
 - [ ] **PLN-16: Migrasi Skema Farmasi, Repositories, Isolasi Depo & Stok Anti-Negatif (TDD)**
-  - Tambahkan DDL tabel farmasi (`databarang`, `resep_obat`, `resep_dokter_nonracikan`, `resep_dokter_racikan`, `resep_dokter_racikan_detail`, `obat_racikan`, `detail_pemberian_obat`, `gudangbarang`, `riwayat_barang_medis`) ke `SchemaMigrator` (lintas-driver SQLite & MySQL 8.0 `VARCHAR` keys).
+  - Tambahkan DDL tabel farmasi (`databarang`, `resep_obat`, `resep_dokter_nonracikan`, `resep_dokter_racikan`, `resep_dokter_racikan_detail`, `obat_racikan`, `detail_pemberian_obat`, `gudangbarang`, `riwayat_barang_medis`) ke `SchemaMigrator` (lintas-driver SQLite & MySQL 8.0 `VARCHAR` keys, lengkap dengan `no_batch` & `no_faktur`).
   - Isolasi Depo IGD (`kd_bangsal = 'IGD'`) vs Depo Apotek Umum (`kd_bangsal = 'APT'`) vs Depo Ralan/Ranap, serta *Smart Claim Sorting* untuk pasien BPJS (`Kapitasi` ➔ `Non-Kapitasi` ➔ `Tunai`).
-  - Mutasi stok atomik `gudangbarang` & `riwayat_barang_medis` dalam transaksi ACID dengan guard penolakan stok keluar melebihi saldo tersedia (anti-stok-negatif).
+  - Mutasi stok atomik `gudangbarang` & `riwayat_barang_medis` dalam transaksi ACID dengan guard penolakan stok keluar melebihi saldo tersedia (anti-stok-negatif) serta generator `no_resep` atomik ber-retry.
 - [ ] **PLN-17: Use-Case Validasi E-Resep, Racikan +1 Detik, Delete & Copy Resep (TDD)**
-  - `DispenseResepUseCase`: validasi penyerahan resep & pemberian **offset waktu `+1 detik`** pada `detail_pemberian_obat.jam` untuk seluruh bahan obat racikan agar terpisah tegas dari obat non-racikan.
+  - `DispenseResepUseCase`: validasi penyerahan resep & pemberian **offset waktu `+1 detik`** menggunakan `DateTimeImmutable::modify('+1 second')` (aman pada batas `23:59:59` agar `tgl_perawatan` & `jam` konsisten) pada `detail_pemberian_obat` untuk seluruh bahan obat racikan agar terpisah tegas dari obat non-racikan.
   - `DeleteResepUseCase` & `SaveCopyResepUseCase`: penghapusan/penyalinan resep atomik dalam transaksi ACID dengan *Clinical Guard* (memblokir hapus resep yang sudah divalidasi/diserahkan).
 - [ ] **PLN-18: UI/UX E-Resep Dokter & Validasi Apotek Ralan/Ranap (Paritas ksmlite)**
   - Antarmuka E-Resep (obat jadi vs racikan multi-bahan, kontrak atribut `data-selected_klaim`), verifikasi apoteker, dan cetak etiket obat dengan debounce `200ms` + `AbortController` (tetap mendukung nama obat pendek seperti B6, Zn, CTM).

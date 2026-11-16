@@ -278,7 +278,10 @@
 
         saveSoap: function () {
             const noRawat = document.getElementById('soapNoRawat').value;
-            if (!noRawat) return;
+            if (!noRawat) {
+                this.showAlert('warning', 'Pilih pasien dari antrean terlebih dahulu.');
+                return;
+            }
 
             const form = document.getElementById('soapForm');
             const fd = new FormData(form);
@@ -393,7 +396,10 @@
 
         savePrb: function () {
             const noRawat = document.getElementById('soapNoRawat').value;
-            if (!noRawat) return;
+            if (!noRawat) {
+                this.showAlert('warning', 'Pilih pasien dari antrean terlebih dahulu.');
+                return;
+            }
 
             const payload = {
                 no_rawat: noRawat,
@@ -432,7 +438,10 @@
         saveOdontogram: function () {
             const noRawat = document.getElementById('soapNoRawat').value;
             const noRm = document.getElementById('soapNoRkmMedis').value;
-            if (!noRawat || !noRm) return;
+            if (!noRawat || !noRm) {
+                this.showAlert('warning', 'Pilih pasien dari antrean terlebih dahulu.');
+                return;
+            }
 
             this.apiFetch('/api/v1/dokter-ralan/odontogram/save', {
                 method: 'POST',
@@ -456,7 +465,10 @@
 
         createSuratSakit: function () {
             const noRawat = document.getElementById('soapNoRawat').value;
-            if (!noRawat) return;
+            if (!noRawat) {
+                this.showAlert('warning', 'Pilih pasien dari antrean terlebih dahulu.');
+                return;
+            }
 
             this.apiFetch('/api/v1/dokter-ralan/surat-sakit', {
                 method: 'POST',
