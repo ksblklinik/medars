@@ -41,14 +41,19 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 ## 🚧 Sedang Dikerjakan (IN PROGRESS)
 
 ### [FASE-1] Pendaftaran, Pasien & Kiosk Antrean (PRD 01)
-- [x] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)** (Selesai: 16-11-2026)
+- [x] **PLN-06: Entity & Value Objects Pasien & Registrasi (PRD 00 & PRD 01)** (Selesai Awal: 16-11-2026)
   - `NoRkmMedis` (string format leading zeros `000123`), `NoRawat` (`YYYY/MM/DD/000001`), `NoReg` (`001`).
   - `PoliklinikSetting` (aturan data-driven `allowBpjs` per poli, tanpa hardcode `PEX`).
   - `Pasien` (perhitungan umur `Th`/`Bl`/`Hr`) & `RegPeriksa` (immutable entity).
-  - Lolos 8 skenario pengujian TDD Unit Test.
-- [ ] **PLN-07: Repository & Auto-Regenerasi Race Condition No Rawat**
-  - TDD concurrency test auto-regenerasi nomor rawat bertabrakan di detik yang sama.
-- [ ] **PLN-08: Use-Case Pendaftaran In-Site vs Check-In Booking Mobile JKN + Clinical Guard**
+  - *Hardening Tertunda sebelum PLN-07:* Tambah `prefik`, `room`, `shift` ke `RegPeriksa`, validasi tanggal lahir masa depan di `Pasien`, dan blokir `'000'` di `NoReg`.
+- [ ] **PLN-07: Repository Dual-Connection ACL & Konkurensi Penomoran**
+  - Pencarian pasien lintas koneksi (`legacy` Read-Only + `next` Read-Write).
+  - Generator `no_rkm_medis` lintas DB (`MAX(legacy, next) + 1`) anti-tabrakan.
+  - Auto-regenerasi atomik untuk **`no_rawat` DAN `no_reg`** (`tgl_registrasi + kd_poli + kd_dokter + shift`) saat race condition.
+- [ ] **PLN-08: Use-Case Dua Jalur (In-Site vs Mobile JKN Check-In) & Clinical Guard**
+  - Jalur A (In-Site): Reservasi `no_reg` terhadap `booking_registrasi`, cek setting poli, tunggakan kasir, idempotency guard (anti double-submit).
+  - Jalur B (Mobile JKN Check-In): Validasi tanggal & status booking, konversi ke `reg_periksa` dengan mempertahankan `no_reg` asli.
+  - Clinical Guard Shield & pengalihan tindakan awal ke dokter pengganti.
 - [ ] **PLN-09: Tampilan Form Registrasi & Modal Cari Pasien F4 Identik ksmlite**
 - [ ] **PLN-10: Display TV Antrean & Kiosk Mandiri Real-Time SSE**
 
