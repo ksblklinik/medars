@@ -9,7 +9,7 @@ use App\Domain\Security\Entity\UserAccount;
 final class NavigationBuilder
 {
     /**
-     * @return list<array{title: string, icon: string, route: string, modules: list<string>}>
+     * @return list<array{title: string, icon: string, route: string, category: string, module_key: string, modules: list<string>}>
      */
     private function catalog(): array
     {
@@ -18,91 +18,119 @@ final class NavigationBuilder
                 'title' => 'Dashboard',
                 'icon' => 'fa-gauge',
                 'route' => '/',
+                'category' => 'Utama',
+                'module_key' => 'dashboard',
                 'modules' => [],
             ],
             [
                 'title' => 'Pendaftaran',
                 'icon' => 'fa-user-plus',
                 'route' => '/pendaftaran',
+                'category' => 'Layanan',
+                'module_key' => 'pendaftaran',
                 'modules' => ['pendaftaran'],
             ],
             [
-                'title' => 'Rawat Jalan',
+                'title' => 'Dokter Ralan',
                 'icon' => 'fa-stethoscope',
                 'route' => '/dokter-ralan',
+                'category' => 'Layanan',
+                'module_key' => 'dokter_ralan',
                 'modules' => ['dokter_ralan', 'rawat_jalan'],
             ],
             [
                 'title' => 'Farmasi',
                 'icon' => 'fa-pills',
                 'route' => '/farmasi',
+                'category' => 'Farmasi',
+                'module_key' => 'farmasi',
                 'modules' => ['farmasi', 'apotek_ralan'],
             ],
             [
                 'title' => 'Kasir',
                 'icon' => 'fa-cash-register',
                 'route' => '/kasir',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'kasir',
                 'modules' => ['kasir', 'kasir_rawat_jalan'],
             ],
             [
                 'title' => 'Laboratorium',
                 'icon' => 'fa-flask',
                 'route' => '/laboratorium',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'laboratorium',
                 'modules' => ['laboratorium'],
             ],
             [
                 'title' => 'Radiologi',
                 'icon' => 'fa-x-ray',
                 'route' => '/radiologi',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'radiologi',
                 'modules' => ['radiologi'],
             ],
             [
                 'title' => 'Laporan',
                 'icon' => 'fa-chart-bar',
                 'route' => '/laporan',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'laporan',
                 'modules' => ['laporan'],
             ],
             [
                 'title' => 'Bridging BPJS',
                 'icon' => 'fa-network-wired',
                 'route' => '/bridging',
+                'category' => 'Bridging & CRM',
+                'module_key' => 'bridging',
                 'modules' => ['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika'],
             ],
             [
                 'title' => 'WhatsApp CRM',
                 'icon' => 'fa-brands fa-whatsapp',
                 'route' => '/wagateway',
+                'category' => 'Bridging & CRM',
+                'module_key' => 'wagateway',
                 'modules' => ['wagateway', 'crm'],
             ],
             [
                 'title' => 'Home Care',
                 'icon' => 'fa-house-medical',
                 'route' => '/homecare',
+                'category' => 'Layanan',
+                'module_key' => 'homecare',
                 'modules' => ['home_care', 'homecare'],
             ],
             [
                 'title' => 'Audit ACID',
                 'icon' => 'fa-shield-halved',
                 'route' => '/audit',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'audit',
                 'modules' => ['audit', 'admin'],
             ],
             [
                 'title' => 'Pengguna',
                 'icon' => 'fa-users',
                 'route' => '/users',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'users',
                 'modules' => ['users'],
             ],
             [
                 'title' => 'Pengaturan',
                 'icon' => 'fa-gear',
                 'route' => '/settings',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'settings',
                 'modules' => ['settings'],
             ],
         ];
     }
 
     /**
-     * @return list<array{title: string, icon: string, route: string}>
+     * @return list<array{title: string, icon: string, route: string, category: string, module_key: string}>
      */
     public function buildForUser(?UserAccount $user): array
     {
@@ -113,6 +141,8 @@ final class NavigationBuilder
                     'title' => $entry['title'],
                     'icon' => $entry['icon'],
                     'route' => $entry['route'],
+                    'category' => $entry['category'],
+                    'module_key' => $entry['module_key'],
                 ];
                 continue;
             }
@@ -127,6 +157,8 @@ final class NavigationBuilder
                         'title' => $entry['title'],
                         'icon' => $entry['icon'],
                         'route' => $entry['route'],
+                        'category' => $entry['category'],
+                        'module_key' => $entry['module_key'],
                     ];
                     break;
                 }
@@ -134,5 +166,25 @@ final class NavigationBuilder
         }
 
         return $items;
+    }
+
+    /**
+     * @return array<string, list<array{title: string, icon: string, route: string, module_key: string}>>
+     */
+    public function buildGroupedForUser(?UserAccount $user): array
+    {
+        $grouped = [];
+        foreach ($this->buildForUser($user) as $item) {
+            if ($item['category'] === 'Utama') {
+                continue;
+            }
+            $grouped[$item['category']][] = [
+                'title' => $item['title'],
+                'icon' => $item['icon'],
+                'route' => $item['route'],
+                'module_key' => $item['module_key'],
+            ];
+        }
+        return $grouped;
     }
 }

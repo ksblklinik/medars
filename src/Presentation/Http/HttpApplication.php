@@ -418,6 +418,24 @@ final class HttpApplication
         // --- RUTE TERPROTEKSI SESI, RBAC & CSRF ---
         $renderDashboard = function (): string {
             $user = $this->requireAuthenticatedUser();
+            $today = date('Y-m-d');
+            $safeCount = function (string $sql, array $params = []): int {
+                try {
+                    $stmt = $this->pdo->prepare($sql);
+                    $stmt->execute($params);
+                    return (int) $stmt->fetchColumn();
+                } catch (\Throwable) {
+                    return 0;
+                }
+            };
+
+            $stats = [
+                'visits_today' => $safeCount('SELECT COUNT(*) FROM reg_periksa WHERE tgl_registrasi = :d', [':d' => $today]),
+                'soap_done' => $safeCount("SELECT COUNT(*) FROM reg_periksa WHERE tgl_registrasi = :d AND stts = 'Sudah'", [':d' => $today]),
+                'resep_pending' => $safeCount("SELECT COUNT(*) FROM resep_obat WHERE tgl_peresepan = :d AND (tgl_perawatan = '0000-00-00' OR tgl_perawatan IS NULL)", [':d' => $today]),
+                'kasir_pending' => $safeCount("SELECT COUNT(DISTINCT no_rawat) FROM mlite_billing_ledger WHERE status = 'Pending'"),
+            ];
+
             return $this->renderer->render('dashboard', [
                 'judul' => 'Dashboard Utama',
                 'klinik_nama' => 'SIMRS Medars',
@@ -427,6 +445,7 @@ final class HttpApplication
                 'user_role' => $user->getRole(),
                 'csrf_token' => $this->csrfGuard->getToken(),
                 'navigations' => $this->navBuilder->buildForUser($user),
+                'dashboard_stats' => $stats,
             ]);
         };
         $router->get('/', $renderDashboard);
