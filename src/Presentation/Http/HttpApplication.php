@@ -11,6 +11,9 @@ use App\Application\Billing\UseCase\VoidBillingTransactionUseCase;
 use App\Application\Bridging\UseCase\ProcessBridgingQueueUseCase;
 use App\Application\Bridging\UseCase\QueueSatuSehatSyncUseCase;
 use App\Application\Bridging\UseCase\VerifyVedikaClaimUseCase;
+use App\Application\Communication\UseCase\AssignHomeCarePreceptorUseCase;
+use App\Application\Communication\UseCase\ProcessInboundWaWebhookUseCase;
+use App\Application\Communication\UseCase\SendWhatsAppMessageUseCase;
 use App\Application\Pharmacy\UseCase\CreateResepUseCase;
 use App\Application\Pharmacy\UseCase\DeleteResepUseCase;
 use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
@@ -37,6 +40,7 @@ use App\Domain\Security\Exception\ForbiddenException;
 use App\Domain\Security\Exception\UnauthorizedException;
 use App\Domain\Setting\Service\SettingService;
 use App\Infrastructure\Database\PdoTransactionManager;
+use App\Infrastructure\Communication\CurlWaClient;
 use App\Infrastructure\Http\CurlHttpClient;
 use App\Infrastructure\Persistence\PdoAuditLogRepository;
 use App\Infrastructure\Persistence\PdoBillingLedgerRepository;
@@ -44,6 +48,7 @@ use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
 use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
+use App\Infrastructure\Persistence\PdoHomeCareRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
 use App\Infrastructure\Persistence\PdoLabRadiologyRepository;
 use App\Infrastructure\Persistence\PdoOdontogramRepository;
@@ -58,6 +63,7 @@ use App\Infrastructure\Persistence\PdoRmeHistoryRepository;
 use App\Infrastructure\Persistence\PdoSettingRepository;
 use App\Infrastructure\Persistence\PdoSuratMedisRepository;
 use App\Infrastructure\Persistence\PdoUserRepository;
+use App\Infrastructure\Persistence\PdoWaGatewayRepository;
 use App\Infrastructure\Realtime\EventMessage;
 use App\Infrastructure\Realtime\PdoEventBroadcaster;
 use App\Infrastructure\Realtime\SseStreamResponse;
@@ -314,6 +320,22 @@ final class HttpApplication
             new QueueSatuSehatSyncUseCase($bridgingQueueRepo),
             new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy),
             new VerifyVedikaClaimUseCase($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
+        $waRepo = new PdoWaGatewayRepository($this->pdo);
+        $homeCareRepo = new PdoHomeCareRepository($this->pdo);
+        $waClient = new CurlWaClient(
+            (string) $settingService->get('wagateway', 'api_url', '-'),
+            (string) $settingService->get('wagateway', 'api_token', '-')
+        );
+        $communicationController = new CommunicationController(
+            $waRepo,
+            $homeCareRepo,
+            new SendWhatsAppMessageUseCase($waRepo, $waClient),
+            new ProcessInboundWaWebhookUseCase($this->pdo, $waRepo, $waClient),
+            new AssignHomeCarePreceptorUseCase($homeCareRepo),
             $this->renderer,
             $this->navBuilder
         );
@@ -682,6 +704,58 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $bridgingController->verifyVedika($data, $user->getUsername());
+        });
+
+        // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)
+        $router->get('/wagateway', function () use ($communicationController): array {
+            $user = $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            return $communicationController->indexWa($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/homecare', function () use ($communicationController): array {
+            $user = $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'dokter_ralan', 'rawat_jalan']);
+            return $communicationController->indexHomeCare($user, $this->csrfGuard->getToken());
+        });
+
+        $router->post('/api/v1/wagateway/send', function () use ($communicationController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin', 'pendaftaran', 'farmasi', 'kasir']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $communicationController->apiSendWa($user, $data);
+        });
+        $router->post('/api/v1/wagateway/webhook', function () use ($communicationController, $postData, $rawBody, $headers): array {
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $communicationController->apiInboundWebhook($data);
+        });
+        $router->get('/api/v1/wagateway/outbox', function () use ($communicationController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            return $communicationController->apiListWaOutbox($queryParams);
+        });
+        $router->get('/api/v1/wagateway/whitelist', function () use ($communicationController): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            return $communicationController->apiListWaWhitelist();
+        });
+        $router->post('/api/v1/wagateway/whitelist', function () use ($communicationController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $communicationController->apiAddWaWhitelist($data);
+        });
+
+        $router->post('/api/v1/homecare/kunjungan', function () use ($communicationController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $communicationController->apiCreateHomeCare($data);
+        });
+        $router->post('/api/v1/homecare/preceptor/assign', function () use ($communicationController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $communicationController->apiAssignPreceptor($data);
+        });
+        $router->get('/api/v1/homecare/supervisor/visits', function () use ($communicationController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'admin']);
+            return $communicationController->apiSupervisorVisits($queryParams);
         });
 
         return $router->dispatch($method, $path);

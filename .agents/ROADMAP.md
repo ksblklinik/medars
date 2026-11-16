@@ -70,21 +70,19 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-7 (WA Gateway CRM & Homecare PWA)
+## 🎯 Fase Aktif Saat Ini: FASE-8 (Audit ACID, OWASP Hardening & Linux Staging Drop-in)
 
-- [x] **PLN-27: Value Objects, Circuit Breaker & Config Bridging BPJS / SatuSehat (TDD)** ✅ *(SELESAI — 223 tests, 877 assertions PASS)*
-  - `BridgingCredentials`, `TimeoutPolicy` (connect `<= 2s`, execution `<= 4s`), `BpjsGatewayService` Zero-Latency Circuit Breaker (`0ms` mock saat kredensial kosong/`-`/`0`/`12345`).
-- [x] **PLN-28: Service VClaim/PCare, HFIS LEAN Board & Verifikasi Klaim Vedika (TDD)** ✅ *(SELESAI)*
-  - `HfisLeanCalculator` (Shift Pagi `08:00:00`, Sore Gigi `15:00:00`, Sore Non-Gigi `16:00:00`, Saran Tiba, & *Net Signed Avg*) serta `VerifyVedikaClaimUseCase`.
-- [x] **PLN-29: FHIR Bundle Builder & SatuSehat Sync Worker (TDD)** ✅ *(SELESAI)*
-  - Skema `bridging_sync_queue` & `mlite_vedika`, `QueueSatuSehatSyncUseCase` (non-blocking async queue), dan `ProcessBridgingQueueUseCase`.
-- [x] **PLN-30: UI/UX Monitoring Bridging, HFIS Board & E2E Integration (Paritas ksmlite)** ✅ *(SELESAI)*
-  - `BridgingController`, `templates/bridging/index.php`, `public/assets/js/modules/bridging.js`, rute `/bridging` & `/api/v1/bridging/*`, serta E2E `testBridgingCircuitBreakerAndSatuSehatQueueEndToEnd`.
+- [x] **PLN-31: Dual-Session WA Gateway (`system` vs `cs`), Whitelist & Anti-Banned Spintax (TDD)** ✅ *(SELESAI — 237 tests, 937 assertions PASS)*
+  - `IndonesianPhoneNumber` (regex `628[1-9]`), `WaSpintax`, `WaSessionManager` (`system` vs `cs`, bot dilarang di sesi `system`, graceful `skip_qr` saat offline), `SendWhatsAppMessageUseCase` (Whitelist gate non-admin & circuit breaker 3x failure abort), `ProcessInboundWaWebhookUseCase` (Zero-Reply QR check-in).
+- [x] **PLN-32: Homecare PWA Mandiri & Trias Preceptorship Privacy Shield (TDD)** ✅ *(SELESAI)*
+  - `HomeCarePrivacyShield::pseudonymize` (`Ny. S*** (56 Th, P)` untuk Supervisor CI Dosen), `AssignHomeCarePreceptorUseCase` (validasi SK aktif institusi & larangan DPJP merangkap grading), tabel `mlite_homecare_kunjungan` & `mlite_homecare_preceptor_sk`.
+- [x] **PLN-33: UI/UX WA CRM & Homecare + E2E Integration (Paritas ksmlite)** ✅ *(SELESAI)*
+  - `CommunicationController`, `templates/communication/wa_index.php`, `templates/communication/homecare_index.php`, `wagateway.js`, `homecare.js`, routes `/wagateway`, `/homecare`, `/api/v1/wagateway/*`, `/api/v1/homecare/*`, serta E2E `testWaGatewayAndHomeCareEndToEnd`.
 
-### Antrean Tugas FASE-7 (WA Gateway CRM & Homecare PWA)
-- [ ] **PLN-31: Dual-Session WA Gateway (`system` vs `cs`), Whitelist & Anti-Banned Spintax (TDD)**
-- [ ] **PLN-32: Homecare PWA Mandiri & Trias Preceptorship Privacy Shield (TDD)**
-- [ ] **PLN-33: UI/UX WA CRM & Homecare + E2E Integration (Paritas ksmlite)**
+### Antrean Tugas FASE-8 (Audit ACID, OWASP Hardening & Linux Staging Drop-in)
+- [ ] **PLN-34: Multi-Table ACID Transaction Audit & Data Integrity Checkers (TDD)**
+- [ ] **PLN-35: OWASP Hardening (Strict CSRF, SQLi Parameterization, Scoped XSS, Header Isolation) (TDD)**
+- [ ] **PLN-36: Verification & Final Polish across Linux/MySQL Staging Compatibility**
 
 ---
 

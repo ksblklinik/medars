@@ -44,7 +44,7 @@ final readonly class PdoBridgingQueueRepository implements BridgingQueueReposito
     public function fetchPending(int $limit = 10): array
     {
         $stmt = $this->pdo->prepare(
-            "SELECT * FROM bridging_sync_queue WHERE status = 'Pending' ORDER BY id ASC LIMIT :lim"
+            "SELECT * FROM bridging_sync_queue WHERE status = 'Pending' AND attempts < 5 ORDER BY id ASC LIMIT :lim"
         );
         $stmt->bindValue(':lim', max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();

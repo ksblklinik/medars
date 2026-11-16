@@ -486,4 +486,90 @@ class HttpApplicationTest extends TestCase
         $vData = json_decode($vRes['body'], true);
         $this->assertSame('Layak', $vData['verification']['status']);
     }
+
+    public function testWaGatewayAndHomeCareEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000001', 'Siti Aminah', '1970-05-10', 'P');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/16/000001', '{$today}', '08:00:00', 'DR001', '000001', 'UMU01', 'BPJ', 'Belum Bayar');
+            INSERT INTO mlite_homecare_preceptor_sk (nip, nama_nakes, institusi, no_sk, status)
+            VALUES ('NIP001', 'Ns. Rina, S.Kep', 'STIKES Harapan', 'SK/2026/001', 'Aktif');
+        ");
+
+        $this->session['user_id'] = 1;
+        $waPage = $this->app->handle('GET', '/wagateway');
+        $this->assertSame(200, $waPage['status']);
+        $this->assertStringContainsString('WhatsApp Gateway', $waPage['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Kirim pesan WA (admin)
+        $sendRes = $this->app->handle(
+            'POST',
+            '/api/v1/wagateway/send',
+            rawBody: json_encode([
+                'phone' => '081234567890',
+                'message' => 'Tes Notifikasi WA SIMRS Medars',
+                'session' => 'system',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $sendRes['status']);
+        $sendData = json_decode($sendRes['body'], true);
+        $this->assertSame('Sent', $sendData['result']['status']);
+
+        // 2. Inbound Webhook QR check-in (Zero-Reply Policy)
+        $hookRes = $this->app->handle(
+            'POST',
+            '/api/v1/wagateway/webhook',
+            rawBody: json_encode([
+                'session' => 'system',
+                'phone' => '6281234567890',
+                'message' => 'CHECKIN 2026/11/16/000001',
+            ]),
+            headers: ['Content-Type' => 'application/json']
+        );
+        $this->assertSame(200, $hookRes['status']);
+        $hookData = json_decode($hookRes['body'], true);
+        $this->assertTrue($hookData['result']['verified']);
+        $this->assertSame(0, $hookData['result']['outbound_sent_count']);
+
+        // 3. Home Care: buat kunjungan dan tugaskan preceptor
+        $createRes = $this->app->handle(
+            'POST',
+            '/api/v1/homecare/kunjungan',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'tgl_kunjungan' => $today,
+                'jam_kunjungan' => '09:00:00',
+                'kd_dokter_dpjp' => 'DR001',
+                'diagnosis' => 'Perawatan Luka DM',
+                'payment_gateway' => 'Kasera',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $createRes['status']);
+
+        $assignRes = $this->app->handle(
+            'POST',
+            '/api/v1/homecare/preceptor/assign',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000001',
+                'preceptor_nip' => 'NIP001',
+                'institusi' => 'STIKES Harapan',
+                'mahasiswa_nim' => 'MHS202601',
+                'supervisor_id' => 'DOSEN01',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $assignRes['status']);
+
+        // 4. Akses tampilan Supervisor Dosen (Patient Privacy Shield aktif)
+        $supRes = $this->app->handle('GET', '/api/v1/homecare/supervisor/visits', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $supRes['status']);
+        $supData = json_decode($supRes['body'], true);
+        $this->assertCount(1, $supData['visits']);
+        $this->assertSame('Ny. S*** (56 Th, P)', $supData['visits'][0]['pseudonym_pasien']);
+    }
 }

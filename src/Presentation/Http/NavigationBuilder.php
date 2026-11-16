@@ -69,6 +69,18 @@ final class NavigationBuilder
                 'modules' => ['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika'],
             ],
             [
+                'title' => 'WhatsApp CRM',
+                'icon' => 'fa-brands fa-whatsapp',
+                'route' => '/wagateway',
+                'modules' => ['wagateway', 'crm'],
+            ],
+            [
+                'title' => 'Home Care',
+                'icon' => 'fa-house-medical',
+                'route' => '/homecare',
+                'modules' => ['home_care', 'homecare'],
+            ],
+            [
                 'title' => 'Pengguna',
                 'icon' => 'fa-users',
                 'route' => '/users',

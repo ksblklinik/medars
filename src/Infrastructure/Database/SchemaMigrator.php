@@ -623,6 +623,49 @@ final class SchemaMigrator
                 verified_at VARCHAR(30) NOT NULL DEFAULT '',
                 UNIQUE (no_rawat)
             ){$suffix}",
+
+            // 10. WhatsApp Gateway CRM & Home Care Preceptorship (Fase 7)
+            "CREATE TABLE IF NOT EXISTS wagateway_whitelist (
+                no_hp VARCHAR(30) PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                kategori VARCHAR(50) NOT NULL DEFAULT 'Pegawai',
+                status VARCHAR(10) NOT NULL DEFAULT 'Aktif'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS wagateway_outbox (
+                id {$bigAutoIncPk},
+                session_name VARCHAR(20) NOT NULL,
+                no_hp VARCHAR(30) NOT NULL,
+                pesan TEXT NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+                error_message TEXT,
+                created_at VARCHAR(30) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_homecare_kunjungan (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_kunjungan VARCHAR(15) NOT NULL,
+                jam_kunjungan VARCHAR(10) NOT NULL,
+                kd_dokter_dpjp VARCHAR(20) NOT NULL,
+                preceptor_nip VARCHAR(20) NOT NULL DEFAULT '',
+                mahasiswa_nim VARCHAR(30) NOT NULL DEFAULT '',
+                supervisor_id VARCHAR(50) NOT NULL DEFAULT '',
+                diagnosis TEXT,
+                status_layanan VARCHAR(30) NOT NULL DEFAULT 'Terjadwal',
+                status_bayar VARCHAR(20) NOT NULL DEFAULT 'Belum',
+                payment_gateway VARCHAR(30) NOT NULL DEFAULT 'Kasera',
+                created_at VARCHAR(30) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_homecare_preceptor_sk (
+                id {$autoIncPk},
+                nip VARCHAR(20) NOT NULL,
+                nama_nakes VARCHAR(100) NOT NULL,
+                institusi VARCHAR(100) NOT NULL,
+                no_sk VARCHAR(100) NOT NULL,
+                status VARCHAR(10) NOT NULL DEFAULT 'Aktif'
+            ){$suffix}",
         ];
 
         foreach ($statements as $sql) {

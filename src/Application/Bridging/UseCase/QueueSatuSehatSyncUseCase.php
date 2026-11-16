@@ -26,6 +26,10 @@ final readonly class QueueSatuSehatSyncUseCase
         string $icd10Display,
         string $encounterStatus = 'finished',
     ): array {
+        if (trim($patientIhsId) === '' || trim($practitionerIhsId) === '') {
+            throw new \InvalidArgumentException('IHS Patient ID dan Practitioner ID wajib diisi.');
+        }
+
         $encounterUuid = 'urn:uuid:' . bin2hex(random_bytes(8));
         $bundle = [
             'resourceType' => 'Bundle',
