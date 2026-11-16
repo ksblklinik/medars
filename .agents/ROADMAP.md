@@ -11,11 +11,11 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
   - Remote origin GitHub terhubung: `https://github.com/ksblklinik/medars.git`.
   - PHPUnit 11 terpasang dan lolos pengujian smoke test.
   - Mandat paritas visual 100% dan eliminasi hidden-show tercatat di PRD 10 & AGENTS.md.
-- [ ] **PLN-02: Dual-Connection, Transaction Manager & ACL Adapter (PRD 00 & PRD 09)**
+- [x] **PLN-02: Dual-Connection, Transaction Manager & ACL Adapter (PRD 00 & PRD 09)** (Selesai: 16-11-2026)
   - Dual-Connection: `legacy` (Read-Only SELECT ke database lama) vs `next` (Read-Write ke database baru).
-  - PdoTransactionManager: Transaksi atomik ACID + Nested Savepoints (`SAVEPOINT sp_n`).
-  - Anti-Corruption Layer (ACL) Adapter: Interface pembacaan aman data master eksisting (pasien, obat, SOAP) tanpa risiko korupsi data.
-  - Unit & Integration Test TDD untuk rollback otomatis dan proteksi read-only connection.
+  - PdoTransactionManager: Transaksi atomik ACID + Nested Savepoints (`SAVEPOINT sp_n`) lolos pengujian TDD.
+  - ReadOnlyConnectionGuard: Proteksi mutlak database legacy (memblokir seluruh mutasi INSERT, UPDATE, DELETE, DROP, ALTER).
+  - ConnectionFactory & ConnectionConfig: Strict PDO parameters (`ATTR_EMULATE_PREPARES => false`, UTF8MB4).
 - [ ] **PLN-03: Module Loader & Registry Kernel (PRD 12)**
   - Schema registry modul (`mlite_modules`) & lifecycle (install, activate, deactivate, uninstall).
 - [ ] **PLN-04: Master Layout Shell Paritas Eksisting (PRD 10)**
@@ -46,3 +46,4 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | ID | Modul / Scope | Rangkuman Hasil Eksekusi | Tanggal Selesai |
 | :--- | :--- | :--- | :--- |
 | **PLN-01** | Fondasi Repositori & Spesifikasi | Inisialisasi Git, remote GitHub, 13 PRD domain, DDL oracle database, clone pustaka referensi `.ref/ksmlite/`, konfigurasi PHP 8.3 & PHPUnit 11 test harness. | 16-11-2026 |
+| **PLN-02** | Dual-Connection & Transaction Manager | Implementasi `PdoTransactionManager` (ACID + Nested Savepoints), `ReadOnlyConnectionGuard` (proteksi mutlak database eksisting), `ConnectionFactory` (strict flags & anti-cast), terverifikasi 13 unit test PASS. | 16-11-2026 |
