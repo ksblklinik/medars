@@ -5,9 +5,12 @@ Domain ini menetapkan standar desain visual, tata kelola komponen antarmuka, res
 
 ---
 
-## 2. Pilihan Arsitektur: Opsi 3 (Modern Bootstrap 5 Foundation with Familiar Ergonomics)
+## 2. Pilihan Arsitektur: Opsi 3 (Modern Foundation with 100% Visual & Ergonomic Parity)
 
-Sistem baru **ksm-next** mengadopsi fondasi **Bootstrap 5 modern** yang mempertahankan 100% tata letak ergonomis yang sudah dihafal oleh staf klinik (*muscle memory*), namun menyingkirkan pustaka usang (*end-of-life*) Bootstrap 3.
+Sistem baru **ksm-next** memegang prinsip mutlak: **"Identik di Mata Pengguna, Unggul di Balik Layar"**:
+- **Tampilan Visual Semirip Mungkin:** Warna khas Medical Teal (`#00897b`), tata letak topbar, susunan menu ikon cepat (`.menu-icon`), sidebar modul collapsible, posisi form input (`#form`) di atas/kiri dan tabel data (`#display`) di bawah/kanan dipertahankan semirip mungkin dengan `ksmlite`.
+- **Zero Learning Curve:** Staf klinik (dokter, perawat, kasir, petugas apotek) dapat langsung bekerja tanpa perlu masa orientasi atau pelatihan ulang (*0-day learning curve*).
+- **Mesin Modern di Balik Layar:** Di balik tampilan yang familiar, arsitektur teknisnya dimodernisasi total menggunakan Bootstrap 5 modern, CSS Grid/Flexbox asli, SSE real-time, dan pemuatan komponen bebas dari masalah tumpukan *hidden-show*.
 
 ---
 
