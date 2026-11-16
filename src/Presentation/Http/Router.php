@@ -40,6 +40,10 @@ final class Router
         $handler = $this->routes[$upperMethod][$path];
         $result = $handler();
 
+        if ($result instanceof Response) {
+            return $result->toArray();
+        }
+
         if (is_array($result) && isset($result['status'], $result['body'])) {
             return [
                 'status' => (int) $result['status'],

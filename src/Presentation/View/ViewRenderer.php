@@ -73,6 +73,10 @@ final class ViewRenderer
 
     private function resolveViewFile(string $view): string
     {
+        if (str_contains($view, '..')) {
+            throw new \InvalidArgumentException("Path traversal tidak diizinkan pada template: '{$view}'");
+        }
+
         $path = $this->viewsPath . '/' . ltrim($view, '/\\');
         if (!str_ends_with($path, '.php')) {
             $path .= '.php';

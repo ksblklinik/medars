@@ -58,7 +58,7 @@ final class AuthController
 
         try {
             $this->authService->login($username, $password, $ipAddress);
-            return Response::redirect('/registration');
+            return Response::redirect('/pendaftaran');
         } catch (InvalidCredentialsException $e) {
             return Response::html(
                 $this->viewRenderer->render('auth/login', [

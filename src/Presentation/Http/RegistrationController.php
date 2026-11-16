@@ -10,9 +10,14 @@ use App\Application\Registration\DTO\ShiftQueueCommand;
 use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
+use App\Domain\Registration\Entity\BookingRegistrasi;
+use App\Domain\Registration\Entity\RegPeriksa;
 use App\Domain\Registration\Repository\PasienRepositoryInterface;
 use App\Domain\Registration\Repository\PoliklinikRepositoryInterface;
 use App\Domain\Registration\Repository\RegPeriksaRepositoryInterface;
+use App\Domain\Security\Entity\UserAccount;
+use App\Infrastructure\Realtime\EventBroadcasterInterface;
+use App\Infrastructure\Realtime\EventMessage;
 use App\Presentation\View\ViewRenderer;
 
 final readonly class RegistrationController
@@ -25,13 +30,15 @@ final readonly class RegistrationController
         private RegisterInSiteUseCase $registerInSiteUseCase,
         private CheckInMobileJknUseCase $checkInMobileJknUseCase,
         private ClinicalGuardShieldUseCase $clinicalGuardUseCase,
-        private ViewRenderer $renderer
+        private ViewRenderer $renderer,
+        private ?EventBroadcasterInterface $broadcaster = null,
+        private ?NavigationBuilder $navBuilder = null
     ) {}
 
     /**
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    public function index(): array
+    public function index(?UserAccount $currentUser = null, string $csrfToken = ''): array
     {
         $poliklinik = $this->poliRepo->findAllActive();
 
@@ -41,20 +48,21 @@ final readonly class RegistrationController
         $stmtPenjab = $this->pdo->query("SELECT kd_pj, png_jawab FROM penjab WHERE status = '1' ORDER BY png_jawab ASC");
         $penjab = $stmtPenjab ? $stmtPenjab->fetchAll(\PDO::FETCH_ASSOC) : [];
 
+        $navigations = $this->navBuilder !== null
+            ? $this->navBuilder->buildForUser($currentUser)
+            : (new NavigationBuilder())->buildForUser($currentUser);
+
         $body = $this->renderer->render('registration/index', [
             'judul' => 'Pendaftaran Rawat Jalan',
             'klinik_nama' => 'SIMRS Medars',
             'current_module' => 'pendaftaran',
+            'user_name' => $currentUser?->getFullname() ?: ($currentUser?->getUsername() ?? 'Petugas Medis'),
+            'user_role' => $currentUser?->getRole() ?? 'Medis',
+            'csrf_token' => $csrfToken,
             'poliklinik' => $poliklinik,
             'dokter' => $dokter,
             'penjab' => $penjab,
-            'navigations' => [
-                ['title' => 'Dashboard', 'icon' => 'fa-gauge', 'route' => '/'],
-                ['title' => 'Pendaftaran', 'icon' => 'fa-user-plus', 'route' => '/pendaftaran'],
-                ['title' => 'Rawat Jalan', 'icon' => 'fa-stethoscope', 'route' => '/rawat-jalan'],
-                ['title' => 'Farmasi', 'icon' => 'fa-pills', 'route' => '/farmasi'],
-                ['title' => 'Kasir', 'icon' => 'fa-cash-register', 'route' => '/kasir'],
-            ],
+            'navigations' => $navigations,
         ]);
 
         return [
@@ -101,12 +109,16 @@ final readonly class RegistrationController
     public function apiRegisterInSite(array $postData = []): array
     {
         try {
+            $tglReg = !empty($postData['tgl_registrasi'])
+                ? $this->parseStrictDate((string) $postData['tgl_registrasi'], 'tgl_registrasi')
+                : null;
+
             $cmd = new RegisterInSiteCommand(
                 noRkmMedis: (string) ($postData['no_rkm_medis'] ?? ''),
                 kdPoli: (string) ($postData['kd_poli'] ?? ''),
                 kdDokter: (string) ($postData['kd_dokter'] ?? ''),
                 kdPj: (string) ($postData['kd_pj'] ?? ''),
-                tglRegistrasi: !empty($postData['tgl_registrasi']) ? new \DateTimeImmutable((string) $postData['tgl_registrasi']) : null,
+                tglRegistrasi: $tglReg,
                 jamReg: !empty($postData['jam_reg']) ? (string) $postData['jam_reg'] : null,
                 shift: (string) ($postData['shift'] ?? ''),
                 prefik: (string) ($postData['prefik'] ?? ''),
@@ -118,12 +130,24 @@ final readonly class RegistrationController
 
             $result = $this->registerInSiteUseCase->execute($cmd);
 
+            if ($result instanceof RegPeriksa) {
+                $this->broadcastDoctorQueueUpdate($result);
+                return $this->jsonResponse([
+                    'status' => 'success',
+                    'message' => 'Pendaftaran pasien berhasil diproses.',
+                    'data' => [
+                        'no_rawat' => $result->noRawat->value(),
+                        'no_reg' => $result->noReg->value(),
+                    ],
+                ]);
+            }
+
             return $this->jsonResponse([
                 'status' => 'success',
-                'message' => 'Pendaftaran pasien berhasil diproses.',
+                'message' => 'Booking pendaftaran masa depan berhasil disimpan.',
                 'data' => [
-                    'no_rawat' => $result?->noRawat?->value(),
-                    'no_reg' => $result?->noReg?->value(),
+                    'no_rawat' => null,
+                    'no_reg' => $result instanceof BookingRegistrasi ? $result->noReg->value() : null,
                 ],
             ]);
         } catch (\DomainException|\InvalidArgumentException $e) {
@@ -141,12 +165,17 @@ final readonly class RegistrationController
     public function apiCheckInMobileJkn(array $postData = []): array
     {
         try {
+            $today = !empty($postData['today'])
+                ? $this->parseStrictDate((string) $postData['today'], 'today')
+                : null;
+
             $cmd = new CheckInMobileJknCommand(
                 noRkmMedis: (string) ($postData['no_rkm_medis'] ?? ''),
-                today: !empty($postData['today']) ? new \DateTimeImmutable((string) $postData['today']) : null
+                today: $today
             );
 
             $result = $this->checkInMobileJknUseCase->execute($cmd);
+            $this->broadcastDoctorQueueUpdate($result);
 
             return $this->jsonResponse([
                 'status' => 'success',
@@ -218,6 +247,35 @@ final readonly class RegistrationController
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    private function parseStrictDate(string $dateStr, string $fieldName): \DateTimeImmutable
+    {
+        $dt = \DateTimeImmutable::createFromFormat('!Y-m-d', $dateStr);
+        if ($dt === false || $dt->format('Y-m-d') !== $dateStr) {
+            throw new \InvalidArgumentException("Format tanggal {$fieldName} tidak valid (wajib YYYY-MM-DD yang valid pada kalender).");
+        }
+
+        return $dt;
+    }
+
+    private function broadcastDoctorQueueUpdate(RegPeriksa $reg): void
+    {
+        if ($this->broadcaster === null) {
+            return;
+        }
+
+        $channel = 'dokter_' . $reg->kdDokter;
+        $this->broadcaster->publish($channel, new EventMessage(
+            event: 'pasien_ralan_updated',
+            data: [
+                'no_rawat' => $reg->noRawat->value(),
+                'no_reg' => $reg->noReg->value(),
+                'kd_poli' => $reg->kdPoli,
+                'kd_dokter' => $reg->kdDokter,
+                'tgl_registrasi' => $reg->tglRegistrasi->format('Y-m-d'),
+            ]
+        ));
     }
 
     /**

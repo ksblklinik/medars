@@ -4,7 +4,7 @@
             <h5 class="card-title m-0 text-medical-teal fw-bold">
                 <i class="fa fa-users-gear me-2"></i>Manajemen Pengguna & Hak Akses
             </h5>
-            <button type="button" class="btn btn-sm btn-primary" style="background-color: #00897b; border-color: #00897b;" data-bs-toggle="modal" data-bs-target="#modalUser">
+            <button type="button" id="btnAddUser" class="btn btn-sm btn-primary" style="background-color: #00897b; border-color: #00897b;" data-bs-toggle="modal" data-bs-target="#modalUser">
                 <i class="fa fa-user-plus me-1"></i> Tambah Pengguna
             </button>
         </div>
@@ -40,6 +40,21 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center">
+                                    <?php
+                                        $userPayload = json_encode([
+                                            'id' => $u->getId(),
+                                            'username' => $u->getUsername(),
+                                            'fullname' => $u->getFullname(),
+                                            'email' => $u->getEmail(),
+                                            'role' => $u->getRole(),
+                                            'access' => implode(', ', $u->getAccess()),
+                                            'cap' => implode(', ', $u->getCap()),
+                                            'status' => $u->getStatus(),
+                                        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+                                    ?>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-edit-user" data-user="<?= $this->e((string) $userPayload) ?>" title="Edit Pengguna">
+                                        <i class="fa fa-pen-to-square"></i>
+                                    </button>
                                     <?php if ($u->getId() !== 1): ?>
                                         <form action="/users/delete" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?');">
                                             <?= $csrf_input ?? '' ?>
@@ -49,7 +64,7 @@
                                             </button>
                                         </form>
                                     <?php else: ?>
-                                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> Protected</span>
+                                        <span class="badge bg-secondary" title="Superadmin dilindungi"><i class="fa fa-lock"></i></span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -124,3 +139,50 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    const modalEl = document.getElementById('modalUser');
+    if (!modalEl) return;
+
+    const btnAdd = document.getElementById('btnAddUser');
+    if (btnAdd) {
+        btnAdd.addEventListener('click', function () {
+            document.getElementById('userId').value = '';
+            document.getElementById('userUsername').value = '';
+            document.getElementById('userFullname').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userRole').value = 'staff';
+            document.getElementById('userAccess').value = 'all';
+            document.getElementById('userCap').value = 'all';
+            document.getElementById('userStatus').value = '1';
+        });
+    }
+
+    document.querySelectorAll('.btn-edit-user').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const raw = this.getAttribute('data-user');
+            if (!raw) return;
+            try {
+                const u = JSON.parse(raw);
+                document.getElementById('userId').value = u.id || '';
+                document.getElementById('userUsername').value = u.username || '';
+                document.getElementById('userFullname').value = u.fullname || '';
+                document.getElementById('userEmail').value = u.email || '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userRole').value = u.role || 'staff';
+                document.getElementById('userAccess').value = u.access || '';
+                document.getElementById('userCap').value = u.cap || '';
+                document.getElementById('userStatus').value = u.status || '1';
+
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            } catch (e) {
+                console.error('Gagal mem-parsing data pengguna.', e);
+            }
+        });
+    });
+})();
+</script>

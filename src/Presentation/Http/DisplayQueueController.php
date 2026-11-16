@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http;
 
+use App\Application\Registration\DTO\CheckInMobileJknCommand;
+use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Domain\Registration\Repository\PoliklinikRepositoryInterface;
 use App\Domain\Registration\Repository\RegPeriksaRepositoryInterface;
 use App\Domain\Registration\ValueObject\NoRawat;
@@ -18,7 +20,8 @@ final readonly class DisplayQueueController
         private PoliklinikRepositoryInterface $poliRepo,
         private RegPeriksaRepositoryInterface $regRepo,
         private EventBroadcasterInterface $broadcaster,
-        private ViewRenderer $renderer
+        private ViewRenderer $renderer,
+        private ?CheckInMobileJknUseCase $checkInUseCase = null
     ) {}
 
     /**
@@ -44,11 +47,12 @@ final readonly class DisplayQueueController
     /**
      * @return array{status: int, headers: array<string, string>, body: string}
      */
-    public function kiosk(): array
+    public function kiosk(string $csrfToken = ''): array
     {
         $body = $this->renderer->render('kiosk/index', [
             'judul' => 'Layar Kiosk Mandiri',
             'klinik_nama' => 'SIMRS Medars',
+            'csrf_token' => $csrfToken,
         ], false);
 
         return [
@@ -56,6 +60,64 @@ final readonly class DisplayQueueController
             'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
             'body' => $body,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiKioskCheckIn(array $postData = []): array
+    {
+        if ($this->checkInUseCase === null) {
+            return $this->jsonResponse([
+                'status' => 'error',
+                'message' => 'Layanan check-in kiosk belum dikonfigurasi.',
+            ], 503);
+        }
+
+        try {
+            $today = null;
+            if (!empty($postData['today'])) {
+                $todayStr = (string) $postData['today'];
+                $dt = \DateTimeImmutable::createFromFormat('!Y-m-d', $todayStr);
+                if ($dt === false || $dt->format('Y-m-d') !== $todayStr) {
+                    throw new \InvalidArgumentException('Format tanggal today tidak valid.');
+                }
+                $today = $dt;
+            }
+
+            $cmd = new CheckInMobileJknCommand(
+                noRkmMedis: (string) ($postData['no_rkm_medis'] ?? ''),
+                today: $today
+            );
+
+            $result = $this->checkInUseCase->execute($cmd);
+
+            $this->broadcaster->publish('dokter_' . $result->kdDokter, new EventMessage(
+                event: 'pasien_ralan_updated',
+                data: [
+                    'no_rawat' => $result->noRawat->value(),
+                    'no_reg' => $result->noReg->value(),
+                    'kd_poli' => $result->kdPoli,
+                    'kd_dokter' => $result->kdDokter,
+                    'tgl_registrasi' => $result->tglRegistrasi->format('Y-m-d'),
+                ]
+            ));
+
+            return $this->jsonResponse([
+                'status' => 'success',
+                'message' => 'Check-in Kiosk berhasil.',
+                'data' => [
+                    'no_rawat' => $result->noRawat->value(),
+                    'no_reg' => $result->noReg->value(),
+                ],
+            ]);
+        } catch (\DomainException|\InvalidArgumentException $e) {
+            return $this->jsonResponse([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     /**

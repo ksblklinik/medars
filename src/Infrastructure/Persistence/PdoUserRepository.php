@@ -61,14 +61,15 @@ final class PdoUserRepository implements UserRepositoryInterface
 
         if ($user->getId() === null) {
             $sql = "
-                INSERT INTO mlite_users (username, password, email, fullname, role, cap, access, avatar, status)
-                VALUES (:username, :password, :email, :fullname, :role, :cap, :access, :avatar, :status)
+                INSERT INTO mlite_users (username, password, email, no_telp, fullname, role, cap, access, avatar, status)
+                VALUES (:username, :password, :email, :no_telp, :fullname, :role, :cap, :access, :avatar, :status)
             ";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
                 ':username' => $user->getUsername(),
                 ':password' => $user->getPasswordHash(),
                 ':email' => $user->getEmail(),
+                ':no_telp' => '',
                 ':fullname' => $user->getFullname(),
                 ':role' => $user->getRole(),
                 ':cap' => $capString,

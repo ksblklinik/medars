@@ -41,10 +41,13 @@ final class PdoSettingRepository implements SettingRepositoryInterface
 
     public function set(string $module, string $field, string $value): void
     {
-        $sql = "
-            INSERT OR REPLACE INTO mlite_settings (module, field, value)
-            VALUES (:mod, :field, :val)
-        ";
+        $existing = $this->get($module, $field);
+
+        if ($existing !== null) {
+            $sql = "UPDATE mlite_settings SET value = :val WHERE module = :mod AND field = :field";
+        } else {
+            $sql = "INSERT INTO mlite_settings (module, field, value) VALUES (:mod, :field, :val)";
+        }
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([

@@ -29,19 +29,17 @@ final class UsersController
         $users = $this->userRepo->findAll();
         $csrfInput = $this->csrfGuard->tokenInputHtml();
         $csrfToken = $this->csrfGuard->getToken();
+        $navBuilder = new NavigationBuilder();
 
         $body = $this->viewRenderer->render('users/index', [
             'judul' => 'Manajemen Pengguna & Hak Akses',
             'current_module' => 'users',
+            'user_name' => $currentUser?->getFullname() ?: ($currentUser?->getUsername() ?? 'Petugas Medis'),
+            'user_role' => $currentUser?->getRole() ?? 'Medis',
             'users' => $users,
             'csrf_input' => $csrfInput,
             'csrf_token' => $csrfToken,
-            'navigations' => [
-                ['title' => 'Dashboard', 'icon' => 'fa-gauge', 'route' => '/'],
-                ['title' => 'Pendaftaran', 'icon' => 'fa-user-plus', 'route' => '/registration'],
-                ['title' => 'Pengguna', 'icon' => 'fa-users', 'route' => '/users'],
-                ['title' => 'Pengaturan', 'icon' => 'fa-gear', 'route' => '/settings'],
-            ],
+            'navigations' => $navBuilder->buildForUser($currentUser),
         ]);
 
         return Response::html($body, 200);
@@ -69,6 +67,12 @@ final class UsersController
         $capRaw = $postData['cap'] ?? '';
         $avatar = (string) ($postData['avatar'] ?? '');
         $status = (string) ($postData['status'] ?? '1');
+
+        // Anti-Self-Demotion Lockout untuk Superadmin Utama (ID: 1)
+        if ($id === 1) {
+            $role = 'admin';
+            $status = '1';
+        }
 
         $existing = $id !== null ? $this->userRepo->findById($id) : null;
 

@@ -241,12 +241,34 @@
         AppSSE.init('/api/stream');
     });
 
+    const apiFetch = function (url, options) {
+        const opts = Object.assign({}, options || {});
+        const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
+        const headers = Object.assign({}, opts.headers || {});
+
+        if (csrfToken && !headers['X-CSRF-Token']) {
+            headers['X-CSRF-Token'] = csrfToken;
+        }
+        opts.headers = headers;
+
+        return fetch(url, opts).then(res => {
+            if (res.status === 401) {
+                window.location.href = '/auth/login';
+                return Promise.reject(new Error('Sesi berakhir, silakan login ulang.'));
+            }
+            return res;
+        });
+    };
+
     // Ekspor API ke global window untuk diakses modul-modul
     window.Medars = {
         viewport: AppViewport,
         modal: AppModal,
         hotkeys: AppHotkeys,
-        sse: AppSSE
+        sse: AppSSE,
+        apiFetch: apiFetch
     };
+    window.MedarsApp = window.Medars;
 
 })(window, document);

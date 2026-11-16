@@ -31,21 +31,21 @@ final class SettingsController
         $farmasi = $this->settingService->getAll('farmasi');
         $bpjs = $this->settingService->getAll('bpjs');
         $csrfInput = $this->csrfGuard->tokenInputHtml();
+        $csrfToken = $this->csrfGuard->getToken();
+        $navBuilder = new NavigationBuilder();
 
         $body = $this->viewRenderer->render('settings/index', [
             'judul' => 'Pengaturan Sistem',
             'current_module' => 'settings',
+            'user_name' => $currentUser?->getFullname() ?: ($currentUser?->getUsername() ?? 'Petugas Medis'),
+            'user_role' => $currentUser?->getRole() ?? 'Medis',
             'general' => $general,
             'pendaftaran' => $pendaftaran,
             'farmasi' => $farmasi,
             'bpjs' => $bpjs,
             'csrf_input' => $csrfInput,
-            'navigations' => [
-                ['title' => 'Dashboard', 'icon' => 'fa-gauge', 'route' => '/'],
-                ['title' => 'Pendaftaran', 'icon' => 'fa-user-plus', 'route' => '/registration'],
-                ['title' => 'Pengguna', 'icon' => 'fa-users', 'route' => '/users'],
-                ['title' => 'Pengaturan', 'icon' => 'fa-gear', 'route' => '/settings'],
-            ],
+            'csrf_token' => $csrfToken,
+            'navigations' => $navBuilder->buildForUser($currentUser),
         ]);
 
         return Response::html($body, 200);

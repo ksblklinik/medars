@@ -6,24 +6,18 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Infrastructure\Database\ConnectionConfig;
 use App\Infrastructure\Database\ConnectionFactory;
-use App\Infrastructure\Database\PdoTransactionManager;
-use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
-use App\Infrastructure\Persistence\PdoPasienRepository;
-use App\Infrastructure\Persistence\PdoPoliklinikRepository;
-use App\Infrastructure\Persistence\PdoRegPeriksaRepository;
-use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
-use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
-use App\Application\Registration\UseCase\RegisterInSiteUseCase;
-use App\Infrastructure\Realtime\EventMessage;
-use App\Infrastructure\Realtime\PdoEventBroadcaster;
-use App\Infrastructure\Realtime\SseStreamResponse;
-use App\Presentation\Http\DisplayQueueController;
-use App\Presentation\Http\RegistrationController;
-use App\Presentation\Http\Router;
-use App\Presentation\View\ViewRenderer;
+use App\Presentation\Http\HttpApplication;
 
-$router = new Router();
-$renderer = new ViewRenderer();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.use_strict_mode', '1');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
 
 $getPdo = static function (): PDO {
     static $pdo = null;
@@ -39,6 +33,8 @@ $getPdo = static function (): PDO {
         }
         $pdo = new PDO("sqlite:{$dbDir}/medars.sqlite");
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $pdo->exec('PRAGMA foreign_keys = ON;');
     } else {
         $config = new ConnectionConfig(
             driver: 'mysql',
@@ -54,183 +50,51 @@ $getPdo = static function (): PDO {
     return $pdo;
 };
 
-$getBroadcaster = static function () use ($getPdo): PdoEventBroadcaster {
-    static $broadcaster = null;
-    if ($broadcaster === null) {
-        $broadcaster = new PdoEventBroadcaster($getPdo());
-        $broadcaster->ensureTableExists();
-    }
-    return $broadcaster;
-};
-
-$getRegistrationController = static function () use ($renderer, $getPdo): RegistrationController {
-    static $controller = null;
-    if ($controller !== null) {
-        return $controller;
-    }
-
-    $pdo = $getPdo();
-
-    $pasienRepo = new PdoPasienRepository($pdo);
-    $poliRepo = new PdoPoliklinikRepository($pdo);
-    $regRepo = new PdoRegPeriksaRepository($pdo);
-    $bookingRepo = new PdoBookingRegistrasiRepository($pdo);
-    $tx = new PdoTransactionManager($pdo);
-
-    $registerInSiteUseCase = new RegisterInSiteUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo);
-    $checkInMobileJknUseCase = new CheckInMobileJknUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $tx);
-    $clinicalGuardUseCase = new ClinicalGuardShieldUseCase($regRepo);
-
-    $controller = new RegistrationController(
-        $pdo,
-        $pasienRepo,
-        $poliRepo,
-        $regRepo,
-        $registerInSiteUseCase,
-        $checkInMobileJknUseCase,
-        $clinicalGuardUseCase,
-        $renderer
-    );
-
-    return $controller;
-};
-
-$renderDashboard = static function () use ($renderer): string {
-    return $renderer->render('dashboard', [
-        'judul' => 'Dashboard Utama',
-        'klinik_nama' => 'Klinik Pratama Rawat Inap',
-        'current_module' => 'dashboard',
-        'module_icon' => 'fa-gauge',
-        'user_name' => 'Administrator',
-        'user_role' => 'Admin',
-        'navigations' => [
-            ['title' => 'Dashboard', 'icon' => 'fa-gauge', 'route' => '/'],
-            ['title' => 'Pendaftaran', 'icon' => 'fa-user-plus', 'route' => '/pendaftaran'],
-            ['title' => 'Rawat Jalan', 'icon' => 'fa-stethoscope', 'route' => '/rawat-jalan'],
-            ['title' => 'Farmasi', 'icon' => 'fa-pills', 'route' => '/farmasi'],
-            ['title' => 'Kasir', 'icon' => 'fa-cash-register', 'route' => '/kasir'],
-        ],
-    ]);
-};
-
-$router->get('/', $renderDashboard);
-$router->get('/dashboard', $renderDashboard);
-
-// Modul Pendaftaran Rawat Jalan (PLN-09)
-$router->get('/pendaftaran', static function () use ($getRegistrationController): array {
-    return $getRegistrationController()->index();
-});
-
-$router->get('/api/v1/registration/patients/search', static function () use ($getRegistrationController): array {
-    return $getRegistrationController()->apiSearchPatients($_GET);
-});
-
-$router->post('/api/v1/registration/insite', static function () use ($getRegistrationController): array {
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw, true) ?: $_POST;
-    return $getRegistrationController()->apiRegisterInSite($data);
-});
-
-$router->post('/api/v1/registration/checkin', static function () use ($getRegistrationController): array {
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw, true) ?: $_POST;
-    return $getRegistrationController()->apiCheckInMobileJkn($data);
-});
-
-$router->get('/api/v1/registration/today', static function () use ($getRegistrationController): array {
-    return $getRegistrationController()->apiListToday($_GET);
-});
-
-$router->post('/api/v1/registration/shift-queue', static function () use ($getRegistrationController): array {
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw, true) ?: $_POST;
-    return $getRegistrationController()->apiShiftQueue($data);
-});
-
-// Modul Display Antrean TV & Kiosk Mandiri (PLN-10)
-$getDisplayQueueController = static function () use ($renderer, $getPdo, $getBroadcaster): DisplayQueueController {
-    static $controller = null;
-    if ($controller !== null) {
-        return $controller;
-    }
-
-    $pdo = $getPdo();
-    $poliRepo = new PdoPoliklinikRepository($pdo);
-    $regRepo = new PdoRegPeriksaRepository($pdo);
-
-    $controller = new DisplayQueueController(
-        $pdo,
-        $poliRepo,
-        $regRepo,
-        $getBroadcaster(),
-        $renderer
-    );
-
-    return $controller;
-};
-
-$router->get('/display-antrean', static function () use ($getDisplayQueueController): array {
-    return $getDisplayQueueController()->index();
-});
-
-$router->get('/antrean', static function () use ($getDisplayQueueController): array {
-    return $getDisplayQueueController()->index();
-});
-
-$router->get('/kiosk', static function () use ($getDisplayQueueController): array {
-    return $getDisplayQueueController()->kiosk();
-});
-
-$router->get('/api/v1/queue/summary', static function () use ($getDisplayQueueController): array {
-    return $getDisplayQueueController()->apiQueueSummary($_GET);
-});
-
-$router->post('/api/v1/queue/call', static function () use ($getDisplayQueueController): array {
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw, true) ?: $_POST;
-    return $getDisplayQueueController()->apiCallQueue($data);
-});
-
-// Endpoint Server-Sent Events (SSE)
-$router->get('/api/stream', static function () use ($getBroadcaster): string {
-    foreach (SseStreamResponse::getHeaders() as $headerName => $headerValue) {
-        header("{$headerName}: {$headerValue}");
-    }
-
-    $lastId = isset($_SERVER['HTTP_LAST_EVENT_ID']) ? (int) $_SERVER['HTTP_LAST_EVENT_ID'] : 0;
-    $broadcaster = $getBroadcaster();
-
-    $connectedMsg = new EventMessage(
-        event: 'system.connected',
-        data: ['status' => 'connected', 'time' => date('c')],
-        retry: 3000
-    );
-
-    echo SseStreamResponse::formatEvent($connectedMsg);
-
-    $events = $broadcaster->fetchSince('antrean', $lastId);
-    foreach ($events as $ev) {
-        echo SseStreamResponse::formatEvent($ev);
-    }
-
-    echo SseStreamResponse::formatHeartbeat();
-
-    if (ob_get_level() > 0) {
-        ob_flush();
-    }
-    flush();
-
-    exit;
-});
-
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
+$path = '/' . trim((string) parse_url($uri, PHP_URL_PATH), '/');
 
-$response = $router->dispatch($method, $uri);
+$headers = [];
+if (function_exists('getallheaders')) {
+    foreach (getallheaders() as $name => $value) {
+        $headers[(string) $name] = (string) $value;
+    }
+}
+if (!isset($headers['X-CSRF-Token']) && isset($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+    $headers['X-CSRF-Token'] = (string) $_SERVER['HTTP_X_CSRF_TOKEN'];
+}
+if (!isset($headers['Content-Type']) && isset($_SERVER['CONTENT_TYPE'])) {
+    $headers['Content-Type'] = (string) $_SERVER['CONTENT_TYPE'];
+}
+if (!isset($headers['Last-Event-ID']) && isset($_SERVER['HTTP_LAST_EVENT_ID'])) {
+    $headers['Last-Event-ID'] = (string) $_SERVER['HTTP_LAST_EVENT_ID'];
+}
 
-http_response_code($response['status']);
-foreach ($response['headers'] as $name => $value) {
-    header("{$name}: {$value}");
+$rawBody = (string) file_get_contents('php://input');
+$ipAddress = (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+
+$app = new HttpApplication($getPdo(), $_SESSION);
+
+$response = $app->handle(
+    method: $method,
+    uri: $uri,
+    queryParams: $_GET,
+    postData: $_POST,
+    rawBody: $rawBody,
+    headers: $headers,
+    ipAddress: $ipAddress
+);
+
+// Lepaskan session lock sebelum output stream SSE agar tab browser lain tidak terblokir
+if ($path === '/api/stream' && session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
+if (!headers_sent()) {
+    http_response_code($response['status']);
+    foreach ($response['headers'] as $name => $value) {
+        header("{$name}: {$value}");
+    }
 }
 
 echo $response['body'];

@@ -103,7 +103,7 @@ class AuthControllerTest extends TestCase
         ], '127.0.0.1');
 
         $this->assertSame(302, $response->getStatusCode());
-        $this->assertSame('/registration', $response->getHeader('Location'));
+        $this->assertSame('/pendaftaran', $response->getHeader('Location'));
         $this->assertSame(1, $this->session['user_id']);
     }
 

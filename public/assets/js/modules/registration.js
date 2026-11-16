@@ -108,7 +108,8 @@
                     if (!q || q.trim() === '') return;
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin me-1"></i> Mencari...</td></tr>';
 
-                    fetch('/api/v1/registration/patients/search?q=' + encodeURIComponent(q))
+                    const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+                    fetcher('/api/v1/registration/patients/search?q=' + encodeURIComponent(q))
                         .then(res => res.json())
                         .then(patients => {
                             if (!patients || patients.length === 0) {
@@ -204,7 +205,8 @@
 
             this.showAlert('info', '<i class="fa fa-spinner fa-spin me-1"></i> Memproses pendaftaran...');
 
-            fetch('/api/v1/registration/insite', {
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/registration/insite', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -234,7 +236,8 @@
             const noRm = inputRm.value.trim();
             this.showAlert('info', '<i class="fa fa-spinner fa-spin me-1"></i> Memvalidasi check-in Mobile JKN...');
 
-            fetch('/api/v1/registration/checkin', {
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/registration/checkin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ no_rkm_medis: noRm })
@@ -260,7 +263,8 @@
 
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin me-1"></i> Memuat...</td></tr>';
 
-            fetch('/api/v1/registration/today')
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/registration/today')
                 .then(res => res.json())
                 .then(rows => {
                     if (!rows || rows.length === 0) {

@@ -118,9 +118,14 @@
             const rm = input.value.trim();
             this.showAlert('info', '<i class="fa fa-spinner fa-spin me-1"></i> Memvalidasi booking Mobile JKN...');
 
-            fetch('/api/v1/registration/checkin', {
+            const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = metaCsrf ? metaCsrf.getAttribute('content') : '';
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+            fetch('/api/v1/kiosk/checkin', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify({ no_rkm_medis: rm })
             })
             .then(res => res.json())

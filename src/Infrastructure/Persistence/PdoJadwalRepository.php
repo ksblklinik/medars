@@ -62,11 +62,40 @@ final class PdoJadwalRepository implements JadwalRepositoryInterface
         // 2. Validasi Anti-Overlap
         $this->overlapGuard->assertNoOverlap($existing, $jadwal);
 
-        // 3. Simpan ke database (REPLACE INTO atau INSERT ON CONFLICT)
-        $sql = "
-            INSERT OR REPLACE INTO jadwal (kd_dokter, kd_poli, hari_kerja, jam_mulai, jam_selesai, kuota, prefik, room)
-            VALUES (:kd_dokter, :kd_poli, :hari_kerja, :jam_mulai, :jam_selesai, :kuota, :prefik, :room)
-        ";
+        // 3. Simpan ke database (Portabel SQLite & MySQL 8.0)
+        $checkStmt = $this->pdo->prepare("
+            SELECT 1 FROM jadwal
+            WHERE kd_dokter = :kd_dokter
+              AND kd_poli = :kd_poli
+              AND UPPER(hari_kerja) = :hari_kerja
+              AND jam_mulai = :jam_mulai
+            LIMIT 1
+        ");
+        $checkStmt->execute([
+            ':kd_dokter' => $jadwal->getKdDokter(),
+            ':kd_poli' => $jadwal->getKdPoli(),
+            ':hari_kerja' => $jadwal->getHariKerja(),
+            ':jam_mulai' => $jadwal->getJamMulai(),
+        ]);
+
+        if ($checkStmt->fetchColumn()) {
+            $sql = "
+                UPDATE jadwal
+                SET jam_selesai = :jam_selesai,
+                    kuota = :kuota,
+                    prefik = :prefik,
+                    room = :room
+                WHERE kd_dokter = :kd_dokter
+                  AND kd_poli = :kd_poli
+                  AND UPPER(hari_kerja) = :hari_kerja
+                  AND jam_mulai = :jam_mulai
+            ";
+        } else {
+            $sql = "
+                INSERT INTO jadwal (kd_dokter, kd_poli, hari_kerja, jam_mulai, jam_selesai, kuota, prefik, room)
+                VALUES (:kd_dokter, :kd_poli, :hari_kerja, :jam_mulai, :jam_selesai, :kuota, :prefik, :room)
+            ";
+        }
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([

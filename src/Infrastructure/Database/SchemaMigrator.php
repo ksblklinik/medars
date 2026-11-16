@@ -1,0 +1,362 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\Database;
+
+use PDO;
+
+final class SchemaMigrator
+{
+    public function __construct(
+        private readonly PDO $pdo,
+    ) {
+    }
+
+    public function migrate(): void
+    {
+        $driver = (string) $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $isMysql = $driver === 'mysql';
+        $autoIncPk = $isMysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+        $bigAutoIncPk = $isMysql ? 'BIGINT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+        $suffix = $isMysql ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
+
+        $statements = [
+            // 1. Auth, RBAC, Settings & Audit
+            "CREATE TABLE IF NOT EXISTS mlite_users (
+                id {$autoIncPk},
+                username VARCHAR(100) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(150) NOT NULL DEFAULT '',
+                no_telp VARCHAR(30) NOT NULL DEFAULT '',
+                fullname VARCHAR(150) NOT NULL DEFAULT '',
+                role VARCHAR(50) NOT NULL DEFAULT 'staff',
+                cap TEXT,
+                access TEXT,
+                avatar VARCHAR(255) NOT NULL DEFAULT '',
+                status VARCHAR(5) NOT NULL DEFAULT '1',
+                created_at VARCHAR(30) NOT NULL DEFAULT '',
+                updated_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_settings (
+                module VARCHAR(50) NOT NULL,
+                field VARCHAR(100) NOT NULL,
+                value TEXT NOT NULL,
+                PRIMARY KEY (module, field)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_logs (
+                id {$bigAutoIncPk},
+                user_id INT NOT NULL DEFAULT 0,
+                username VARCHAR(100) NOT NULL DEFAULT '',
+                action VARCHAR(100) NOT NULL,
+                details TEXT NOT NULL,
+                ip_address VARCHAR(45) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_login_attempts (
+                id {$bigAutoIncPk},
+                username VARCHAR(100) NOT NULL,
+                ip_address VARCHAR(45) NOT NULL,
+                attempt_time INT NOT NULL
+            ){$suffix}",
+
+            // 2. SDM / Kepegawaian
+            "CREATE TABLE IF NOT EXISTS dokter (
+                kd_dokter VARCHAR(20) PRIMARY KEY,
+                nm_dokter VARCHAR(100) NOT NULL,
+                jk VARCHAR(5) NOT NULL DEFAULT 'L',
+                no_ijn_praktek VARCHAR(100) NOT NULL DEFAULT '',
+                status VARCHAR(5) NOT NULL DEFAULT '1',
+                almt_tgl VARCHAR(200) NOT NULL DEFAULT '',
+                no_telp VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS petugas (
+                nip VARCHAR(20) PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                jk VARCHAR(5) NOT NULL DEFAULT 'L',
+                jbtn VARCHAR(100) NOT NULL DEFAULT '',
+                status VARCHAR(5) NOT NULL DEFAULT '1',
+                almt_tgl VARCHAR(200) NOT NULL DEFAULT '',
+                no_telp VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pegawai (
+                nik VARCHAR(20) PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                jk VARCHAR(15) NOT NULL DEFAULT 'Pria',
+                jbtn VARCHAR(100) NOT NULL DEFAULT '',
+                departemen VARCHAR(100) NOT NULL DEFAULT '',
+                status VARCHAR(20) NOT NULL DEFAULT 'AKTIF'
+            ){$suffix}",
+
+            // 3. Master Klinik & Tarif
+            "CREATE TABLE IF NOT EXISTS poliklinik (
+                kd_poli VARCHAR(10) PRIMARY KEY,
+                nm_poli VARCHAR(100) NOT NULL,
+                registrasi DECIMAL(15,2) NOT NULL DEFAULT 0,
+                registrasilama DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(5) NOT NULL DEFAULT '1',
+                allow_bpjs TINYINT NOT NULL DEFAULT 1
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS jadwal (
+                kd_dokter VARCHAR(20) NOT NULL,
+                kd_poli VARCHAR(10) NOT NULL,
+                hari_kerja VARCHAR(15) NOT NULL,
+                jam_mulai VARCHAR(10) NOT NULL,
+                jam_selesai VARCHAR(10) NOT NULL,
+                kuota INT NOT NULL DEFAULT 0,
+                prefik VARCHAR(10) NOT NULL DEFAULT '',
+                room VARCHAR(30) NOT NULL DEFAULT '',
+                PRIMARY KEY (kd_dokter, kd_poli, hari_kerja, jam_mulai)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS penjab (
+                kd_pj VARCHAR(10) PRIMARY KEY,
+                png_jawab VARCHAR(100) NOT NULL,
+                status VARCHAR(5) NOT NULL DEFAULT '1',
+                nama_perusahaan VARCHAR(150) NOT NULL DEFAULT '',
+                alamat_asuransi VARCHAR(200) NOT NULL DEFAULT '',
+                no_telp VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS jns_perawatan (
+                kd_jenis_prw VARCHAR(20) PRIMARY KEY,
+                nm_perawatan VARCHAR(150) NOT NULL,
+                kd_kategori VARCHAR(15) NOT NULL DEFAULT '',
+                material DECIMAL(15,2) NOT NULL DEFAULT 0,
+                tarif_tindakandr DECIMAL(15,2) NOT NULL DEFAULT 0,
+                tarif_tindakanpr DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_byrdr DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_byrpr DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(5) NOT NULL DEFAULT '1'
+            ){$suffix}",
+
+            // 4. Pasien, Registrasi & Booking (Fase 1)
+            "CREATE TABLE IF NOT EXISTS pasien (
+                no_rkm_medis VARCHAR(15) PRIMARY KEY,
+                nm_pasien VARCHAR(100) NOT NULL,
+                no_ktp VARCHAR(20) NOT NULL DEFAULT '',
+                jk VARCHAR(5) NOT NULL DEFAULT '-',
+                tmp_lahir VARCHAR(50) NOT NULL DEFAULT '',
+                tgl_lahir VARCHAR(15) NOT NULL,
+                nm_ibu VARCHAR(100) NOT NULL DEFAULT '-',
+                alamat VARCHAR(255) NOT NULL DEFAULT '',
+                gol_darah VARCHAR(5) NOT NULL DEFAULT '-',
+                pekerjaan VARCHAR(60) NOT NULL DEFAULT '-',
+                stts_nikah VARCHAR(30) NOT NULL DEFAULT 'BELUM MENIKAH',
+                agama VARCHAR(20) NOT NULL DEFAULT '-',
+                tgl_daftar VARCHAR(15) NOT NULL DEFAULT '',
+                no_tlp VARCHAR(30) NOT NULL DEFAULT '',
+                umur VARCHAR(30) NOT NULL DEFAULT '0 Th',
+                pnd VARCHAR(20) NOT NULL DEFAULT '-',
+                keluarga VARCHAR(30) NOT NULL DEFAULT 'DIRI SENDIRI',
+                namakeluarga VARCHAR(100) NOT NULL DEFAULT '-',
+                kd_pj VARCHAR(10) NOT NULL DEFAULT 'UMU',
+                no_peserta VARCHAR(30) NOT NULL DEFAULT '',
+                kd_kel INT NOT NULL DEFAULT 0,
+                kd_kec INT NOT NULL DEFAULT 0,
+                kd_kab INT NOT NULL DEFAULT 0,
+                pekerjaanpj VARCHAR(60) NOT NULL DEFAULT '-',
+                alamatpj VARCHAR(255) NOT NULL DEFAULT '-',
+                kelurahanpj VARCHAR(60) NOT NULL DEFAULT '-',
+                kecamatanpj VARCHAR(60) NOT NULL DEFAULT '-',
+                kabupatenpj VARCHAR(60) NOT NULL DEFAULT '-',
+                perusahaan_pasien VARCHAR(20) NOT NULL DEFAULT '-',
+                suku_bangsa INT NOT NULL DEFAULT 1,
+                bahasa_pasien INT NOT NULL DEFAULT 1,
+                cacat_fisik INT NOT NULL DEFAULT 1,
+                email VARCHAR(100) NOT NULL DEFAULT '',
+                nip VARCHAR(30) NOT NULL DEFAULT '-',
+                kd_prop INT NOT NULL DEFAULT 0,
+                propinsipj VARCHAR(60) NOT NULL DEFAULT '-'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS reg_periksa (
+                no_reg VARCHAR(10) NOT NULL,
+                no_rawat VARCHAR(20) PRIMARY KEY,
+                tgl_registrasi VARCHAR(15) NOT NULL,
+                jam_reg VARCHAR(10) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                no_rkm_medis VARCHAR(15) NOT NULL,
+                kd_poli VARCHAR(10) NOT NULL,
+                p_jawab VARCHAR(100) NOT NULL DEFAULT '-',
+                almt_pj VARCHAR(255) NOT NULL DEFAULT '-',
+                hubunganpj VARCHAR(30) NOT NULL DEFAULT '-',
+                biaya_reg DECIMAL(15,2) NOT NULL DEFAULT 0,
+                stts VARCHAR(30) NOT NULL DEFAULT 'Belum',
+                stts_daftar VARCHAR(15) NOT NULL DEFAULT 'Lama',
+                status_lanjut VARCHAR(10) NOT NULL DEFAULT 'Ralan',
+                kd_pj VARCHAR(10) NOT NULL,
+                umurdaftar INT NOT NULL DEFAULT 0,
+                sttsumur VARCHAR(5) NOT NULL DEFAULT 'Th',
+                status_bayar VARCHAR(20) NOT NULL DEFAULT 'Belum Bayar',
+                status_poli VARCHAR(15) NOT NULL DEFAULT 'Lama',
+                prefik VARCHAR(10) NOT NULL DEFAULT '',
+                room VARCHAR(30) NOT NULL DEFAULT '',
+                shift VARCHAR(20) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS booking_registrasi (
+                tanggal_booking VARCHAR(15) NOT NULL,
+                jam_booking VARCHAR(10) NOT NULL,
+                no_rkm_medis VARCHAR(15) NOT NULL,
+                tanggal_periksa VARCHAR(15) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                kd_poli VARCHAR(10) NOT NULL,
+                no_reg VARCHAR(10) NOT NULL,
+                kd_pj VARCHAR(10) NOT NULL,
+                limit_reg INT NOT NULL DEFAULT 0,
+                waktu_kunjungan VARCHAR(30) NOT NULL DEFAULT '',
+                status VARCHAR(30) NOT NULL DEFAULT 'Belum',
+                PRIMARY KEY (no_rkm_medis, tanggal_periksa)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS sse_events (
+                id {$bigAutoIncPk},
+                channel VARCHAR(64) NOT NULL,
+                event VARCHAR(128) NOT NULL,
+                payload TEXT NOT NULL,
+                created_at VARCHAR(30) NOT NULL
+            ){$suffix}",
+
+            // 5. Rekam Medis Elektronik / RME (Fase 2)
+            "CREATE TABLE IF NOT EXISTS pemeriksaan_ralan (
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam_rawat VARCHAR(10) NOT NULL,
+                suhu_tubuh VARCHAR(10) NOT NULL DEFAULT '-',
+                tensi VARCHAR(15) NOT NULL DEFAULT '-',
+                sistole VARCHAR(10) NOT NULL DEFAULT '-',
+                diastole VARCHAR(10) NOT NULL DEFAULT '-',
+                nadi VARCHAR(10) NOT NULL DEFAULT '-',
+                respirasi VARCHAR(10) NOT NULL DEFAULT '-',
+                tinggi VARCHAR(10) NOT NULL DEFAULT '-',
+                berat VARCHAR(10) NOT NULL DEFAULT '-',
+                spo2 VARCHAR(10) NOT NULL DEFAULT '-',
+                gcs VARCHAR(10) NOT NULL DEFAULT '-',
+                kesadaran VARCHAR(30) NOT NULL DEFAULT 'Compos Mentis',
+                keluhan TEXT NOT NULL,
+                pemeriksaan TEXT NOT NULL,
+                alergi VARCHAR(150) NOT NULL DEFAULT '-',
+                lingkar_perut VARCHAR(10) NOT NULL DEFAULT '-',
+                rtl TEXT NOT NULL,
+                penilaian TEXT NOT NULL,
+                instruksi TEXT NOT NULL,
+                evaluasi TEXT NOT NULL,
+                nip VARCHAR(20) NOT NULL,
+                PRIMARY KEY (no_rawat, tgl_perawatan, jam_rawat)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pemeriksaan_ranap (
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam_rawat VARCHAR(10) NOT NULL,
+                suhu_tubuh VARCHAR(10) NOT NULL DEFAULT '-',
+                tensi VARCHAR(15) NOT NULL DEFAULT '-',
+                nadi VARCHAR(10) NOT NULL DEFAULT '-',
+                respirasi VARCHAR(10) NOT NULL DEFAULT '-',
+                tinggi VARCHAR(10) NOT NULL DEFAULT '-',
+                berat VARCHAR(10) NOT NULL DEFAULT '-',
+                spo2 VARCHAR(10) NOT NULL DEFAULT '-',
+                gcs VARCHAR(10) NOT NULL DEFAULT '-',
+                kesadaran VARCHAR(30) NOT NULL DEFAULT 'Compos Mentis',
+                keluhan TEXT NOT NULL,
+                pemeriksaan TEXT NOT NULL,
+                alergi VARCHAR(150) NOT NULL DEFAULT '-',
+                rtl TEXT NOT NULL,
+                penilaian TEXT NOT NULL,
+                instruksi TEXT NOT NULL,
+                evaluasi TEXT NOT NULL,
+                nip VARCHAR(20) NOT NULL,
+                PRIMARY KEY (no_rawat, tgl_perawatan, jam_rawat)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_pemeriksaan_ralan_metadata (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam_rawat VARCHAR(10) NOT NULL,
+                meta_key VARCHAR(100) NOT NULL,
+                meta_value TEXT NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS penyakit (
+                kd_penyakit VARCHAR(15) PRIMARY KEY,
+                nm_penyakit VARCHAR(200) NOT NULL,
+                ciri_ciri TEXT,
+                keterangan TEXT,
+                kd_ktg VARCHAR(15) NOT NULL DEFAULT '-',
+                status VARCHAR(30) NOT NULL DEFAULT 'Menular',
+                nm_indonesia VARCHAR(200) NOT NULL DEFAULT '',
+                skdi_level VARCHAR(10) NOT NULL DEFAULT '4A'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS diagnosa_pasien (
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_penyakit VARCHAR(15) NOT NULL,
+                status VARCHAR(15) NOT NULL DEFAULT 'Ralan',
+                prioritas TINYINT NOT NULL DEFAULT 1,
+                status_penyakit VARCHAR(20) NOT NULL DEFAULT 'Baru',
+                PRIMARY KEY (no_rawat, kd_penyakit, status)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_odontogram (
+                id {$bigAutoIncPk},
+                no_rkm_medis VARCHAR(15) NOT NULL,
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_pemeriksaan VARCHAR(15) NOT NULL,
+                nomor_gigi VARCHAR(10) NOT NULL,
+                kondisi VARCHAR(30) NOT NULL,
+                catatan TEXT,
+                id_user INT NOT NULL DEFAULT 0
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS surat_sakit (
+                no_surat VARCHAR(50) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tanggalawal VARCHAR(15) NOT NULL,
+                tanggalakhir VARCHAR(15) NOT NULL,
+                lamasakit VARCHAR(20) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS surat_hamil (
+                no_surat VARCHAR(50) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tanggalperiksa VARCHAR(15) NOT NULL,
+                hasilperiksa VARCHAR(100) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS surat_bebas_narkoba (
+                no_surat VARCHAR(50) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tanggal VARCHAR(15) NOT NULL,
+                kategori VARCHAR(50) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                keperluan VARCHAR(150) NOT NULL,
+                opiat VARCHAR(20) NOT NULL DEFAULT 'NEGATIF',
+                ganja VARCHAR(20) NOT NULL DEFAULT 'NEGATIF',
+                amphetamin VARCHAR(20) NOT NULL DEFAULT 'NEGATIF',
+                methamphetamin VARCHAR(20) NOT NULL DEFAULT 'NEGATIF',
+                benzodiazepin VARCHAR(20) NOT NULL DEFAULT 'NEGATIF',
+                cocain VARCHAR(20) NOT NULL DEFAULT 'NEGATIF'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS rujukan_internal (
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                kd_poli VARCHAR(10) NOT NULL,
+                catatan TEXT,
+                PRIMARY KEY (no_rawat, kd_poli)
+            ){$suffix}",
+        ];
+
+        foreach ($statements as $sql) {
+            $this->pdo->exec($sql);
+        }
+    }
+}
