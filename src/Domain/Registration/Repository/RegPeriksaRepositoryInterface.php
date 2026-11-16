@@ -39,8 +39,9 @@ interface RegPeriksaRepositoryInterface
     /**
      * Menyimpan data kunjungan dengan proteksi balapan (race condition).
      * Jika terjadi tabrakan nomor rawat atau no_reg pada jam sibuk, secara atomik meregenerasi nomor.
+     * Jika $preserveNoReg = true (Mobile JKN), no_reg asli dipertahankan dan hanya no_rawat yang diregenerasi.
      */
-    public function saveWithAtomicRetry(RegPeriksa $regPeriksa, int $maxRetries = 5): RegPeriksa;
+    public function saveWithAtomicRetry(RegPeriksa $regPeriksa, int $maxRetries = 5, bool $preserveNoReg = false): RegPeriksa;
 
     /**
      * Memeriksa apakah pasien sudah memiliki rekam catatan klinis (SOAP, tindakan, resep obat, lab, radiologi).

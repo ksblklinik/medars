@@ -25,8 +25,8 @@ final readonly class Pasien
             throw new \InvalidArgumentException('Nama pasien tidak boleh kosong.');
         }
 
-        if (!in_array($jk, ['L', 'P'], true)) {
-            throw new \InvalidArgumentException("Jenis kelamin harus 'L' atau 'P'.");
+        if (!in_array($jk, ['L', 'P', '-'], true)) {
+            throw new \InvalidArgumentException("Jenis kelamin harus 'L', 'P', atau '-'.");
         }
     }
 

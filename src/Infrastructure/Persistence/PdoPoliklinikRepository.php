@@ -33,7 +33,7 @@ final readonly class PdoPoliklinikRepository implements PoliklinikRepositoryInte
      */
     public function findAllActive(): array
     {
-        $sql = 'SELECT * FROM poliklinik WHERE status = "1" ORDER BY nm_poli ASC';
+        $sql = "SELECT * FROM poliklinik WHERE status = '1' ORDER BY nm_poli ASC";
 
         $stmt = $this->pdo->query($sql);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -43,8 +43,8 @@ final readonly class PdoPoliklinikRepository implements PoliklinikRepositoryInte
 
     public function save(PoliklinikSetting $setting): void
     {
-        $sql = 'INSERT INTO poliklinik (kd_poli, nm_poli, registrasi, registrasilama, status, allow_bpjs)
-                VALUES (:kd_poli, :nm_poli, :registrasi, :registrasilama, "1", :allow_bpjs)';
+        $sql = "INSERT INTO poliklinik (kd_poli, nm_poli, registrasi, registrasilama, status, allow_bpjs)
+                VALUES (:kd_poli, :nm_poli, :registrasi, :registrasilama, '1', :allow_bpjs)";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([

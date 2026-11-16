@@ -82,6 +82,13 @@ final readonly class ClinicalGuardShieldUseCase
             throw new ClinicalGuardBlockedException($cmd->noRawat, 'Pasien sudah dalam pelayanan atau selesai.');
         }
 
+        if ($this->regRepo->hasClinicalRecords($noRawat)) {
+            throw new ClinicalGuardBlockedException(
+                $cmd->noRawat,
+                'Pasien sudah memiliki catatan SOAP dokter, tindakan medis/paramedis, e-resep, atau order lab/radiologi.'
+            );
+        }
+
         $this->regRepo->reassignDoctor($noRawat, $cmd->newKdDokter, $reg->kdDokter);
     }
 }

@@ -123,6 +123,7 @@ final class DisplayQueueControllerTest extends TestCase
         $this->assertSame(200, $response['status']);
         $this->assertStringContainsString('Display Antrean Poliklinik', $response['body']);
         $this->assertStringContainsString('id="displayTvAntrean"', $response['body']);
+        $this->assertStringNotContainsString('id="navbar-wrapper"', $response['body'], 'TV Display tidak boleh dibungkus layout admin');
     }
 
     public function test_kiosk_renders_kiosk_view(): void
@@ -132,6 +133,7 @@ final class DisplayQueueControllerTest extends TestCase
         $this->assertStringContainsString('Layar Kiosk Mandiri', $response['body']);
         $this->assertStringContainsString('kiosk-wrapper', $response['body']);
         $this->assertStringContainsString('General Consent', $response['body']);
+        $this->assertStringNotContainsString('id="navbar-wrapper"', $response['body'], 'Layar Kiosk tidak boleh dibungkus layout admin');
     }
 
     public function test_api_queue_summary_returns_current_and_waiting_patients(): void

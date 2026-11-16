@@ -32,7 +32,7 @@ final readonly class DisplayQueueController
             'judul' => 'Display Antrean Poliklinik',
             'klinik_nama' => 'SIMRS Medars',
             'poliklinik' => $poliklinik,
-        ]);
+        ], false);
 
         return [
             'status' => 200,
@@ -49,7 +49,7 @@ final readonly class DisplayQueueController
         $body = $this->renderer->render('kiosk/index', [
             'judul' => 'Layar Kiosk Mandiri',
             'klinik_nama' => 'SIMRS Medars',
-        ]);
+        ], false);
 
         return [
             'status' => 200,
@@ -71,27 +71,27 @@ final readonly class DisplayQueueController
 
         foreach ($poliklinik as $poli) {
             // 1. Antrean yang sedang dipanggil
-            $sqlCurrent = 'SELECT r.no_reg, r.no_rawat, d.nm_dokter, r.room 
+            $sqlCurrent = "SELECT r.no_reg, r.no_rawat, d.nm_dokter, r.room 
                            FROM reg_periksa r
                            LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
                            WHERE r.kd_poli = :poli 
                              AND r.tgl_registrasi = :tgl 
-                             AND r.stts IN ("Awal", "Dipanggil") 
+                             AND r.stts IN ('Awal', 'Dipanggil') 
                            ORDER BY r.jam_reg DESC 
-                           LIMIT 1';
+                           LIMIT 1";
 
             $stmtCurrent = $this->pdo->prepare($sqlCurrent);
             $stmtCurrent->execute(['poli' => $poli->kdPoli, 'tgl' => $date]);
             $currentRow = $stmtCurrent->fetch(\PDO::FETCH_ASSOC);
 
             // 2. Daftar antrean berikutnya yang sedang menunggu
-            $sqlWaiting = 'SELECT r.no_reg 
+            $sqlWaiting = "SELECT r.no_reg 
                            FROM reg_periksa r 
                            WHERE r.kd_poli = :poli 
                              AND r.tgl_registrasi = :tgl 
-                             AND r.stts = "Belum" 
+                             AND r.stts = 'Belum' 
                            ORDER BY r.no_reg ASC 
-                           LIMIT 5';
+                           LIMIT 5";
 
             $stmtWaiting = $this->pdo->prepare($sqlWaiting);
             $stmtWaiting->execute(['poli' => $poli->kdPoli, 'tgl' => $date]);
@@ -140,7 +140,7 @@ final readonly class DisplayQueueController
         $finalRoom = $room !== '' ? $room : ($row['room'] ?: 'Ruang Periksa');
 
         // Update status menjadi 'Awal' (sedang dipanggil di depan poli)
-        $sqlUpdate = 'UPDATE reg_periksa SET stts = "Awal", room = :room WHERE no_rawat = :rawat';
+        $sqlUpdate = "UPDATE reg_periksa SET stts = 'Awal', room = :room WHERE no_rawat = :rawat";
         $stmtUpdate = $this->pdo->prepare($sqlUpdate);
         $stmtUpdate->execute(['room' => $finalRoom, 'rawat' => $noRawat]);
 

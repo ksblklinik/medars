@@ -175,4 +175,44 @@ final class PdoRegPeriksaRepositoryTest extends TestCase
         $this->pdo->exec("INSERT INTO pemeriksaan_ralan (no_rawat) VALUES ('2026/11/16/000001')");
         $this->assertTrue($this->repository->hasClinicalRecords($noRawat));
     }
+
+    public function test_has_clinical_records_ignores_initial_consultation_codes(): void
+    {
+        $noRawat = new NoRawat('2026/11/16/000002');
+
+        // Hanya ada karcis konsul awal RJ002
+        $this->pdo->exec("INSERT INTO rawat_jl_dr (no_rawat, kd_jenis_prw) VALUES ('2026/11/16/000002', 'RJ002')");
+        $this->assertFalse($this->repository->hasClinicalRecords($noRawat), 'Konsul awal RJ002 tidak boleh memblokir pergeseran antrean');
+
+        // Jika ada tindakan medis non-konsul awal (misal TD001)
+        $this->pdo->exec("INSERT INTO rawat_jl_dr (no_rawat, kd_jenis_prw) VALUES ('2026/11/16/000002', 'TD001')");
+        $this->assertTrue($this->repository->hasClinicalRecords($noRawat));
+    }
+
+    public function test_save_with_atomic_retry_preserves_no_reg_for_mobile_jkn(): void
+    {
+        $today = new \DateTimeImmutable('2026-11-16');
+
+        // Sudah ada pasien lain yang mengambil no_rawat 000001 dengan antrean 001
+        $this->pdo->exec("INSERT INTO reg_periksa (no_rawat, no_reg, tgl_registrasi, kd_dokter, kd_poli, no_rkm_medis, kd_pj)
+            VALUES ('2026/11/16/000001', '001', '2026-11-16', 'DR001', 'U01', '000001', 'A09')");
+
+        // Pasien Mobile JKN check-in dengan no_reg asli booking '005', tapi no_rawat bentrok dengan 000001
+        $jknReg = new RegPeriksa(
+            noRawat: new NoRawat('2026/11/16/000001'),
+            noReg: new NoReg('005'),
+            noRkmMedis: new NoRkmMedis('000002'),
+            kdPoli: 'U01',
+            kdDokter: 'DR001',
+            kdPj: 'BPJ',
+            tglRegistrasi: $today,
+            jamReg: '08:30:00',
+            biayaReg: 25000.0
+        );
+
+        $saved = $this->repository->saveWithAtomicRetry($jknReg, 5, true);
+
+        $this->assertSame('2026/11/16/000002', $saved->noRawat->value());
+        $this->assertSame('005', $saved->noReg->value(), 'no_reg asli booking Mobile JKN harus tetap dipertahankan');
+    }
 }

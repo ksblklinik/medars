@@ -35,10 +35,10 @@ final readonly class RegistrationController
     {
         $poliklinik = $this->poliRepo->findAllActive();
 
-        $stmtDokter = $this->pdo->query('SELECT kd_dokter, nm_dokter FROM dokter WHERE status = "1" ORDER BY nm_dokter ASC');
+        $stmtDokter = $this->pdo->query("SELECT kd_dokter, nm_dokter FROM dokter WHERE status = '1' ORDER BY nm_dokter ASC");
         $dokter = $stmtDokter ? $stmtDokter->fetchAll(\PDO::FETCH_ASSOC) : [];
 
-        $stmtPenjab = $this->pdo->query('SELECT kd_pj, png_jawab FROM penjab WHERE status = "1" ORDER BY png_jawab ASC');
+        $stmtPenjab = $this->pdo->query("SELECT kd_pj, png_jawab FROM penjab WHERE status = '1' ORDER BY png_jawab ASC");
         $penjab = $stmtPenjab ? $stmtPenjab->fetchAll(\PDO::FETCH_ASSOC) : [];
 
         $body = $this->renderer->render('registration/index', [
@@ -172,15 +172,15 @@ final readonly class RegistrationController
     {
         $date = (string) ($queryParams['date'] ?? date('Y-m-d'));
 
-        $sql = 'SELECT r.no_reg, r.no_rawat, r.no_rkm_medis, p.nm_pasien, 
+        $sql = "SELECT r.no_reg, r.no_rawat, r.no_rkm_medis, p.nm_pasien, 
                        pol.nm_poli, d.nm_dokter, pj.png_jawab, r.stts, r.status_bayar
                 FROM reg_periksa r
                 LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
                 LEFT JOIN poliklinik pol ON r.kd_poli = pol.kd_poli
                 LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
                 LEFT JOIN penjab pj ON r.kd_pj = pj.kd_pj
-                WHERE r.tgl_registrasi = :tgl AND r.stts != "Batal"
-                ORDER BY r.no_reg ASC';
+                WHERE r.tgl_registrasi = :tgl AND r.stts != 'Batal'
+                ORDER BY r.no_reg ASC";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['tgl' => $date]);

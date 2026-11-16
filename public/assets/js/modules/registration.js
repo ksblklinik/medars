@@ -10,6 +10,16 @@
     'use strict';
 
     const RegistrationModule = {
+        escapeHtml: function (str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+
         init: function () {
             this.bindEvents();
             this.loadTodayRegistrations();
@@ -67,7 +77,7 @@
                 <div class="p-1">
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
-                        <input type="text" id="modalSearchQuery" class="form-control" placeholder="Ketik No. RM, Nama, NIK, atau No. BPJS..." value="${initialQuery}">
+                        <input type="text" id="modalSearchQuery" class="form-control" placeholder="Ketik No. RM, Nama, NIK, atau No. BPJS..." value="${this.escapeHtml(initialQuery)}">
                     </div>
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table table-hover table-sm small" id="tableModalPatients">
@@ -106,13 +116,13 @@
                                 return;
                             }
 
-                            tbody.innerHTML = patients.map(p => `
-                                <tr class="patient-row cursor-pointer" data-json='${JSON.stringify(p).replace(/'/g, "&#39;")}'>
-                                    <td class="fw-bold font-monospace text-teal">${p.no_rkm_medis}</td>
-                                    <td>${p.nm_pasien}</td>
-                                    <td>${p.nik || p.no_peserta || '-'}</td>
-                                    <td>${p.tgl_lahir}</td>
-                                    <td class="text-truncate" style="max-width: 150px;">${p.alamat || '-'}</td>
+                            tbody.innerHTML = patients.map((p, idx) => `
+                                <tr class="patient-row cursor-pointer" data-idx="${idx}">
+                                    <td class="fw-bold font-monospace text-teal">${this.escapeHtml(p.no_rkm_medis)}</td>
+                                    <td>${this.escapeHtml(p.nm_pasien)}</td>
+                                    <td>${this.escapeHtml(p.nik || p.no_peserta || '-')}</td>
+                                    <td>${this.escapeHtml(p.tgl_lahir)}</td>
+                                    <td class="text-truncate" style="max-width: 150px;">${this.escapeHtml(p.alamat || '-')}</td>
                                     <td>
                                         <button type="button" class="btn btn-teal btn-sm py-0 px-2 btn-pilih-pasien">Pilih</button>
                                     </td>
@@ -121,8 +131,8 @@
 
                             tbody.querySelectorAll('.patient-row').forEach(row => {
                                 row.addEventListener('click', () => {
-                                    const pData = JSON.parse(row.getAttribute('data-json'));
-                                    this.selectPatient(pData);
+                                    const idx = parseInt(row.getAttribute('data-idx'), 10);
+                                    this.selectPatient(patients[idx]);
                                     window.AppModal.close();
                                 });
                             });
@@ -202,11 +212,11 @@
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    this.showAlert('success', `<strong>Sukses:</strong> Pendaftaran tersimpan! No. Antrean: <strong>${res.data.no_reg}</strong> | No. Rawat: <strong>${res.data.no_rawat}</strong>`);
+                    this.showAlert('success', `<strong>Sukses:</strong> Pendaftaran tersimpan! No. Antrean: <strong>${this.escapeHtml(res.data.no_reg)}</strong> | No. Rawat: <strong>${this.escapeHtml(res.data.no_rawat)}</strong>`);
                     this.resetForm();
                     this.loadTodayRegistrations();
                 } else {
-                    this.showAlert('danger', `<strong>Gagal:</strong> ${res.message}`);
+                    this.showAlert('danger', `<strong>Gagal:</strong> ${this.escapeHtml(res.message)}`);
                 }
             })
             .catch(err => {
@@ -232,11 +242,11 @@
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    this.showAlert('success', `<strong>Check-in Berhasil:</strong> No. Antrean: <strong>${res.data.no_reg}</strong> | No. Rawat: <strong>${res.data.no_rawat}</strong>`);
+                    this.showAlert('success', `<strong>Check-in Berhasil:</strong> No. Antrean: <strong>${this.escapeHtml(res.data.no_reg)}</strong> | No. Rawat: <strong>${this.escapeHtml(res.data.no_rawat)}</strong>`);
                     this.resetForm();
                     this.loadTodayRegistrations();
                 } else {
-                    this.showAlert('danger', `<strong>Gagal Check-in:</strong> ${res.message}`);
+                    this.showAlert('danger', `<strong>Gagal Check-in:</strong> ${this.escapeHtml(res.message)}`);
                 }
             })
             .catch(err => {
@@ -267,22 +277,22 @@
                         return `
                             <tr>
                                 <td class="text-center">
-                                    <span class="badge bg-medical-teal font-monospace fs-6">${r.no_reg}</span>
+                                    <span class="badge bg-medical-teal font-monospace fs-6">${this.escapeHtml(r.no_reg)}</span>
                                 </td>
                                 <td>
-                                    <span class="font-monospace text-muted d-block small">${r.no_rawat}</span>
+                                    <span class="font-monospace text-muted d-block small">${this.escapeHtml(r.no_rawat)}</span>
                                     ${bayarBadge}
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-dark d-block">${r.nm_pasien || '-'}</span>
-                                    <span class="text-muted small font-monospace">${r.no_rkm_medis}</span>
+                                    <span class="fw-bold text-dark d-block">${this.escapeHtml(r.nm_pasien || '-')}</span>
+                                    <span class="text-muted small font-monospace">${this.escapeHtml(r.no_rkm_medis)}</span>
                                 </td>
                                 <td>
-                                    <span class="d-block fw-medium">${r.nm_poli || '-'}</span>
-                                    <span class="text-muted small">${r.nm_dokter || '-'}</span>
+                                    <span class="d-block fw-medium">${this.escapeHtml(r.nm_poli || '-')}</span>
+                                    <span class="text-muted small">${this.escapeHtml(r.nm_dokter || '-')}</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge ${statusClass}">${r.stts}</span>
+                                    <span class="badge ${statusClass}">${this.escapeHtml(r.stts)}</span>
                                 </td>
                             </tr>
                         `;

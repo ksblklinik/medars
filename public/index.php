@@ -15,21 +15,20 @@ use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
 use App\Infrastructure\Realtime\EventMessage;
+use App\Infrastructure\Realtime\PdoEventBroadcaster;
 use App\Infrastructure\Realtime\SseStreamResponse;
 use App\Presentation\Http\DisplayQueueController;
 use App\Presentation\Http\RegistrationController;
 use App\Presentation\Http\Router;
 use App\Presentation\View\ViewRenderer;
-use App\Infrastructure\Realtime\InMemoryEventBroadcaster;
 
 $router = new Router();
 $renderer = new ViewRenderer();
-$broadcaster = new InMemoryEventBroadcaster();
 
-$getRegistrationController = static function () use ($renderer): RegistrationController {
-    static $controller = null;
-    if ($controller !== null) {
-        return $controller;
+$getPdo = static function (): PDO {
+    static $pdo = null;
+    if ($pdo !== null) {
+        return $pdo;
     }
 
     $dbDriver = getenv('DB_DRIVER') ?: 'sqlite';
@@ -51,6 +50,26 @@ $getRegistrationController = static function () use ($renderer): RegistrationCon
         );
         $pdo = ConnectionFactory::create($config);
     }
+
+    return $pdo;
+};
+
+$getBroadcaster = static function () use ($getPdo): PdoEventBroadcaster {
+    static $broadcaster = null;
+    if ($broadcaster === null) {
+        $broadcaster = new PdoEventBroadcaster($getPdo());
+        $broadcaster->ensureTableExists();
+    }
+    return $broadcaster;
+};
+
+$getRegistrationController = static function () use ($renderer, $getPdo): RegistrationController {
+    static $controller = null;
+    if ($controller !== null) {
+        return $controller;
+    }
+
+    $pdo = $getPdo();
 
     $pasienRepo = new PdoPasienRepository($pdo);
     $poliRepo = new PdoPoliklinikRepository($pdo);
@@ -129,29 +148,13 @@ $router->post('/api/v1/registration/shift-queue', static function () use ($getRe
 });
 
 // Modul Display Antrean TV & Kiosk Mandiri (PLN-10)
-$getDisplayQueueController = static function () use ($renderer, $broadcaster): DisplayQueueController {
+$getDisplayQueueController = static function () use ($renderer, $getPdo, $getBroadcaster): DisplayQueueController {
     static $controller = null;
     if ($controller !== null) {
         return $controller;
     }
 
-    $dbDriver = getenv('DB_DRIVER') ?: 'sqlite';
-    if ($dbDriver === 'sqlite') {
-        $dbDir = __DIR__ . '/../storage';
-        $pdo = new PDO("sqlite:{$dbDir}/medars.sqlite");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    } else {
-        $config = new ConnectionConfig(
-            driver: 'mysql',
-            host: getenv('DB_HOST') ?: '127.0.0.1',
-            port: (int) (getenv('DB_PORT') ?: 3306),
-            database: getenv('DB_DATABASE') ?: 'ksm_next',
-            username: getenv('DB_USERNAME') ?: 'root',
-            password: getenv('DB_PASSWORD') ?: ''
-        );
-        $pdo = ConnectionFactory::create($config);
-    }
-
+    $pdo = $getPdo();
     $poliRepo = new PdoPoliklinikRepository($pdo);
     $regRepo = new PdoRegPeriksaRepository($pdo);
 
@@ -159,7 +162,7 @@ $getDisplayQueueController = static function () use ($renderer, $broadcaster): D
         $pdo,
         $poliRepo,
         $regRepo,
-        $broadcaster,
+        $getBroadcaster(),
         $renderer
     );
 
@@ -189,10 +192,13 @@ $router->post('/api/v1/queue/call', static function () use ($getDisplayQueueCont
 });
 
 // Endpoint Server-Sent Events (SSE)
-$router->get('/api/stream', static function (): string {
+$router->get('/api/stream', static function () use ($getBroadcaster): string {
     foreach (SseStreamResponse::getHeaders() as $headerName => $headerValue) {
         header("{$headerName}: {$headerValue}");
     }
+
+    $lastId = isset($_SERVER['HTTP_LAST_EVENT_ID']) ? (int) $_SERVER['HTTP_LAST_EVENT_ID'] : 0;
+    $broadcaster = $getBroadcaster();
 
     $connectedMsg = new EventMessage(
         event: 'system.connected',
@@ -201,6 +207,12 @@ $router->get('/api/stream', static function (): string {
     );
 
     echo SseStreamResponse::formatEvent($connectedMsg);
+
+    $events = $broadcaster->fetchSince('antrean', $lastId);
+    foreach ($events as $ev) {
+        echo SseStreamResponse::formatEvent($ev);
+    }
+
     echo SseStreamResponse::formatHeartbeat();
 
     if (ob_get_level() > 0) {

@@ -38,12 +38,12 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
         \DateTimeInterface $date,
         string $shift = ''
     ): bool {
-        $sql = 'SELECT COUNT(*) FROM reg_periksa 
+        $sql = "SELECT COUNT(*) FROM reg_periksa 
                 WHERE no_rkm_medis = :rm 
                   AND kd_poli = :poli 
                   AND kd_dokter = :dokter 
                   AND tgl_registrasi = :tgl 
-                  AND stts != "Batal"';
+                  AND stts != 'Batal'";
 
         $params = [
             'rm' => $noRkmMedis->value(),
@@ -65,11 +65,11 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
 
     public function hasUnpaidPreviousVisit(NoRkmMedis $noRkmMedis, \DateTimeInterface $today): bool
     {
-        $sql = 'SELECT COUNT(*) FROM reg_periksa 
+        $sql = "SELECT COUNT(*) FROM reg_periksa 
                 WHERE no_rkm_medis = :rm 
-                  AND status_bayar = "Belum Bayar" 
-                  AND stts != "Batal" 
-                  AND tgl_registrasi < :today';
+                  AND status_bayar = 'Belum Bayar' 
+                  AND stts != 'Batal' 
+                  AND tgl_registrasi < :today";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -143,7 +143,7 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
         return NoRawat::generate($date, $maxSeq + 1);
     }
 
-    public function saveWithAtomicRetry(RegPeriksa $regPeriksa, int $maxRetries = 5): RegPeriksa
+    public function saveWithAtomicRetry(RegPeriksa $regPeriksa, int $maxRetries = 5, bool $preserveNoReg = false): RegPeriksa
     {
         $current = $regPeriksa;
 
@@ -197,9 +197,11 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
                     || str_contains($e->getMessage(), 'Duplicate entry');
 
                 if ($isUniqueViolation && $attempt < $maxRetries) {
-                    // Regenerasi nomor rawat dan nomor registrasi berikutnya
+                    // Regenerasi nomor rawat (dan no_reg jika bukan Mobile JKN)
                     $nextRawat = $this->getNextNoRawat($current->tglRegistrasi);
-                    $nextReg = $this->getNextNoReg($current->kdPoli, $current->kdDokter, $current->tglRegistrasi, $current->shift);
+                    $nextReg = $preserveNoReg
+                        ? $current->noReg
+                        : $this->getNextNoReg($current->kdPoli, $current->kdDokter, $current->tglRegistrasi, $current->shift);
 
                     $current = new RegPeriksa(
                         noRawat: $nextRawat,
@@ -237,19 +239,18 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
 
     public function hasClinicalRecords(NoRawat $noRawat): bool
     {
-        $tables = [
-            'pemeriksaan_ralan',
-            'rawat_jl_dr',
-            'rawat_jl_pr',
-            'rawat_jl_drpr',
-            'resep_obat',
-            'periksa_lab',
-            'periksa_radiologi',
+        $checks = [
+            'pemeriksaan_ralan' => 'SELECT 1 FROM pemeriksaan_ralan WHERE no_rawat = :rawat LIMIT 1',
+            'rawat_jl_dr' => "SELECT 1 FROM rawat_jl_dr WHERE no_rawat = :rawat AND kd_jenis_prw NOT IN ('RJ002', 'RJ003', 'RJ008') LIMIT 1",
+            'rawat_jl_pr' => 'SELECT 1 FROM rawat_jl_pr WHERE no_rawat = :rawat LIMIT 1',
+            'rawat_jl_drpr' => 'SELECT 1 FROM rawat_jl_drpr WHERE no_rawat = :rawat LIMIT 1',
+            'resep_obat' => 'SELECT 1 FROM resep_obat WHERE no_rawat = :rawat LIMIT 1',
+            'periksa_lab' => 'SELECT 1 FROM periksa_lab WHERE no_rawat = :rawat LIMIT 1',
+            'periksa_radiologi' => 'SELECT 1 FROM periksa_radiologi WHERE no_rawat = :rawat LIMIT 1',
         ];
 
-        foreach ($tables as $table) {
+        foreach ($checks as $sql) {
             try {
-                $sql = "SELECT 1 FROM {$table} WHERE no_rawat = :rawat LIMIT 1";
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute(['rawat' => $noRawat->value()]);
                 if ($stmt->fetchColumn() !== false) {
@@ -266,7 +267,7 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
 
     public function countVisitsByPatient(NoRkmMedis $noRkmMedis): int
     {
-        $sql = 'SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND stts != "Batal"';
+        $sql = "SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND stts != 'Batal'";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['rm' => $noRkmMedis->value()]);
 
@@ -275,7 +276,7 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
 
     public function countVisitsByPatientAndPoli(NoRkmMedis $noRkmMedis, string $kdPoli): int
     {
-        $sql = 'SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND kd_poli = :poli AND stts != "Batal"';
+        $sql = "SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND kd_poli = :poli AND stts != 'Batal'";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['rm' => $noRkmMedis->value(), 'poli' => $kdPoli]);
 

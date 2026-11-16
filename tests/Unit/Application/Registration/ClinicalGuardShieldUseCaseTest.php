@@ -100,4 +100,14 @@ final class ClinicalGuardShieldUseCaseTest extends TestCase
         $dokterTindakan = $this->pdo->query("SELECT kd_dokter FROM rawat_jl_dr WHERE no_rawat = '2026/11/16/000001' AND kd_jenis_prw = 'RJ002'")->fetchColumn();
         $this->assertSame('DR002', $dokterTindakan);
     }
+
+    public function test_should_block_reassigning_doctor_if_clinical_records_exist(): void
+    {
+        $this->pdo->exec("INSERT INTO pemeriksaan_ralan (no_rawat) VALUES ('2026/11/16/000001')");
+
+        $cmd = new ReassignDoctorCommand('2026/11/16/000001', 'DR002');
+
+        $this->expectException(ClinicalGuardBlockedException::class);
+        $this->useCase->reassignDoctor($cmd);
+    }
 }

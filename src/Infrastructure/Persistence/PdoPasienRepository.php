@@ -88,7 +88,10 @@ final readonly class PdoPasienRepository implements PasienRepositoryInterface
     public function search(string $query, int $limit = 20): array
     {
         $sql = 'SELECT * FROM pasien 
-                WHERE no_rkm_medis LIKE :q OR nm_pasien LIKE :q 
+                WHERE no_rkm_medis LIKE :q 
+                   OR nm_pasien LIKE :q 
+                   OR no_ktp LIKE :q 
+                   OR no_peserta LIKE :q 
                 ORDER BY no_rkm_medis DESC 
                 LIMIT ' . (int) $limit;
 
@@ -109,7 +112,10 @@ final readonly class PdoPasienRepository implements PasienRepositoryInterface
         if (count($results) < $limit && $this->legacyGuard !== null) {
             $remaining = $limit - count($results);
             $legacySql = 'SELECT * FROM pasien 
-                          WHERE no_rkm_medis LIKE :q OR nm_pasien LIKE :q 
+                          WHERE no_rkm_medis LIKE :q 
+                             OR nm_pasien LIKE :q 
+                             OR no_ktp LIKE :q 
+                             OR no_peserta LIKE :q 
                           ORDER BY no_rkm_medis DESC 
                           LIMIT ' . (int) $remaining;
 
@@ -161,7 +167,7 @@ final readonly class PdoPasienRepository implements PasienRepositoryInterface
         $legacyMax = 0;
 
         if ($this->legacyGuard !== null) {
-            $legacyCastType = 'INTEGER'; // Default SQLite, atau cek driver jika koneksi langsung
+            $legacyCastType = $this->getCastType($this->legacyGuard->pdo());
             $legacySql = "SELECT ifnull(MAX(CAST(no_rkm_medis AS {$legacyCastType})), 0) FROM pasien";
             $legacyResult = $this->legacyGuard->query($legacySql);
             if (!empty($legacyResult)) {
@@ -185,12 +191,20 @@ final readonly class PdoPasienRepository implements PasienRepositoryInterface
      */
     private function hydrate(array $row): Pasien
     {
+        $rawJk = strtoupper(trim((string) ($row['jk'] ?? '-')));
+        $jk = in_array($rawJk, ['L', 'P', '-'], true) ? $rawJk : '-';
+
+        $rawTgl = trim((string) ($row['tgl_lahir'] ?? ''));
+        $tglLahir = ($rawTgl === '' || $rawTgl === '0000-00-00')
+            ? new \DateTimeImmutable('1970-01-01')
+            : new \DateTimeImmutable($rawTgl);
+
         return new Pasien(
             noRkmMedis: new NoRkmMedis((string) $row['no_rkm_medis']),
             nmPasien: (string) $row['nm_pasien'],
             nik: (string) ($row['no_ktp'] ?? '-'),
-            jk: (string) ($row['jk'] ?? 'L'),
-            tglLahir: new \DateTimeImmutable((string) $row['tgl_lahir']),
+            jk: $jk,
+            tglLahir: $tglLahir,
             alamat: (string) ($row['alamat'] ?? '-'),
             noTelp: (string) ($row['no_tlp'] ?? '-'),
             noPeserta: (string) ($row['no_peserta'] ?? ''),

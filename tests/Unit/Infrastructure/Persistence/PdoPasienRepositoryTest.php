@@ -107,8 +107,8 @@ final class PdoPasienRepositoryTest extends TestCase
 
     public function test_search_and_find_by_nik(): void
     {
-        $this->nextPdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tgl_lahir) 
-            VALUES ('000300', 'Siti Aminah', '3201055555550001', 'P', '1992-05-15')");
+        $this->nextPdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, no_peserta, jk, tgl_lahir) 
+            VALUES ('000300', 'Siti Aminah', '3201055555550001', '0009988776655', 'P', '1992-05-15')");
 
         $byNik = $this->repository->findByNik('3201055555550001');
         $this->assertNotNull($byNik);
@@ -117,5 +117,25 @@ final class PdoPasienRepositoryTest extends TestCase
         $results = $this->repository->search('Aminah');
         $this->assertCount(1, $results);
         $this->assertSame('000300', $results[0]->noRkmMedis->value());
+
+        // Pencarian F4 via NIK
+        $resultsByNik = $this->repository->search('3201055555550001');
+        $this->assertCount(1, $resultsByNik);
+        $this->assertSame('000300', $resultsByNik[0]->noRkmMedis->value());
+
+        // Pencarian F4 via No. BPJS
+        $resultsByBpjs = $this->repository->search('0009988776655');
+        $this->assertCount(1, $resultsByBpjs);
+        $this->assertSame('000300', $resultsByBpjs[0]->noRkmMedis->value());
+    }
+
+    public function test_hydrates_legacy_patient_with_dash_gender(): void
+    {
+        $this->legacyPdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tgl_lahir) 
+            VALUES ('000099', 'Pasien Legacy Tanpa JK', '-', '-', '1985-01-01')");
+
+        $found = $this->repository->findByNoRkmMedis(new NoRkmMedis('000099'));
+        $this->assertNotNull($found);
+        $this->assertSame('-', $found->jk);
     }
 }

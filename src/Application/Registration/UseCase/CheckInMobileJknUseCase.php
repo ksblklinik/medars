@@ -86,9 +86,9 @@ final readonly class CheckInMobileJknUseCase
             shift: $booking->shift ?? ''
         );
 
-        // Eksekusi atomik dalam transaksi ACID
+        // Eksekusi atomik dalam transaksi ACID (preserveNoReg = true agar no_reg booking tidak berubah)
         return $this->tx->transaction(function () use ($reg, $pasien, $today): RegPeriksa {
-            $saved = $this->regRepo->saveWithAtomicRetry($reg);
+            $saved = $this->regRepo->saveWithAtomicRetry($reg, 5, true);
             $this->bookingRepo->markAsRegistered($pasien->noRkmMedis, $today);
 
             return $saved;

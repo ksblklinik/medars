@@ -17,11 +17,11 @@ final readonly class PdoBookingRegistrasiRepository implements BookingRegistrasi
 
     public function findTodayPendingBooking(NoRkmMedis $noRkmMedis, \DateTimeInterface $today): ?BookingRegistrasi
     {
-        $sql = 'SELECT * FROM booking_registrasi 
+        $sql = "SELECT * FROM booking_registrasi 
                 WHERE no_rkm_medis = :no_rkm_medis 
                   AND tanggal_periksa = :tanggal_periksa 
-                  AND status = "Belum" 
-                LIMIT 1';
+                  AND status = 'Belum' 
+                LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -54,10 +54,10 @@ final readonly class PdoBookingRegistrasiRepository implements BookingRegistrasi
 
     public function markAsRegistered(NoRkmMedis $noRkmMedis, \DateTimeInterface $today): void
     {
-        $sql = 'UPDATE booking_registrasi 
-                SET status = "Terdaftar" 
+        $sql = "UPDATE booking_registrasi 
+                SET status = 'Terdaftar' 
                 WHERE no_rkm_medis = :no_rkm_medis 
-                  AND tanggal_periksa = :tanggal_periksa';
+                  AND tanggal_periksa = :tanggal_periksa";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
