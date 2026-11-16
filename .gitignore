@@ -64,3 +64,6 @@ storage/media/
 *.njsproj
 *.sln
 *.sw?
+
+# Local Reference Oracle (Read-Only)
+.ref/
