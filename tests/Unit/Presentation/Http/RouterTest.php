@@ -40,4 +40,31 @@ final class RouterTest extends TestCase
         $this->assertSame(200, $response['status']);
         $this->assertSame('SSE_OK', $response['body']);
     }
+
+    public function test_dispatches_json_response_when_handler_returns_array(): void
+    {
+        $router = new Router();
+        $router->get('/api/data', fn () => ['status' => 'ok', 'count' => 10]);
+
+        $response = $router->dispatch('GET', '/api/data');
+
+        $this->assertSame(200, $response['status']);
+        $this->assertSame('application/json; charset=utf-8', $response['headers']['Content-Type']);
+        $this->assertJsonStringEqualsJsonString('{"status":"ok","count":10}', $response['body']);
+    }
+
+    public function test_passes_through_structured_status_and_body(): void
+    {
+        $router = new Router();
+        $router->post('/api/save', fn () => [
+            'status' => 422,
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => json_encode(['error' => 'Validation error']),
+        ]);
+
+        $response = $router->dispatch('POST', '/api/save');
+
+        $this->assertSame(422, $response['status']);
+        $this->assertStringContainsString('Validation error', $response['body']);
+    }
 }

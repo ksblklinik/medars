@@ -38,12 +38,28 @@ final class Router
         }
 
         $handler = $this->routes[$upperMethod][$path];
-        $body = (string) $handler();
+        $result = $handler();
+
+        if (is_array($result) && isset($result['status'], $result['body'])) {
+            return [
+                'status' => (int) $result['status'],
+                'headers' => array_merge(['Content-Type' => 'text/html; charset=utf-8'], $result['headers'] ?? []),
+                'body' => (string) $result['body'],
+            ];
+        }
+
+        if (is_array($result)) {
+            return [
+                'status' => 200,
+                'headers' => ['Content-Type' => 'application/json; charset=utf-8'],
+                'body' => json_encode($result, JSON_THROW_ON_ERROR),
+            ];
+        }
 
         return [
             'status' => 200,
             'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
-            'body' => $body,
+            'body' => (string) $result,
         ];
     }
 
