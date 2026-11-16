@@ -1,0 +1,66 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and Secrets (CRITICAL: NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# Node / Frontend Dependencies & Builds
+node_modules/
+.npm/
+dist/
+build/
+.next/
+out/
+.nuxt/
+.output/
+.turbo/
+
+# Go Dependencies & Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+
+# PHP Dependencies & Logs
+/vendor/
+composer.phar
+storage/logs/*.log
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Python / AI / Virtual Envs
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Database dumps and local storage
+*.sql.gz
+*.sqlite
+*.sqlite3
+storage/uploads/
+storage/media/
+
+# IDE / Editor configuration
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

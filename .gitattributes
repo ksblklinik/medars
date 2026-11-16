@@ -1,0 +1,26 @@
+# Enforce LF line endings for all text files across Windows and Linux
+* text=auto eol=lf
+
+# Force specific binary handling
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.zip binary
+*.tar.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+
+# Shell scripts must always have LF
+*.sh text eol=lf
+*.bash text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
