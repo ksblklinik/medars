@@ -46,4 +46,15 @@ interface RegPeriksaRepositoryInterface
      * Memeriksa apakah pasien sudah memiliki rekam catatan klinis (SOAP, tindakan, resep obat, lab, radiologi).
      */
     public function hasClinicalRecords(NoRawat $noRawat): bool;
+
+    public function countVisitsByPatient(NoRkmMedis $noRkmMedis): int;
+
+    public function countVisitsByPatientAndPoli(NoRkmMedis $noRkmMedis, string $kdPoli): int;
+
+    public function update(RegPeriksa $regPeriksa): void;
+
+    /**
+     * Mengalihkan dokter pada kunjungan dan memperbarui tindakan konsultasi awal jika ada.
+     */
+    public function reassignDoctor(NoRawat $noRawat, string $newKdDokter, string $oldKdDokter): void;
 }

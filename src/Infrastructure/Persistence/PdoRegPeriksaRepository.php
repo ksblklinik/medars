@@ -264,6 +264,79 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
         return false;
     }
 
+    public function countVisitsByPatient(NoRkmMedis $noRkmMedis): int
+    {
+        $sql = 'SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND stts != "Batal"';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['rm' => $noRkmMedis->value()]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countVisitsByPatientAndPoli(NoRkmMedis $noRkmMedis, string $kdPoli): int
+    {
+        $sql = 'SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = :rm AND kd_poli = :poli AND stts != "Batal"';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['rm' => $noRkmMedis->value(), 'poli' => $kdPoli]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function update(RegPeriksa $regPeriksa): void
+    {
+        $sql = 'UPDATE reg_periksa 
+                SET no_reg = :no_reg,
+                    kd_dokter = :kd_dokter,
+                    kd_poli = :kd_poli,
+                    shift = :shift,
+                    stts = :stts,
+                    status_bayar = :status_bayar
+                WHERE no_rawat = :no_rawat';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'no_reg' => $regPeriksa->noReg->value(),
+            'kd_dokter' => $regPeriksa->kdDokter,
+            'kd_poli' => $regPeriksa->kdPoli,
+            'shift' => $regPeriksa->shift,
+            'stts' => $regPeriksa->stts,
+            'status_bayar' => $regPeriksa->statusBayar,
+            'no_rawat' => $regPeriksa->noRawat->value(),
+        ]);
+    }
+
+    public function reassignDoctor(NoRawat $noRawat, string $newKdDokter, string $oldKdDokter): void
+    {
+        // 1. Update kunjungan dokter
+        $sqlReg = 'UPDATE reg_periksa 
+                   SET kd_dokter = :newDokter, 
+                       kd_dokter_berhalangan = :oldDokter 
+                   WHERE no_rawat = :no_rawat';
+        $stmtReg = $this->pdo->prepare($sqlReg);
+        $stmtReg->execute([
+            'newDokter' => $newKdDokter,
+            'oldDokter' => $oldKdDokter,
+            'no_rawat' => $noRawat->value(),
+        ]);
+
+        // 2. Alihkan tindakan konsultasi awal (RJ002, RJ003, RJ008) ke dokter pengganti jika tabel ada
+        try {
+            $sqlTindakan = "UPDATE rawat_jl_dr 
+                            SET kd_dokter = :newDokter 
+                            WHERE no_rawat = :no_rawat 
+                              AND kd_dokter = :oldDokter 
+                              AND kd_jenis_prw IN ('RJ002', 'RJ003', 'RJ008')";
+            $stmtTindakan = $this->pdo->prepare($sqlTindakan);
+            $stmtTindakan->execute([
+                'newDokter' => $newKdDokter,
+                'oldDokter' => $oldKdDokter,
+                'no_rawat' => $noRawat->value(),
+            ]);
+        } catch (\PDOException) {
+            // Abaikan jika tabel tindakan rawat_jl_dr belum dipasang
+        }
+    }
+
     private function getCastType(): string
     {
         return $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'INTEGER' : 'UNSIGNED';
