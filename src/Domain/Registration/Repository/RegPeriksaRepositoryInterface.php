@@ -54,6 +54,8 @@ interface RegPeriksaRepositoryInterface
 
     public function update(RegPeriksa $regPeriksa): void;
 
+    public function updateStatus(NoRawat $noRawat, string $stts): void;
+
     /**
      * Mengalihkan dokter pada kunjungan dan memperbarui tindakan konsultasi awal jika ada.
      */

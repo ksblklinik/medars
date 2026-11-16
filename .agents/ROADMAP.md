@@ -70,30 +70,19 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 
 ---
 
-## 🎯 Fase Aktif Saat Ini: FASE-2 (Rekam Medis Elektronik, SOAP Dinamis, IGD/Ranap & Surat Medis)
+## 🎯 Fase Aktif Saat Ini: FASE-3 (E-Resep, Gudang Farmasi & Apotek)
 
-- [x] **PLN-10E: Pra-Fase 2 Hardening, Migrasi Skema & Wiring Integrasi (TDD)** (Selesai: 16-11-2026)
-  - `SchemaMigrator` & `InitialSeeder` lintas-driver (`VARCHAR` keys MySQL 8.0 `utf8mb4_unicode_ci` & SQLite `PRAGMA foreign_keys = ON`), CLI `database/migrate.php`, serta refactor portabilitas `PdoJadwalRepository` & `PdoSettingRepository`.
-  - `HttpApplication` dengan Global Exception Boundary, security headers, `NavigationBuilder` SSOT ber-RBAC, pemisahan rute publik Kiosk (`POST /api/v1/kiosk/checkin`, `GET /api/stream`) vs rute terproteksi Sesi/RBAC/CSRF, anti-IDOR kanal SSE dokter, serta validasi tanggal ketat anti-rollover.
-  - Terverifikasi 154 tests, 508 assertions (termasuk 6 Integration Test E2E `HttpApplicationTest` PASS).
-- [ ] **PLN-11: Value Objects, Entities RME, Triase & Odontogram (TDD)**
-  - Entitas `PemeriksaanRalan` dan `PemeriksaanRanap` dengan composite primary key `(no_rawat, tgl_perawatan, jam_rawat)` serta sanitasi nilai default MySQL 8.0 Strict Mode (`'-'` untuk kolom teks kosong, `'Compos Mentis'` untuk kesadaran).
-  - Value Object `TandaVital` (Suhu, TD Sistole/Diastole, Nadi, Respirasi, Tinggi, Berat, SpO2, GCS, Lingkar Perut) dan enum `Kesadaran`.
-  - Entitas `RmeMetadata` (`mlite_pemeriksaan_ralan_metadata`, flag `isMetaDirty` untuk *Smart Peek Shield*), `DiagnosaPasien` (primer/sekunder), `TriaseIgd` (ATS/WHO), `Odontogram` (`mlite_odontogram` kode FDI 11–48 & status `UNE`), serta `SuratMedis`.
-- [ ] **PLN-12: Repositories Dual-Connection RME, Smart Peek & Grounding ICD-10 (TDD)**
-  - `PdoPemeriksaanRalanRepository` & `PdoPemeriksaanRanapRepository`: murni DML tanpa DDL runtime (mencegah *Metadata Lock* & *implicit commit* MySQL 8.0).
-  - `PdoRmeHistoryRepository` (*Smart Peek*): pembacaan gabungan Dual-Connection (`next` + opsional `?ReadOnlyConnectionGuard $legacyGuard = null` konsisten dengan `PdoPasienRepository`, fallback mulus jika `legacy` belum terhubung) dengan query JOIN/batch bebas N+1 dan mempertahankan 100% histori kunjungan pasien.
-  - `PdoIcdGroundingRepository`: grounding kode ICD-10 murni terhadap katalog `penyakit` SatuSehat Kemenkes + Knowledge Vault (`mlite_vault_nodes`, `mlite_vault_edges`, `mlite_vault_icd10_map`) tanpa memblokir diagnosa berdasarkan tingkat SKDI.
-- [ ] **PLN-13: Use-Case SOAP (Ralan/IGD/Ranap), Resep PRB 30 Hari, Odontogram & Surat Medis (TDD)**
-  - **DTO Whitelisting Boundary (`PRD 09`):** Seluruh input payload (`SaveSoapCommand`, `SaveCpptRanapCommand`, `SavePrbCommand`, `SaveTriaseIgdCommand`) divalidasi melalui validator DTO ketat yang menolak field liar (*unwhitelisted fields*) di pintu masuk sebelum menyentuh Use-Case.
-  - `SaveSoapUseCase` (Ralan/IGD) & `SaveCpptRanapUseCase` (Rawat Inap): simpan/update SOAP dokter (`kd_dokter`) & perawat (`nip`) dalam 1 transaksi ACID dengan **identitas pemeriksa (`nip`) wajib diikat dari sesi user yang terautentikasi (anti-spoofing)** serta **validasi cakupan poliklinik (`RbacGuard::assertCanAccessPoli` terhadap `reg_periksa.kd_poli`) anti-IDOR lintas-poli**; untuk Ralan/IGD izinkan lintas hari maksimal `H-1` selama status bukan `'Batal'` (termasuk `'Belum'`, `'Awal'`, `'Berkas Diterima'`, dan **`'Sudah'`** agar dokter tetap dapat menambah/mengoreksi catatan SOAP multi-visite di hari yang sama), untuk Ranap izinkan multi-visite selama pasien belum pulang (`RanapStatusCheckerInterface`); tegakkan *Smart Peek Shield* (`isMetaDirty === false` atau `'{}'`) dan transisi status `reg_periksa.stts` ke `'Sudah'`.
-  - `SaveTriaseIgdUseCase`: pencatatan skala kegawatdaruratan ATS/WHO (Resusitasi, Emergensi, Urgensi, Non-Urgent) terikat ke kunjungan IGD.
-  - `SavePrbPrescriptionUseCase`: cari triplet `pemeriksaan_ralan` aktif hari ini atau auto-create record dasar (nilai sanitasi default `'-'`) dalam transaksi ACID lalu kembalikan triplet `(tgl_perawatan, jam_rawat)` agar form SOAP utama tidak membuat baris duplikat; catat resep kronis PRB 30 hari di metadata `meta_prb` & sinkronkan ke Planning (`rtl`) SOAP **tanpa memotong stok fisik gudang (`gudangbarang`)**.
-  - `SaveOdontogramUseCase` & `DeleteOdontogramUseCase`: penghapusan berbasis Primary Key `id` (mengizinkan dokter jaga pengganti mengoreksi gigi sembuh).
-  - `CreateSuratMedisUseCase`: pembuatan & penomoran urut atomik (anti-tabrakan nomor surat lintas poli dalam transaksi) untuk Surat Sakit, Surat Hamil/Cuti Hamil, Surat Bebas Narkoba, dan Rujukan Internal.
-- [ ] **PLN-14: UI/UX RME Dinamis, Smart Peek & Mitigasi Lag Frontend (Paritas ksmlite)**
-  - Antarmuka SOAP split view paritas `ksmlite` (tab Subjektif/Objektif/Asesmen/Planning, form spesifik poli KIA/Kronis/TB/Gigi, odontogram SVG interaktif, modal cetak surat medis & PRB). Seluruh tautan & endpoint API yang membawa `no_rawat` (`YYYY/MM/DD/000001`) **wajib menggunakan query parameter `?no_rawat=...` atau payload JSON** (dilarang menaruh `no_rawat` sebagai path segmen mentah karena karakter `/` akan memecah routing).
-  - Pencarian AJAX ICD-10, tindakan, dan obat menggunakan debounce `200ms` + `AbortController` pembatalan request aktif (anti-lag), scoped dropdown initialization (tanpa destroy/re-init global), serta listener SSE kanal dokter.
+- [ ] **PLN-15: Value Objects & Entities Farmasi, E-Resep & Stok Depo (TDD)**
+  - Entitas `ResepObat`, `ResepDokterNonRacikan` (`resep_dokter_nonracikan`), `ResepDokterRacikan`, `ResepDokterRacikanDetail`, `DetailPemberianObat`, dan `GudangBarang`.
+  - Nilai tarif seragam (*Uniform Flat Pricing SSOT*): `harga_tunai`, `harga_kapitasi`, `harga_nonkapitasi`, `jualbebas`, `dasar`/`h_beli`.
+- [ ] **PLN-16: Repositories Farmasi, Isolasi Depo & Offset Racikan +1 Detik (TDD)**
+  - Isolasi Depo IGD (`kd_bangsal = 'IGD'`) vs Depo Apotek Umum (`kd_bangsal = 'APT'`) vs Depo Rawat Jalan/Inap.
+  - Mutasi stok atomik `gudangbarang` & `riwayat_barang_medis` dalam transaksi ACID.
+- [ ] **PLN-17: Use-Case Validasi E-Resep, Racikan +1s & Copy Resep (TDD)**
+  - Penyerahan resep & pemberian offset waktu `+1 detik` pada `detail_pemberian_obat.jam` untuk seluruh bahan obat racikan.
+  - Penghapusan dan penyalinan resep atomik (`SaveCopyResepUseCase`, `DeleteResepUseCase`).
+- [ ] **PLN-18: UI/UX E-Resep Dokter & Validasi Apotek Ralan/Ranap (Paritas ksmlite)**
+  - Antarmuka E-Resep (obat jadi vs racikan multi-bahan), verifikasi apoteker, dan cetak etiket obat.
 
 ---
 
@@ -130,6 +119,10 @@ Dokumen ini adalah Single Source of Truth (SSOT) pelacakan progres pengembangan 
 | **PLN-10C** | Master Data Klinik, Jadwal Praktik & Penjamin | `PdoPenjabRepository`, `PdoJadwalRepository` dengan `ScheduleOverlapGuard` (deteksi tabrakan waktu multi-shift dokter pada hari yang sama), `PdoJenisPerawatanRepository`. 7 test PASS. | 16-11-2026 |
 | **PLN-10D** | Pengaturan Sistem & UI/UX Administrasi | `SettingService` & `PdoSettingRepository` (`mlite_settings` key-value per modul ber-cache in-memory), `PdoAuditLogRepository` (`mlite_logs` viewer & filter), `AuthController` (login/logout view), `SettingsController` & `UsersController` (Medical Teal UI parity 99%). 12 test PASS (Total 143 test PASS). **FASE 1B SELESAI 100%**. | 16-11-2026 |
 | **PLN-10E** | Pra-Fase 2 Hardening, Migrasi & Wiring E2E | `SchemaMigrator` & `InitialSeeder` lintas-driver (MySQL 8.0 `VARCHAR` keys & SQLite `PRAGMA foreign_keys = ON`), `HttpApplication` dengan Exception Boundary & Security Headers, `NavigationBuilder` SSOT ber-RBAC, pemisahan Kiosk vs RBAC API + `X-CSRF-Token` + SSE dokter, serta 6 Integration Test E2E (Total 154 test PASS). | 16-11-2026 |
+| **PLN-11** | Value Objects & Entities RME, Triase, Odontogram | `TandaVital`, `Kesadaran`, `PemeriksaanRalan`, `PemeriksaanRanap` (composite key `(no_rawat, tgl_perawatan, jam_rawat)` & sanitasi MySQL 8.0 Strict Mode), `RmeMetadata` (*Smart Peek Shield*), `DiagnosaPasien`, `TriaseIgd`, `Odontogram` (FDI + `UNE`), dan `SuratMedis`. 8 test PASS. | 16-11-2026 |
+| **PLN-12** | Repository Dual-Connection RME & ICD-10 | `PdoPemeriksaanRalanRepository`, `PdoPemeriksaanRanapRepository` (murni DML anti-MDL), `PdoRmeHistoryRepository` (*Smart Peek* `next` + opsional `ReadOnlyConnectionGuard` `legacy` bebas N+1), `PdoIcdGroundingRepository` (SatuSehat tanpa blokir SKDI), `PdoOdontogramRepository`, dan `PdoSuratMedisRepository`. 6 test PASS. | 16-11-2026 |
+| **PLN-13** | Use-Case SOAP, PRB 30 Hari, Odontogram & Surat | DTO Whitelisting (`SaveSoapCommand`, `SaveCpptRanapCommand`, `SavePrbCommand`), `SaveSoapUseCase` (anti-spoofing `nip`, anti-IDOR poli, H-1/multi-visite `'Sudah'`, *Smart Peek Shield*), `SavePrbPrescriptionUseCase` (triplet alignment tanpa potong stok), `SaveCpptRanapUseCase`, `DeleteOdontogramUseCase` (PK `id`), & `CreateSuratMedisUseCase` (penomoran atomik). 6 test PASS. | 16-11-2026 |
+| **PLN-14** | UI/UX RME Dinamis & Smart Peek Dokter Poli | `DokterRalanController`, `dokter_ralan/index.php` & `dokter-ralan.js` (split view Antrean + Form SOAP + *Smart Peek*, ICD-10 debounce `200ms` + `AbortController`, PRB 30 hari, Odontogram, Surat Sakit, SSE kanal dokter, query param `?no_rawat=...`). 3 test PASS (Total 177 test, 598 assertions PASS). **FASE 2 SELESAI 100%**. | 16-11-2026 |
 
 ---
 

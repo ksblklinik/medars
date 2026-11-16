@@ -306,6 +306,15 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
         ]);
     }
 
+    public function updateStatus(NoRawat $noRawat, string $stts): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE reg_periksa SET stts = :stts WHERE no_rawat = :no_rawat');
+        $stmt->execute([
+            'stts' => $stts,
+            'no_rawat' => $noRawat->value(),
+        ]);
+    }
+
     public function reassignDoctor(NoRawat $noRawat, string $newKdDokter, string $oldKdDokter): void
     {
         // 1. Update kunjungan dokter
