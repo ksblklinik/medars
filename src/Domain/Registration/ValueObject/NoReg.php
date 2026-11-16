@@ -11,8 +11,12 @@ final readonly class NoReg implements \Stringable
     public function __construct(string $value)
     {
         $trimmed = trim($value);
-        if ($trimmed === '' || strlen($trimmed) > 8) {
-            throw new \InvalidArgumentException('Nomor Antrean (no_reg) tidak valid.');
+        if ($trimmed === '' || strlen($trimmed) > 8 || !ctype_digit($trimmed)) {
+            throw new \InvalidArgumentException('Nomor Antrean (no_reg) harus berupa digit angka.');
+        }
+
+        if ((int) $trimmed < 1) {
+            throw new \InvalidArgumentException('Nomor Antrean (no_reg) minimal bernilai 1.');
         }
 
         $this->value = $trimmed;

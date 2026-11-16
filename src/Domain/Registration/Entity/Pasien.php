@@ -37,6 +37,10 @@ final readonly class Pasien
      */
     public function hitungUmurPada(\DateTimeInterface $refDate): array
     {
+        if ($this->tglLahir > $refDate) {
+            throw new \InvalidArgumentException('Tanggal lahir tidak boleh lebih besar dari tanggal referensi.');
+        }
+
         $diff = $refDate->diff($this->tglLahir);
 
         if ($diff->y > 0) {

@@ -75,6 +75,21 @@ final class RegistrationEntitiesTest extends TestCase
         $this->assertSame(['umur' => 6, 'satuan' => 'Hr'], $newborn->hitungUmurPada($refDate));
     }
 
+    public function test_pasien_rejects_birth_date_in_future_relative_to_ref_date(): void
+    {
+        $refDate = new \DateTimeImmutable('2026-11-16');
+        $futureBorn = new Pasien(
+            noRkmMedis: new NoRkmMedis('000126'),
+            nmPasien: 'Anak Masa Depan',
+            nik: '-',
+            jk: 'L',
+            tglLahir: new \DateTimeImmutable('2026-11-20')
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        $futureBorn->hitungUmurPada($refDate);
+    }
+
     public function test_reg_periksa_tracks_service_status_and_clinical_lock(): void
     {
         $reg = new RegPeriksa(
@@ -99,5 +114,37 @@ final class RegistrationEntitiesTest extends TestCase
         $servedReg = $reg->withStatus('Sudah');
         $this->assertTrue($servedReg->isServed());
         $this->assertFalse($reg->isServed(), 'Entity bersifat immutable');
+    }
+
+    public function test_reg_periksa_supports_prefik_room_and_shift(): void
+    {
+        $reg = new RegPeriksa(
+            noRawat: new NoRawat('2026/11/16/000001'),
+            noReg: new NoReg('001'),
+            noRkmMedis: new NoRkmMedis('000123'),
+            kdPoli: 'U01',
+            kdDokter: 'DR001',
+            kdPj: 'A09',
+            tglRegistrasi: new \DateTimeImmutable('2026-11-16'),
+            jamReg: '08:15:00',
+            biayaReg: 25000.0,
+            prefik: 'A',
+            room: '1',
+            shift: '07:00:00'
+        );
+
+        $this->assertSame('A', $reg->prefik);
+        $this->assertSame('1', $reg->room);
+        $this->assertSame('07:00:00', $reg->shift);
+
+        $updatedStatus = $reg->withStatus('Sudah');
+        $this->assertSame('A', $updatedStatus->prefik);
+        $this->assertSame('1', $updatedStatus->room);
+        $this->assertSame('07:00:00', $updatedStatus->shift);
+
+        $updatedRawat = $reg->withNoRawat(new NoRawat('2026/11/16/000099'));
+        $this->assertSame('A', $updatedRawat->prefik);
+        $this->assertSame('1', $updatedRawat->room);
+        $this->assertSame('07:00:00', $updatedRawat->shift);
     }
 }

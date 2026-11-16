@@ -29,7 +29,10 @@ final readonly class RegPeriksa
         public string $sttsUmur = 'Th',
         public string $pJawab = '-',
         public string $almtPj = '-',
-        public string $hubunganPj = '-'
+        public string $hubunganPj = '-',
+        public string $prefik = '',
+        public string $room = '',
+        public string $shift = ''
     ) {}
 
     public function isServed(): bool
@@ -68,7 +71,10 @@ final readonly class RegPeriksa
             sttsUmur: $this->sttsUmur,
             pJawab: $this->pJawab,
             almtPj: $this->almtPj,
-            hubunganPj: $this->hubunganPj
+            hubunganPj: $this->hubunganPj,
+            prefik: $this->prefik,
+            room: $this->room,
+            shift: $this->shift
         );
     }
 
@@ -93,7 +99,10 @@ final readonly class RegPeriksa
             sttsUmur: $this->sttsUmur,
             pJawab: $this->pJawab,
             almtPj: $this->almtPj,
-            hubunganPj: $this->hubunganPj
+            hubunganPj: $this->hubunganPj,
+            prefik: $this->prefik,
+            room: $this->room,
+            shift: $this->shift
         );
     }
 }

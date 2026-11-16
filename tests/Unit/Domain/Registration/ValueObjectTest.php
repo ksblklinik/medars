@@ -52,4 +52,16 @@ final class ValueObjectTest extends TestCase
         $regLarge = NoReg::fromSequence(125);
         $this->assertSame('125', $regLarge->value());
     }
+
+    public function test_no_reg_rejects_zero_or_non_numeric(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new NoReg('000');
+    }
+
+    public function test_no_reg_rejects_non_numeric(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new NoReg('ABC');
+    }
 }
