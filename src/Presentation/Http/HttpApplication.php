@@ -342,15 +342,17 @@ final class HttpApplication
             $httpClient,
             $timeoutPolicy,
         );
+        $vedikaRepo = new PdoVedikaRepository($this->pdo);
         $bridgingController = new BridgingController(
             $bridgingQueueRepo,
             new BpjsGatewayService($bpjsCreds, $httpClient, $timeoutPolicy),
             new HfisLeanCalculator(),
             new QueueSatuSehatSyncUseCase($bridgingQueueRepo),
             new ProcessBridgingQueueUseCase($bridgingQueueRepo, $httpClient, $satuSehatCreds, $timeoutPolicy, $satuSehatAuth),
-            new VerifyVedikaClaimUseCase(new PdoVedikaRepository($this->pdo), $tx),
+            new VerifyVedikaClaimUseCase($vedikaRepo, $tx),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            $vedikaRepo
         );
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
@@ -921,6 +923,14 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $bridgingController->verifyVedika($data, $user->getUsername());
+        });
+        $router->get('/api/v1/bridging/vedika/claims', function () use ($bridgingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vedika', 'kasir']);
+            return $bridgingController->listVedikaClaims($queryParams);
+        });
+        $router->get('/vedika/bundel', function () use ($bridgingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vedika', 'kasir']);
+            return $bridgingController->printVedikaBundle($queryParams);
         });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)

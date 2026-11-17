@@ -106,8 +106,20 @@
                     </div>
                 </form>
                 <div id="vedikaFeedback" class="mt-2"></div>
+                <hr class="my-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                    <input type="date" id="vedikaFrom" class="form-control form-control-sm" style="width: auto;" value="<?= date('Y-m-01') ?>">
+                    <input type="date" id="vedikaTo" class="form-control form-control-sm" style="width: auto;" value="<?= date('Y-m-d') ?>">
+                    <button type="button" id="btnLoadVedikaClaims" class="btn btn-sm btn-outline-teal">Muat Klaim BPJS</button>
+                </div>
+                <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0 small">
+                        <thead class="table-light"><tr><th>No. Rawat</th><th>Pasien</th><th>Status</th><th class="text-center">Bundel</th></tr></thead>
+                        <tbody id="tbodyVedikaClaims"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<script src="/assets/js/modules/bridging.js" defer></script>
+<script src="/assets/js/modules/bridging.js?v=20261117b" defer></script>

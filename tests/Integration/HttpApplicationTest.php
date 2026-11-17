@@ -1390,4 +1390,38 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $usersPage['status']);
         $this->assertStringContainsString('usersTableBody', $usersPage['body']);
     }
+
+    public function testVedikaClaimsAndBundleEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000120', 'Budi BPJS', '1985-05-05', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/17/000120', '{$today}', '08:00:00', 'DR01', '000120', 'U01', 'BPJ', 'Belum Bayar');
+            INSERT INTO pemeriksaan_ralan (no_rawat, tgl_perawatan, jam_rawat, keluhan, pemeriksaan, rtl, penilaian, instruksi, evaluasi, nip)
+            VALUES ('2026/11/17/000120', '{$today}', '08:15:00', 'Pusing', 'Normal', 'Obat', 'Vertigo', '-', '-', 'DR01');
+            INSERT INTO diagnosa_pasien (no_rawat, kd_penyakit, status, prioritas) VALUES ('2026/11/17/000120', 'H81', 'Ralan', 1);
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/bridging');
+        $this->assertSame(200, $page['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+        $verify = $this->app->handle(
+            'POST',
+            '/api/v1/bridging/vedika/verify',
+            rawBody: json_encode(['no_rawat' => '2026/11/17/000120', 'no_sep' => '0123R001001']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $verify['status']);
+
+        $claims = $this->app->handle('GET', '/api/v1/bridging/vedika/claims', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $claims['status']);
+        $this->assertCount(1, json_decode($claims['body'], true)['claims']);
+
+        $bundle = $this->app->handle('GET', '/vedika/bundel', queryParams: ['no_rawat' => '2026/11/17/000120']);
+        $this->assertSame(200, $bundle['status']);
+        $this->assertStringContainsString('BUNDEL BERKAS KLAIM VEDIKA BPJS', $bundle['body']);
+        $this->assertStringContainsString('Budi BPJS', $bundle['body']);
+    }
 }

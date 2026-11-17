@@ -80,7 +80,30 @@
                 ? `<div class="alert alert-success py-2 small">Status: ${escapeHtml(data.verification.status)} — ${escapeHtml(data.verification.catatan)}</div>`
                 : `<div class="alert alert-danger py-2 small">${escapeHtml(data.error)}</div>`;
         }
+        loadVedikaClaims();
     });
 
+    async function loadVedikaClaims() {
+        const tbody = document.getElementById('tbodyVedikaClaims');
+        if (!tbody) return;
+        const from = document.getElementById('vedikaFrom')?.value || '';
+        const to = document.getElementById('vedikaTo')?.value || '';
+        const data = await apiFetch(`/api/v1/bridging/vedika/claims?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        if (!data.ok || !Array.isArray(data.claims) || data.claims.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada pengajuan klaim BPJS.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.claims.map((c) => `
+            <tr>
+                <td class="font-monospace">${escapeHtml(c.no_rawat)}</td>
+                <td>${escapeHtml(c.nm_pasien || '-')}</td>
+                <td><span class="badge ${c.vedika_status === 'Layak' ? 'bg-success' : 'bg-warning text-dark'}">${escapeHtml(c.vedika_status || 'Belum')}</span></td>
+                <td class="text-center"><a href="/vedika/bundel?no_rawat=${encodeURIComponent(c.no_rawat)}" target="_blank" class="btn btn-xs btn-outline-teal">Bundel</a></td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('btnLoadVedikaClaims')?.addEventListener('click', loadVedikaClaims);
     loadBridgingStatus();
+    loadVedikaClaims();
 })();

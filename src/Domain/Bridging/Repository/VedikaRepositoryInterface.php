@@ -23,4 +23,14 @@ interface VedikaRepositoryInterface
         string $verifiedBy,
         string $verifiedAt,
     ): void;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listClaims(string $from, string $to, string $status = ''): array;
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getBundleData(string $noRawat): ?array;
 }
