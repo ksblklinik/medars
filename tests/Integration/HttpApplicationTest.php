@@ -764,4 +764,82 @@ class HttpApplicationTest extends TestCase
         $getResumeJson = json_decode($getResume['body'], true);
         $this->assertSame('J45', $getResumeJson['data']['kd_diagnosa_utama']);
     }
+
+    public function testApotekAndKasirDeepeningEndToEnd(): void
+    {
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000020', 'Ahmad Fauzi', '1985-06-15', 'L');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR02', 'dr. Sari', '1');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U02', 'Poli Penyakit Dalam', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_bayar)
+            VALUES ('002', '2026/11/16/000020', '{$yesterday}', '10:00:00', 'DR02', '000020', 'U02', 'A09', 'Sudah', 'Belum Bayar');
+            INSERT INTO databarang (kode_brng, nama_brng, h_beli, harga_tunai, status) VALUES ('OBT099', 'Paracetamol 500mg', 500, 1500, '1');
+            INSERT INTO resep_obat (no_resep, tgl_peresepan, jam_peresepan, no_rawat, kd_dokter, tgl_perawatan, jam, status)
+            VALUES ('202611160001', '{$yesterday}', '10:15:00', '2026/11/16/000020', 'DR02', '0000-00-00', '00:00:00', 'ralan');
+            INSERT INTO resep_dokter_nonracikan (no_resep, kode_brng, jml, aturan_pakai) VALUES ('202611160001', 'OBT099', 10, '3 x 1 Sesudah Makan');
+            INSERT INTO mlite_billing_ledger (no_rawat, category, item_code, item_name, qty, unit_price, total_amount, claim_type, status, provider_id)
+            VALUES ('2026/11/16/000020', 'Tindakan', 'TND99', 'Konsultasi Spesialis', 1, 150000, 150000, 'Piutang', 'Pending', 'TND-99');
+        ");
+
+        $this->session['user_id'] = 1;
+
+        // 1. Apotek UI & multi-day queue
+        $apotekPage = $this->app->handle('GET', '/apotek-ralan');
+        $this->assertSame(200, $apotekPage['status']);
+        $this->assertStringContainsString('farmasiFilterFrom', $apotekPage['body']);
+        $this->assertStringContainsString('btnPrintEtiket', $apotekPage['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $resepQueue = $this->app->handle('GET', '/api/v1/farmasi/queue', queryParams: ['from' => $yesterday, 'to' => $today]);
+        $this->assertSame(200, $resepQueue['status']);
+        $resepRows = json_decode($resepQueue['body'], true);
+        $this->assertCount(1, $resepRows);
+        $this->assertSame('202611160001', $resepRows[0]['no_resep']);
+
+        // 2. Cetak Etiket & Cetak E-Resep
+        $etiket = $this->app->handle('GET', '/farmasi/etiket', queryParams: ['no_resep' => '202611160001']);
+        $this->assertSame(200, $etiket['status']);
+        $this->assertStringContainsString('Paracetamol 500mg', $etiket['body']);
+        $this->assertStringContainsString('3 x 1 Sesudah Makan', $etiket['body']);
+
+        $cetakResep = $this->app->handle('GET', '/farmasi/cetak-resep', queryParams: ['no_resep' => '202611160001']);
+        $this->assertSame(200, $cetakResep['status']);
+        $this->assertStringContainsString('SALINAN E-RESEP FARMASI', $cetakResep['body']);
+
+        // 3. Kasir UI, multi-day queue, pay + settle piutang + cetak faktur
+        $kasirPage = $this->app->handle('GET', '/kasir');
+        $this->assertSame(200, $kasirPage['status']);
+        $this->assertStringContainsString('billingFilterFrom', $kasirPage['body']);
+        $this->assertStringContainsString('btnSettlePiutang', $kasirPage['body']);
+
+        $kasirQueue = $this->app->handle('GET', '/api/v1/kasir/queue', queryParams: ['from' => $yesterday, 'to' => $today]);
+        $this->assertSame(200, $kasirQueue['status']);
+        $kasirRows = json_decode($kasirQueue['body'], true);
+        $this->assertCount(1, $kasirRows);
+
+        $payRes = $this->app->handle(
+            'POST',
+            '/api/v1/kasir/pay',
+            rawBody: json_encode(['no_rawat' => '2026/11/16/000020']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $payRes['status']);
+
+        $settleRes = $this->app->handle(
+            'POST',
+            '/api/v1/kasir/settle-piutang',
+            rawBody: json_encode(['no_rawat' => '2026/11/16/000020']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $settleRes['status']);
+        $settleJson = json_decode($settleRes['body'], true);
+        $this->assertSame('success', $settleJson['status']);
+
+        $faktur = $this->app->handle('GET', '/kasir/faktur', queryParams: ['no_rawat' => '2026/11/16/000020']);
+        $this->assertSame(200, $faktur['status']);
+        $this->assertStringContainsString('KUITANSI &amp; RINCIAN BILLING 4-PILAR', $faktur['body']);
+        $this->assertStringContainsString('Konsultasi Spesialis', $faktur['body']);
+    }
 }

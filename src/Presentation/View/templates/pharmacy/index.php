@@ -11,8 +11,14 @@
             <option value="selesai">Sudah Diserahkan</option>
         </select>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode Resep: <?= date('d-m-Y') ?></span>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: auto;">
+            <span class="input-group-text bg-white text-muted">Dari</span>
+            <input type="date" id="farmasiFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
+            <span class="input-group-text bg-white text-muted">s/d</span>
+            <input type="date" id="farmasiFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
+            <button type="button" id="btnFilterResep" class="btn btn-outline-teal">Filter</button>
+        </div>
     </div>
 </div>
 
@@ -52,7 +58,16 @@
                     <h6 class="m-0 fw-bold"><i class="fa fa-pills me-1"></i> Validasi & Penyerahan E-Resep</h6>
                     <small id="activeResepBanner" class="text-white-50">Pilih resep dari antrean untuk memvalidasi, atau input resep baru</small>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex flex-wrap gap-1">
+                    <button type="button" id="btnPrintEtiket" class="btn btn-sm btn-outline-light" disabled title="Cetak Etiket Obat">
+                        <i class="fa fa-tag me-1"></i> Etiket
+                    </button>
+                    <button type="button" id="btnPrintResep" class="btn btn-sm btn-outline-light" disabled title="Cetak E-Resep">
+                        <i class="fa fa-print me-1"></i> E-Resep
+                    </button>
+                    <button type="button" id="btnCopyResep" class="btn btn-sm btn-outline-light" disabled title="Buat Salinan / Copy Resep">
+                        <i class="fa fa-copy me-1"></i> Copy
+                    </button>
                     <button type="button" id="btnDeleteResep" class="btn btn-sm btn-danger" disabled>
                         <i class="fa fa-trash me-1"></i> Hapus
                     </button>
@@ -124,4 +139,4 @@
     </div>
 </div>
 
-<script src="/assets/js/modules/pharmacy.js"></script>
+<script src="/assets/js/modules/pharmacy.js?v=20261117b"></script>

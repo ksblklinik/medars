@@ -43,6 +43,22 @@
             const btnRef = document.getElementById('btnRefreshResepQueue');
             if (btnRef) btnRef.addEventListener('click', () => this.loadQueue());
 
+            const btnFilter = document.getElementById('btnFilterResep');
+            if (btnFilter) btnFilter.addEventListener('click', () => this.loadQueue());
+            ['farmasiFilterFrom', 'farmasiFilterTo'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', () => this.loadQueue());
+            });
+
+            const btnPrintEtiket = document.getElementById('btnPrintEtiket');
+            if (btnPrintEtiket) btnPrintEtiket.addEventListener('click', () => this.openPrint('/farmasi/etiket'));
+
+            const btnPrintResep = document.getElementById('btnPrintResep');
+            if (btnPrintResep) btnPrintResep.addEventListener('click', () => this.openPrint('/farmasi/cetak-resep'));
+
+            const btnCopy = document.getElementById('btnCopyResep');
+            if (btnCopy) btnCopy.addEventListener('click', () => this.copyActiveResep());
+
             const btnDisp = document.getElementById('btnDispenseResep');
             if (btnDisp) btnDisp.addEventListener('click', () => this.dispenseActiveResep());
 
@@ -69,7 +85,14 @@
             const tbody = document.getElementById('resepQueueBody');
             if (!tbody) return;
 
-            this.apiFetch('/api/v1/farmasi/queue')
+            const from = document.getElementById('farmasiFilterFrom')?.value || '';
+            const to = document.getElementById('farmasiFilterTo')?.value || '';
+            const params = new URLSearchParams();
+            if (from) params.set('from', from);
+            if (to) params.set('to', to);
+            const qs = params.toString();
+
+            this.apiFetch('/api/v1/farmasi/queue' + (qs ? '?' + qs : ''))
                 .then(res => res.json())
                 .then(rows => {
                     if (!Array.isArray(rows) || rows.length === 0) {
@@ -111,7 +134,39 @@
 
             document.getElementById('btnDispenseResep').disabled = !!row.is_dispensed;
             document.getElementById('btnDeleteResep').disabled = !!row.is_dispensed;
+            const btnEtiket = document.getElementById('btnPrintEtiket');
+            const btnCetak = document.getElementById('btnPrintResep');
+            const btnCopy = document.getElementById('btnCopyResep');
+            if (btnEtiket) btnEtiket.disabled = false;
+            if (btnCetak) btnCetak.disabled = false;
+            if (btnCopy) btnCopy.disabled = false;
             this.loadResepDetail(row.no_resep);
+        },
+
+        openPrint: function (path) {
+            if (!this._activeResep || !this._activeResep.no_resep) return;
+            window.open(path + '?no_resep=' + encodeURIComponent(this._activeResep.no_resep), '_blank');
+        },
+
+        copyActiveResep: function () {
+            if (!this._activeResep) return;
+            this.apiFetch('/api/v1/farmasi/resep/copy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source_no_resep: this._activeResep.no_resep,
+                    target_no_rawat: this._activeResep.no_rawat,
+                    kd_dokter: this._activeResep.kd_dokter || '',
+                }),
+            })
+            .then(res => res.json())
+            .then(res => {
+                this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message || 'Copy resep selesai.'));
+                if (res.status === 'success') {
+                    this.loadQueue();
+                }
+            })
+            .catch(() => this.showAlert('danger', 'Gagal menyalin E-Resep.'));
         },
 
         loadResepDetail: function (noResep) {

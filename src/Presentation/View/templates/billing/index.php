@@ -11,8 +11,14 @@
             <option value="sudah">Sudah Bayar</option>
         </select>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode Kasir: <?= date('d-m-Y') ?></span>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: auto;">
+            <span class="input-group-text bg-white text-muted">Dari</span>
+            <input type="date" id="billingFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
+            <span class="input-group-text bg-white text-muted">s/d</span>
+            <input type="date" id="billingFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
+            <button type="button" id="btnFilterBilling" class="btn btn-outline-teal">Filter</button>
+        </div>
     </div>
 </div>
 
@@ -52,7 +58,13 @@
                     <h6 class="m-0 fw-bold"><i class="fa fa-file-invoice-dollar me-1"></i> Split Billing 4-Pilar & POS Retail</h6>
                     <small id="activeBillingBanner" class="text-white-50">Pilih kunjungan untuk melihat rincian tagihan</small>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex flex-wrap gap-1">
+                    <button type="button" id="btnPrintFaktur" class="btn btn-sm btn-outline-light" disabled title="Cetak Kuitansi / Faktur">
+                        <i class="fa fa-print me-1"></i> Faktur
+                    </button>
+                    <button type="button" id="btnSettlePiutang" class="btn btn-sm btn-warning text-dark" disabled title="Lunasi Piutang ke Kas">
+                        <i class="fa fa-hand-holding-dollar me-1"></i> Lunasi Piutang
+                    </button>
                     <button type="button" id="btnVoidBilling" class="btn btn-sm btn-danger" disabled>
                         <i class="fa fa-ban me-1"></i> Void (Anti-Fraud)
                     </button>
@@ -126,4 +138,4 @@
     </div>
 </div>
 
-<script src="/assets/js/modules/billing.js"></script>
+<script src="/assets/js/modules/billing.js?v=20261117b"></script>

@@ -67,6 +67,9 @@ final readonly class PharmacyController
     public function apiQueueResep(array $queryParams = []): array
     {
         $date = trim((string) ($queryParams['date'] ?? date('Y-m-d')));
+        $from = trim((string) ($queryParams['from'] ?? $date));
+        $to = trim((string) ($queryParams['to'] ?? $from));
+        $statusFilter = trim((string) ($queryParams['status'] ?? ''));
 
         $sql = "
             SELECT ro.no_resep, ro.tgl_peresepan, ro.jam_peresepan, ro.no_rawat, ro.kd_dokter,
@@ -77,21 +80,31 @@ final readonly class PharmacyController
             LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
             LEFT JOIN dokter d ON ro.kd_dokter = d.kd_dokter
             LEFT JOIN penjab pj ON r.kd_pj = pj.kd_pj
-            WHERE ro.tgl_peresepan = :tgl
-            ORDER BY ro.no_resep DESC
+            WHERE ro.tgl_peresepan BETWEEN :from AND :to
+            ORDER BY ro.tgl_peresepan DESC, ro.no_resep DESC
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':tgl' => $date]);
+        $stmt->execute([':from' => $from, ':to' => $to]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($rows as &$row) {
+        $result = [];
+        foreach ($rows as $row) {
             $tglR = (string) ($row['tgl_perawatan'] ?? '0000-00-00');
-            $row['is_dispensed'] = $tglR !== '' && $tglR !== '0000-00-00';
+            $isDispensed = $tglR !== '' && $tglR !== '0000-00-00';
+            $row['is_dispensed'] = $isDispensed;
             $row['is_bpjs'] = strtoupper((string) ($row['kd_pj'] ?? '')) === 'BPJ';
+
+            if ($statusFilter === 'menunggu' && $isDispensed) {
+                continue;
+            }
+            if ($statusFilter === 'selesai' && !$isDispensed) {
+                continue;
+            }
+            $result[] = $row;
         }
 
-        return $this->jsonResponse($rows);
+        return $this->jsonResponse($result);
     }
 
     /**
@@ -264,6 +277,168 @@ final readonly class PharmacyController
         } catch (\DomainException|\InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
+    }
+
+    /**
+     * Cetak Etiket Obat (paritas ksmlite getCetakLabelAll).
+     *
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printEtiket(array $queryParams = []): array
+    {
+        $noResep = trim((string) ($queryParams['no_resep'] ?? ''));
+        $header = $this->findResepHeader($noResep);
+        if ($header === null) {
+            return [
+                'status' => 404,
+                'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+                'body' => '<h3>Resep tidak ditemukan.</h3>',
+            ];
+        }
+
+        $items = $this->findResepItems($noResep);
+        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $cards = '';
+        foreach ($items as $it) {
+            $cards .= '<div class="etiket-card">'
+                . '<div class="etiket-head"><strong>INSTALASI FARMASI</strong><span>' . $e($header['tgl_peresepan'] ?? '') . '</span></div>'
+                . '<div class="etiket-meta">No. Resep: <strong>' . $e($noResep) . '</strong> | RM: <strong>' . $e($header['no_rkm_medis'] ?? '-') . '</strong></div>'
+                . '<div class="etiket-patient">Pasien: <strong>' . $e($header['nm_pasien'] ?? '-') . '</strong></div>'
+                . '<hr>'
+                . '<div class="etiket-drug">' . $e($it['nama']) . ' (Qty: ' . $e($it['qty']) . ')</div>'
+                . '<div class="etiket-signa">Aturan Pakai: <strong>' . $e($it['aturan']) . '</strong></div>'
+                . '</div>';
+        }
+        if ($cards === '') {
+            $cards = '<p>Belum ada item obat pada resep ini.</p>';
+        }
+
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Etiket Obat ' . $e($noResep) . '</title>'
+            . '<style>body{font-family:Arial,sans-serif;margin:16px;background:#f8f9fa}.etiket-card{width:340px;border:1px solid #222;background:#fff;padding:10px 12px;margin-bottom:12px;page-break-inside:avoid}.etiket-head{display:flex;justify-content:space-between;font-size:12px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:6px}.etiket-meta,.etiket-patient{font-size:12px;margin-bottom:3px}.etiket-drug{font-size:13px;font-weight:700;margin:6px 0 4px}.etiket-signa{font-size:13px}@media print{.no-print{display:none}body{background:#fff;margin:0}}</style>'
+            . '</head><body>'
+            . '<div class="no-print" style="margin-bottom:12px;"><button onclick="window.print()">Cetak Etiket</button></div>'
+            . $cards
+            . '</body></html>';
+
+        return [
+            'status' => 200,
+            'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+            'body' => $html,
+        ];
+    }
+
+    /**
+     * Cetak Salinan / Pratinjau E-Resep (paritas ksmlite anyCetakEresep).
+     *
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printResep(array $queryParams = []): array
+    {
+        $noResep = trim((string) ($queryParams['no_resep'] ?? ''));
+        $header = $this->findResepHeader($noResep);
+        if ($header === null) {
+            return [
+                'status' => 404,
+                'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+                'body' => '<h3>Resep tidak ditemukan.</h3>',
+            ];
+        }
+
+        $items = $this->findResepItems($noResep);
+        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $rowsHtml = '';
+        foreach ($items as $idx => $it) {
+            $rowsHtml .= '<tr>'
+                . '<td>' . ($idx + 1) . '</td>'
+                . '<td>R/ ' . $e($it['nama']) . '</td>'
+                . '<td style="text-align:center">' . $e($it['qty']) . '</td>'
+                . '<td>' . $e($it['aturan']) . '</td>'
+                . '</tr>';
+        }
+
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>E-Resep ' . $e($noResep) . '</title>'
+            . '<style>body{font-family:Arial,sans-serif;margin:20px;max-width:720px}h2{margin:0 0 4px;color:#00897b}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:6px 8px;font-size:13px;text-align:left}th{background:#f1f5f9}@media print{.no-print{display:none}}</style>'
+            . '</head><body>'
+            . '<div class="no-print" style="margin-bottom:12px;"><button onclick="window.print()">Cetak E-Resep</button></div>'
+            . '<h2>SALINAN E-RESEP FARMASI</h2>'
+            . '<div style="font-size:13px;margin-bottom:10px;">'
+            . 'No. Resep: <strong>' . $e($noResep) . '</strong> | Tanggal: ' . $e($header['tgl_peresepan'] ?? '') . '<br>'
+            . 'No. Rawat: ' . $e($header['no_rawat'] ?? '-') . ' | Pasien: <strong>' . $e($header['nm_pasien'] ?? '-') . '</strong> (' . $e($header['no_rkm_medis'] ?? '-') . ')<br>'
+            . 'Dokter Peresep: ' . $e($header['nm_dokter'] ?? ($header['kd_dokter'] ?? '-'))
+            . '</div>'
+            . '<table><thead><tr><th>No</th><th>Nama Obat / Racikan</th><th>Qty</th><th>Aturan Pakai</th></tr></thead><tbody>'
+            . ($rowsHtml !== '' ? $rowsHtml : '<tr><td colspan="4">Tidak ada item.</td></tr>')
+            . '</tbody></table>'
+            . '<div style="margin-top:28px;text-align:right;font-size:13px;">Petugas Farmasi / Apoteker<br><br><br>(__________________________)</div>'
+            . '</body></html>';
+
+        return [
+            'status' => 200,
+            'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+            'body' => $html,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findResepHeader(string $noResep): ?array
+    {
+        if ($noResep === '') {
+            return null;
+        }
+        $stmt = $this->pdo->prepare("
+            SELECT ro.*, p.nm_pasien, p.no_rkm_medis, d.nm_dokter
+            FROM resep_obat ro
+            LEFT JOIN reg_periksa r ON ro.no_rawat = r.no_rawat
+            LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+            LEFT JOIN dokter d ON ro.kd_dokter = d.kd_dokter
+            WHERE ro.no_resep = :nr
+            LIMIT 1
+        ");
+        $stmt->execute([':nr' => $noResep]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * @return list<array{nama: string, qty: string, aturan: string}>
+     */
+    private function findResepItems(string $noResep): array
+    {
+        $items = [];
+        $stmtNon = $this->pdo->prepare("
+            SELECT rd.jml, rd.aturan_pakai, COALESCE(db.nama_brng, rd.kode_brng) AS nama_brng
+            FROM resep_dokter_nonracikan rd
+            LEFT JOIN databarang db ON rd.kode_brng = db.kode_brng
+            WHERE rd.no_resep = :nr
+        ");
+        $stmtNon->execute([':nr' => $noResep]);
+        foreach ($stmtNon->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $items[] = [
+                'nama' => (string) $r['nama_brng'],
+                'qty' => (string) $r['jml'],
+                'aturan' => (string) ($r['aturan_pakai'] ?: '-'),
+            ];
+        }
+
+        $stmtRacik = $this->pdo->prepare("
+            SELECT nama_racik, jml_dr, aturan_pakai
+            FROM resep_dokter_racikan
+            WHERE no_resep = :nr
+        ");
+        $stmtRacik->execute([':nr' => $noResep]);
+        foreach ($stmtRacik->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $items[] = [
+                'nama' => '[Racikan] ' . (string) $r['nama_racik'],
+                'qty' => (string) $r['jml_dr'] . ' bks',
+                'aturan' => (string) ($r['aturan_pakai'] ?: '-'),
+            ];
+        }
+
+        return $items;
     }
 
     /**

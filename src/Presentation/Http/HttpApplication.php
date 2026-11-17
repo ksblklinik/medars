@@ -6,6 +6,7 @@ namespace App\Presentation\Http;
 
 use App\Application\Billing\UseCase\ProcessPosApotekUmumUseCase;
 use App\Application\Billing\UseCase\ProcessSplitPaymentUseCase;
+use App\Application\Billing\UseCase\SettlePiutangUseCase;
 use App\Application\Billing\UseCase\ReconcilePendingOrderUseCase;
 use App\Application\Billing\UseCase\VoidBillingTransactionUseCase;
 use App\Application\Bridging\UseCase\ProcessBridgingQueueUseCase;
@@ -300,7 +301,8 @@ final class HttpApplication
             new ReconcilePendingOrderUseCase($ledgerRepo, $this->auditRepo, $tx),
             new ProcessPosApotekUmumUseCase($barangRepo, $gudangRepo, $posRepo, $tx),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            new SettlePiutangUseCase($ledgerRepo, $tx)
         );
 
         $labRepo = new PdoLabRadiologyRepository($this->pdo);
@@ -632,6 +634,14 @@ final class HttpApplication
         };
         $router->get('/farmasi', $renderPharmacy);
         $router->get('/apotek-ralan', $renderPharmacy);
+        $router->get('/farmasi/etiket', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            return $pharmacyController->printEtiket($queryParams);
+        });
+        $router->get('/farmasi/cetak-resep', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan']);
+            return $pharmacyController->printResep($queryParams);
+        });
 
         $router->get('/api/v1/farmasi/queue', function () use ($pharmacyController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
@@ -697,6 +707,16 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $billingController->apiPay($data);
+        });
+        $router->post('/api/v1/kasir/settle-piutang', function () use ($billingController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $billingController->apiSettlePiutang($data);
+        });
+        $router->get('/kasir/faktur', function () use ($billingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            return $billingController->printFaktur($queryParams);
         });
         $router->post('/api/v1/kasir/void', function () use ($billingController, $postData, $rawBody, $headers, $ipAddress): array {
             $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);

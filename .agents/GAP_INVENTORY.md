@@ -19,8 +19,8 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 4 | `surat` | 🟡 Parsial | Sudah ada `CreateSuratMedisUseCase`, belum ada halaman UI daftar surat & cetak PDF (Surat Sakit, Sehat, Hamil, Cuti Hamil, Rujukan, Bebas Narkoba). |
 | 5 | `rawat_jalan` | 🟡 Parsial | Filter periode tanggal multi-hari (`from`–`to`) & status (`stts`) serta ubah status periksa (`ClinicalGuardShield`) sudah ada. Sisa: ubah dokter/poli di UI, SEP/rujukan internal, upload berkas digital, cetak rincian/antrean. |
 | 6 | `dokter_ralan` | 🟡 Parsial | Input tindakan dokter (`rawat_jl_dr` + ledger), order lab/rad & E-Resep langsung dari layar dokter, serta Resume Medis (`resume_pasien`) sudah ada. Sisa: cetak PDF e-resep/resume medis & riwayat lengkap per tab. |
-| 7 | `apotek_ralan` | 🟡 Parsial | Belum ada cetak etiket obat, copy resep UI, riwayat penyerahan multi-hari, dan penyesuaian stok per batch/depo dari layar apotek. |
-| 8 | `kasir_rawat_jalan` | 🟡 Parsial | Belum ada cetak kuitansi/faktur PDF/thermal, filter periode tanggal, manajemen piutang pasien, dan rincian billing dari tindakan/lab/rad terpadu. |
+| 7 | `apotek_ralan` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), Cetak Etiket (`/farmasi/etiket`), Cetak E-Resep (`/farmasi/cetak-resep`), & tombol Copy Resep UI sudah ada. Sisa: penyesuaian stok per batch/depo langsung dari layar apotek. |
+| 8 | `kasir_rawat_jalan` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), Cetak Kuitansi/Faktur 4-Pilar (`/kasir/faktur`), & Pelunasan Piutang (`/api/v1/kasir/settle-piutang`) sudah ada. Sisa: cetak thermal & email faktur. |
 | 9 | `frontoffice` | ❌ Belum Ada | Dashboard khusus Front Office / Gatekeeper konfirmasi antrean & pendaftaran loket terpadu. |
 
 ---

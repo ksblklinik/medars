@@ -203,7 +203,8 @@ final class RegisterInSiteUseCaseTest extends TestCase
 
     public function test_should_route_future_date_to_booking_registrasi(): void
     {
-        $tomorrow = new \DateTimeImmutable('2026-11-17');
+        $tomorrow = new \DateTimeImmutable('tomorrow');
+        $tomorrowStr = $tomorrow->format('Y-m-d');
         $cmd = new RegisterInSiteCommand(
             noRkmMedis: '000123',
             kdPoli: 'U01',
@@ -218,7 +219,7 @@ final class RegisterInSiteUseCaseTest extends TestCase
         $countReg = (int) $this->pdo->query("SELECT COUNT(*) FROM reg_periksa")->fetchColumn();
         $this->assertSame(0, $countReg);
 
-        $countBooking = (int) $this->pdo->query("SELECT COUNT(*) FROM booking_registrasi WHERE tanggal_periksa = '2026-11-17'")->fetchColumn();
+        $countBooking = (int) $this->pdo->query("SELECT COUNT(*) FROM booking_registrasi WHERE tanggal_periksa = '{$tomorrowStr}'")->fetchColumn();
         $this->assertSame(1, $countBooking);
     }
 }

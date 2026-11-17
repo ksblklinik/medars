@@ -41,6 +41,19 @@
             const btnRef = document.getElementById('btnRefreshBillingQueue');
             if (btnRef) btnRef.addEventListener('click', () => this.loadQueue());
 
+            const btnFilter = document.getElementById('btnFilterBilling');
+            if (btnFilter) btnFilter.addEventListener('click', () => this.loadQueue());
+            ['billingFilterFrom', 'billingFilterTo'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', () => this.loadQueue());
+            });
+
+            const btnPrint = document.getElementById('btnPrintFaktur');
+            if (btnPrint) btnPrint.addEventListener('click', () => this.printFaktur());
+
+            const btnSettle = document.getElementById('btnSettlePiutang');
+            if (btnSettle) btnSettle.addEventListener('click', () => this.settlePiutangActive());
+
             const btnPay = document.getElementById('btnPayBilling');
             if (btnPay) btnPay.addEventListener('click', () => this.payActive());
 
@@ -75,13 +88,24 @@
             document.getElementById('btnPayBilling').disabled = true;
             document.getElementById('btnVoidBilling').disabled = true;
             document.getElementById('btnReconcileOrder').disabled = true;
+            const btnPrint = document.getElementById('btnPrintFaktur');
+            const btnSettle = document.getElementById('btnSettlePiutang');
+            if (btnPrint) btnPrint.disabled = true;
+            if (btnSettle) btnSettle.disabled = true;
         },
 
         loadQueue: function () {
             const tbody = document.getElementById('billingQueueBody');
             if (!tbody) return;
 
-            this.apiFetch('/api/v1/kasir/queue')
+            const from = document.getElementById('billingFilterFrom')?.value || '';
+            const to = document.getElementById('billingFilterTo')?.value || '';
+            const params = new URLSearchParams();
+            if (from) params.set('from', from);
+            if (to) params.set('to', to);
+            const qs = params.toString();
+
+            this.apiFetch('/api/v1/kasir/queue' + (qs ? '?' + qs : ''))
                 .then(res => res.json())
                 .then(rows => {
                     if (!Array.isArray(rows) || rows.length === 0) {
@@ -115,7 +139,33 @@
             document.getElementById('btnPayBilling').disabled = false;
             document.getElementById('btnVoidBilling').disabled = false;
             document.getElementById('btnReconcileOrder').disabled = false;
+            const btnPrint = document.getElementById('btnPrintFaktur');
+            if (btnPrint) btnPrint.disabled = false;
             this.loadDetail(row.no_rawat);
+        },
+
+        printFaktur: function () {
+            const nr = document.getElementById('activeBillingNoRawat')?.value || '';
+            if (!nr) return;
+            window.open('/kasir/faktur?no_rawat=' + encodeURIComponent(nr), '_blank');
+        },
+
+        settlePiutangActive: function () {
+            const nr = document.getElementById('activeBillingNoRawat')?.value || '';
+            if (!nr) return;
+            this.apiFetch('/api/v1/kasir/settle-piutang', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ no_rawat: nr }),
+            })
+            .then(res => res.json())
+            .then(res => {
+                this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message || 'Proses pelunasan selesai.'));
+                if (res.status === 'success') {
+                    this.loadDetail(nr);
+                }
+            })
+            .catch(() => this.showAlert('danger', 'Gagal memproses pelunasan piutang.'));
         },
 
         loadDetail: function (noRawat) {
@@ -127,6 +177,8 @@
                     document.getElementById('sumKapitasi').innerText = 'Rp ' + Number(s['Kapitasi'] || 0).toLocaleString('id-ID');
                     document.getElementById('sumNonKapitasi').innerText = 'Rp ' + Number(s['Non-Kapitasi'] || 0).toLocaleString('id-ID');
                     document.getElementById('sumPiutang').innerText = 'Rp ' + Number(s['Piutang'] || 0).toLocaleString('id-ID');
+                    const btnSettle = document.getElementById('btnSettlePiutang');
+                    if (btnSettle) btnSettle.disabled = Number(s['Piutang'] || 0) <= 0;
 
                     const tbody = document.getElementById('billingItemsBody');
                     const items = Array.isArray(data.items) ? data.items : [];
