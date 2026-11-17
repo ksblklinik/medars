@@ -369,6 +369,7 @@ final class HttpApplication
             new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo),
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
+        $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1289,6 +1290,20 @@ final class HttpApplication
         $router->post('/api/v1/jkn-mobile-fktp/sisa-antrean', fn(): array => $jknMobileFktpController->sisaAntrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
         $router->post('/api/v1/jkn-mobile-fktp/batal-antrean', fn(): array => $jknMobileFktpController->batalAntrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
         $router->post('/api/v1/jkn-mobile-fktp/peserta', fn(): array => $jknMobileFktpController->peserta($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->get('/api/v1/bridging/satusehat/mappings', function () use ($satuSehatController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat', 'admin']);
+            return $satuSehatController->apiMappingList($queryParams);
+        });
+        $router->post('/api/v1/bridging/satusehat/mappings-save', function () use ($satuSehatController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $satuSehatController->apiMappingSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/bridging/satusehat/fhir-enqueue', function () use ($satuSehatController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $satuSehatController->apiFhirEnqueue($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)
         $router->get('/wagateway', function () use ($communicationController): array {

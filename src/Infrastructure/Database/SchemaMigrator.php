@@ -1211,6 +1211,15 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_satusehat_mapping (
+                id {$bigAutoIncPk},
+                entity_type VARCHAR(30) NOT NULL,
+                local_code VARCHAR(40) NOT NULL,
+                local_name VARCHAR(120) NOT NULL DEFAULT '',
+                ihs_id VARCHAR(100) NOT NULL,
+                updated_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

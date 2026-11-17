@@ -414,3 +414,80 @@ document.addEventListener('DOMContentLoaded', function () {
     loadAntrol();
 });
 </script>
+<div class="row" style="margin-top:14px;" id="satuSehatPanel">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading" style="background:#00897b;color:#fff;font-weight:bold;">
+                SatuSehat Kemenkes (Mapping IHS ID &amp; Antrean FHIR Observation / MedicationRequest / ServiceRequest)
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Mapping IHS ID (Location / Practitioner / Patient / Organization)</h5>
+                        <form id="formSsMapping" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <select id="ssEntityType" class="form-control input-sm">
+                                <option value="location">Location (Poli)</option>
+                                <option value="practitioner">Practitioner (Dokter/Nakes)</option>
+                                <option value="patient">Patient (Pasien)</option>
+                                <option value="organization">Organization (Unit)</option>
+                            </select>
+                            <input type="text" id="ssLocalCode" class="form-control input-sm" placeholder="Kode Lokal" required>
+                            <input type="text" id="ssLocalName" class="form-control input-sm" placeholder="Nama Lokal">
+                            <input type="text" id="ssIhsId" class="form-control input-sm" placeholder="IHS ID SatuSehat" required>
+                            <button type="submit" class="btn btn-success btn-sm">Simpan Mapping IHS</button>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-condensed" style="font-size:12px;">
+                                <thead><tr><th>Tipe</th><th>Kode Lokal</th><th>Nama</th><th>IHS ID</th></tr></thead>
+                                <tbody id="ssMappingBody"><tr><td colspan="4" class="text-center text-muted">Belum ada mapping IHS ID.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Kirim Antrean FHIR Resource (Observation / MedicationRequest / ServiceRequest)</h5>
+                        <form id="formSsFhir" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <select id="ssFhirType" class="form-control input-sm">
+                                <option value="Observation">Observation (TTV / Lab)</option>
+                                <option value="MedicationRequest">MedicationRequest (E-Resep)</option>
+                                <option value="ServiceRequest">ServiceRequest (Order Lab/Rad)</option>
+                                <option value="Encounter">Encounter</option>
+                                <option value="Condition">Condition</option>
+                            </select>
+                            <input type="text" id="ssFhirNoRawat" class="form-control input-sm" placeholder="No. Rawat" required>
+                            <input type="text" id="ssFhirNote" class="form-control input-sm" placeholder="Ringkasan / Kode LOINC/KFA">
+                            <button type="submit" class="btn btn-primary btn-sm">Antrekan FHIR</button>
+                        </form>
+                        <div id="ssFhirFeedback" class="small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
+    if (!api) return;
+
+    async function loadMappings() {
+        const res = await api('/api/v1/bridging/satusehat/mappings');
+        const rows = res.data || [];
+        document.getElementById('ssMappingBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.entity_type) + '</td><td>' + esc(r.local_code) + '</td><td>' + esc(r.local_name) + '</td><td>' + esc(r.ihs_id) + '</td></tr>').join('') : '<tr><td colspan="4" class="text-center text-muted">Belum ada mapping IHS ID.</td></tr>';
+    }
+    document.getElementById('formSsMapping')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/satusehat/mappings-save', { method: 'POST', body: JSON.stringify({ entity_type: ssEntityType.value, local_code: ssLocalCode.value, local_name: ssLocalName.value, ihs_id: ssIhsId.value }) });
+        if (res.status === 'success') loadMappings();
+    });
+    document.getElementById('formSsFhir')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/satusehat/fhir-enqueue', { method: 'POST', body: JSON.stringify({ resource_type: ssFhirType.value, no_rawat: ssFhirNoRawat.value, note: ssFhirNote.value }) });
+        const fb = document.getElementById('ssFhirFeedback');
+        if (res.status === 'success' && res.data) {
+            fb.innerHTML = '<span class="text-success">Berhasil masuk antrean FHIR: ' + esc(res.data.resource_type) + ' (' + esc(res.data.no_rawat) + ')</span>';
+        }
+    });
+    loadMappings();
+});
+</script>

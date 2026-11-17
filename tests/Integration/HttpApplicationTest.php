@@ -2599,4 +2599,33 @@ class HttpApplicationTest extends TestCase
             'nomorkartu' => '0009998887771', 'kodepoli' => '001', 'tanggalperiksa' => '2026-11-17', 'keterangan' => 'Batal FKTP',
         ]), headers: $headers)['body'], true)['metadata']['code']);
     }
+
+    public function testSatuSehatMappingAndFhirResourcesEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/bridging');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('satuSehatPanel', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $mapRes = $this->app->handle('POST', '/api/v1/bridging/satusehat/mappings-save', postData: [
+            'entity_type' => 'location',
+            'local_code' => 'INT',
+            'local_name' => 'Poli Penyakit Dalam',
+            'ihs_id' => 'loc-ihs-10001',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $mapRes['status']);
+
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/satusehat/mappings')['body'], true)['data']);
+
+        foreach (['Observation', 'MedicationRequest', 'ServiceRequest'] as $resType) {
+            $qRes = $this->app->handle('POST', '/api/v1/bridging/satusehat/fhir-enqueue', postData: [
+                'resource_type' => $resType,
+                'no_rawat' => '2026/11/17/000201',
+                'note' => 'FHIR ' . $resType,
+            ], headers: ['X-CSRF-Token' => $csrf]);
+            $this->assertSame(201, $qRes['status']);
+            $this->assertSame($resType, json_decode($qRes['body'], true)['data']['resource_type']);
+        }
+    }
 }

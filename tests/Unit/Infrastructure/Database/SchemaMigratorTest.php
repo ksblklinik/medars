@@ -129,6 +129,7 @@ class SchemaMigratorTest extends TestCase
             'mlite_hfis_jadwal',
             'mlite_antrol_log',
             'referensi_mobilejkn_bpjs',
+            'mlite_satusehat_mapping',
         ];
 
         $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'");
