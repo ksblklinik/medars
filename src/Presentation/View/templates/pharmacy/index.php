@@ -17,6 +17,11 @@
             <input type="date" id="farmasiFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
             <span class="input-group-text bg-white text-muted">s/d</span>
             <input type="date" id="farmasiFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
+            <select id="farmasiFilterLayanan" class="form-select" style="max-width: 130px;">
+                <option value="">Ralan + Ranap</option>
+                <option value="ralan">Rawat Jalan</option>
+                <option value="ranap">Rawat Inap</option>
+            </select>
             <button type="button" id="btnFilterResep" class="btn btn-outline-teal">Filter</button>
         </div>
     </div>

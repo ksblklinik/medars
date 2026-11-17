@@ -71,6 +71,7 @@ final readonly class BillingController
         $from = trim((string) ($queryParams['from'] ?? $date));
         $to = trim((string) ($queryParams['to'] ?? $from));
         $statusBayar = trim((string) ($queryParams['status_bayar'] ?? ''));
+        $statusLanjut = trim((string) ($queryParams['status_lanjut'] ?? ''));
 
         $sql = "
             SELECT r.no_rawat, r.no_reg, r.tgl_registrasi, r.no_rkm_medis, p.nm_pasien, pol.nm_poli,
@@ -85,6 +86,10 @@ final readonly class BillingController
         if ($statusBayar !== '') {
             $sql .= " AND r.status_bayar = :sb";
             $params[':sb'] = $statusBayar;
+        }
+        if (in_array($statusLanjut, ['Ralan', 'Ranap'], true)) {
+            $sql .= " AND r.status_lanjut = :sl";
+            $params[':sl'] = $statusLanjut;
         }
         $sql .= " ORDER BY r.tgl_registrasi DESC, r.no_reg ASC";
 

@@ -69,6 +69,7 @@ final readonly class PharmacyController
         $from = trim((string) ($queryParams['from'] ?? $date));
         $to = trim((string) ($queryParams['to'] ?? $from));
         $statusFilter = trim((string) ($queryParams['status'] ?? ''));
+        $statusLayanan = strtolower(trim((string) ($queryParams['status_layanan'] ?? '')));
 
         $sql = "
             SELECT ro.no_resep, ro.tgl_peresepan, ro.jam_peresepan, ro.no_rawat, ro.kd_dokter,
@@ -80,11 +81,16 @@ final readonly class PharmacyController
             LEFT JOIN dokter d ON ro.kd_dokter = d.kd_dokter
             LEFT JOIN penjab pj ON r.kd_pj = pj.kd_pj
             WHERE ro.tgl_peresepan BETWEEN :from AND :to
-            ORDER BY ro.tgl_peresepan DESC, ro.no_resep DESC
         ";
+        $params = [':from' => $from, ':to' => $to];
+        if (in_array($statusLayanan, ['ralan', 'ranap'], true)) {
+            $sql .= ' AND LOWER(ro.status) = :sl';
+            $params[':sl'] = $statusLayanan;
+        }
+        $sql .= ' ORDER BY ro.tgl_peresepan DESC, ro.no_resep DESC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':from' => $from, ':to' => $to]);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $result = [];

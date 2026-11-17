@@ -1528,4 +1528,25 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $book['status']);
         $this->assertSame('001', json_decode($book['body'], true)['data']['no_reg']);
     }
+
+    public function testApotekAndKasirRanapFilterEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000150', 'Rudi Ranap', '1980-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_lanjut, status_bayar)
+            VALUES ('001', '2026/11/17/000150', '{$today}', '08:00:00', 'DR01', '000150', 'IGDK', 'A09', 'Dirawat', 'Ranap', 'Belum Bayar');
+            INSERT INTO resep_obat (no_resep, tgl_peresepan, jam_peresepan, no_rawat, kd_dokter, tgl_perawatan, jam, status)
+            VALUES ('202611170001', '{$today}', '09:00:00', '2026/11/17/000150', 'DR01', '0000-00-00', '00:00:00', 'ranap');
+        ");
+
+        $this->session['user_id'] = 1;
+        $resepRanap = $this->app->handle('GET', '/api/v1/farmasi/queue', queryParams: ['from' => $today, 'to' => $today, 'status_layanan' => 'ranap']);
+        $this->assertSame(200, $resepRanap['status']);
+        $this->assertCount(1, json_decode($resepRanap['body'], true));
+
+        $kasirRanap = $this->app->handle('GET', '/api/v1/kasir/queue', queryParams: ['from' => $today, 'to' => $today, 'status_lanjut' => 'Ranap']);
+        $this->assertSame(200, $kasirRanap['status']);
+        $this->assertCount(1, json_decode($kasirRanap['body'], true));
+    }
 }

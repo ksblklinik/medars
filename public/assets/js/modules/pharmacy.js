@@ -45,7 +45,7 @@
 
             const btnFilter = document.getElementById('btnFilterResep');
             if (btnFilter) btnFilter.addEventListener('click', () => this.loadQueue());
-            ['farmasiFilterFrom', 'farmasiFilterTo'].forEach((id) => {
+            ['farmasiFilterFrom', 'farmasiFilterTo', 'farmasiFilterLayanan'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', () => this.loadQueue());
             });
@@ -87,9 +87,11 @@
 
             const from = document.getElementById('farmasiFilterFrom')?.value || '';
             const to = document.getElementById('farmasiFilterTo')?.value || '';
+            const lay = document.getElementById('farmasiFilterLayanan')?.value || '';
             const params = new URLSearchParams();
             if (from) params.set('from', from);
             if (to) params.set('to', to);
+            if (lay) params.set('status_layanan', lay);
             const qs = params.toString();
 
             this.apiFetch('/api/v1/farmasi/queue' + (qs ? '?' + qs : ''))

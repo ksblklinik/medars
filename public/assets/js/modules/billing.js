@@ -44,7 +44,7 @@
 
             const btnFilter = document.getElementById('btnFilterBilling');
             if (btnFilter) btnFilter.addEventListener('click', () => this.loadQueue());
-            ['billingFilterFrom', 'billingFilterTo'].forEach((id) => {
+            ['billingFilterFrom', 'billingFilterTo', 'billingFilterLanjut'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', () => this.loadQueue());
             });
@@ -101,9 +101,11 @@
 
             const from = document.getElementById('billingFilterFrom')?.value || '';
             const to = document.getElementById('billingFilterTo')?.value || '';
+            const sl = document.getElementById('billingFilterLanjut')?.value || '';
             const params = new URLSearchParams();
             if (from) params.set('from', from);
             if (to) params.set('to', to);
+            if (sl) params.set('status_lanjut', sl);
             const qs = params.toString();
 
             this.apiFetch('/api/v1/kasir/queue' + (qs ? '?' + qs : ''))
