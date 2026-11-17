@@ -1490,4 +1490,42 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $list['status']);
         $this->assertCount(1, json_decode($list['body'], true)['data']);
     }
+
+    public function testPortalPasienEndToEnd(): void
+    {
+        $tomorrow = date('Y-m-d', strtotime('+1 day'));
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000140', 'Lia Amalia', '1992-05-20', 'P');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U01', 'Poli Umum', '1');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Andi', '1');
+        ");
+
+        $page = $this->app->handle('GET', '/portal-pasien');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Portal Pasien Mandiri', $page['body']);
+
+        $lookup = $this->app->handle(
+            'POST',
+            '/api/v1/portal-pasien/lookup',
+            rawBody: json_encode(['no_rkm_medis' => '000140', 'tgl_lahir' => '1992-05-20']),
+            headers: ['Content-Type' => 'application/json']
+        );
+        $this->assertSame(200, $lookup['status']);
+        $this->assertSame('Lia Amalia', json_decode($lookup['body'], true)['data']['patient']['nm_pasien']);
+
+        $book = $this->app->handle(
+            'POST',
+            '/api/v1/portal-pasien/booking',
+            rawBody: json_encode([
+                'no_rkm_medis' => '000140',
+                'tgl_lahir' => '1992-05-20',
+                'tanggal_periksa' => $tomorrow,
+                'kd_poli' => 'U01',
+                'kd_dokter' => 'DR01',
+            ]),
+            headers: ['Content-Type' => 'application/json']
+        );
+        $this->assertSame(200, $book['status']);
+        $this->assertSame('001', json_decode($book['body'], true)['data']['no_reg']);
+    }
 }

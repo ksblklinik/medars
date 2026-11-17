@@ -86,7 +86,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 43 | `anjungan` | 🟡 Parsial | Sudah ada Display TV & Kiosk dasar; belum ada cetak tiket thermal, display LEAN TV, & antrean farmasi/kasir terpisah. |
 | 44 | `wagateway` | 🟡 Parsial | Sudah ada kirim satuan, webhook QR, whitelist; belum ada UI live chat 2-arah sesi `cs`, template broadcast terjadwal, & AI draft CS. |
 | 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
-| 46 | `portal_pasien` | ❌ Belum Ada | Portal mandiri pasien (lihat riwayat, hasil lab, booking online). |
+| 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |
 | 47 | `presensi` | ❌ Belum Ada | Modul absensi / presensi pegawai (lokasi/foto/jadwal shift). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |

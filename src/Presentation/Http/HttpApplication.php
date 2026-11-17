@@ -455,6 +455,11 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $portalPasienController = new PortalPasienController(
+            new \App\Infrastructure\Persistence\PdoPortalPasienRepository($this->pdo),
+            $this->renderer
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -477,6 +482,15 @@ final class HttpApplication
         $router->get('/display-antrean', fn(): array => $displayController->index());
         $router->get('/antrean', fn(): array => $displayController->index());
         $router->get('/kiosk', fn(): array => $displayController->kiosk($this->csrfGuard->getToken()));
+        $router->get('/portal-pasien', fn(): array => $portalPasienController->index());
+        $router->post('/api/v1/portal-pasien/lookup', function () use ($portalPasienController, $postData, $rawBody, $headers): array {
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $portalPasienController->apiLookup($data);
+        });
+        $router->post('/api/v1/portal-pasien/booking', function () use ($portalPasienController, $postData, $rawBody, $headers): array {
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $portalPasienController->apiBooking($data);
+        });
         $router->get('/api/v1/queue/summary', fn(): array => $displayController->apiQueueSummary($queryParams));
 
         $router->post('/api/v1/kiosk/checkin', function () use ($displayController, $postData, $rawBody, $headers): array {
