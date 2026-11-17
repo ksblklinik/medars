@@ -888,7 +888,7 @@ class HttpApplicationTest extends TestCase
             rawBody: json_encode([
                 'no_rawat' => '2026/11/17/000030',
                 'dokter_perujuk' => 'DR03',
-                'items' => [['kd_jenis_prw' => 'RAD01', 'nm_perawatan' => 'Thorax PA', 'harga' => 150000, 'claim_type' => 'Tunai']],
+                'items' => [['kd_jenis_prw' => 'RAD01', 'nm_perawatan' => 'Thorax PA', 'harga' => 150000, 'claim_type' => 'Kapitasi']],
             ]),
             headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
         );
@@ -2884,5 +2884,84 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $pay['status']);
         $payJson = json_decode($pay['body'], true);
         $this->assertSame(35000.0, (float) $payJson['data']['tunai_paid']); // 25000 Reg + 4*2500 Obat
+    }
+
+    public function testJknMobileSyncToBookingAndRegPeriksaWithGracefulUnmappedFallback(): void
+    {
+        $tokenRes = $this->app->handle('GET', '/api/v1/jkn-mobile/token', headers: [
+            'X-Username' => 'admin',
+            'X-Password' => 'AdminPass2026!',
+        ]);
+        $token = (string) (json_decode($tokenRes['body'], true)['response']['token'] ?? '');
+        $headers = ['Content-Type' => 'application/json', 'X-Token' => $token, 'X-Username' => 'admin'];
+
+        // 1. Graceful fallback bila belum ada mapping pasien/poli lokal
+        $unmapped = $this->app->handle('POST', '/api/v1/jkn-mobile/antrean', rawBody: json_encode([
+            'nomorkartu' => '0008887776661',
+            'kodepoli' => 'UNMAPPED',
+            'tanggalperiksa' => date('Y-m-d'),
+        ]), headers: $headers);
+        $this->assertSame(200, json_decode($unmapped['body'], true)['metadata']['code']);
+        $this->assertFalse(json_decode($unmapped['body'], true)['response']['simrs_synced']);
+
+        // 2. Ter-mapping penuh -> otomatis membuat booking_registrasi & checkIn membuat reg_periksa
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, no_peserta, tgl_lahir, jk) VALUES ('RM-JKN-01', 'Andi JKN Sync', '3500088776655', '0008887776662', '1990-01-01', 'L')");
+        $mapped = $this->app->handle('POST', '/api/v1/jkn-mobile/antrean', rawBody: json_encode([
+            'nomorkartu' => '0008887776662',
+            'norm' => 'RM-JKN-01',
+            'kodepoli' => 'UMU01',
+            'kodedokter' => 'DR001',
+            'tanggalperiksa' => date('Y-m-d'),
+        ]), headers: $headers);
+        $mappedJson = json_decode($mapped['body'], true);
+        $this->assertTrue($mappedJson['response']['simrs_synced']);
+        $kodebooking = $mappedJson['response']['kodebooking'];
+
+        $ci = $this->app->handle('POST', '/api/v1/jkn-mobile/checkin', rawBody: json_encode([
+            'kodebooking' => $kodebooking,
+            'waktu' => 1763352000000,
+        ]), headers: $headers);
+        $ciJson = json_decode($ci['body'], true);
+        $this->assertSame(200, $ciJson['metadata']['code']);
+        $this->assertNotEmpty($ciJson['response']['no_rawat']);
+
+        $regCount = (int) $this->pdo->query("SELECT COUNT(*) FROM reg_periksa WHERE no_rkm_medis = 'RM-JKN-01'")->fetchColumn();
+        $this->assertSame(1, $regCount);
+    }
+
+    public function testRadiologyValidationGateEnforcesKasirPaymentForTunai(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('RM-RAD-G', 'Pasien Rad Gate', '1990-01-01', 'L')");
+        $this->app->handle('GET', '/radiologi');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $reg = $this->app->handle('POST', '/api/v1/registration/insite', postData: [
+            'no_rkm_medis' => 'RM-RAD-G', 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001', 'kd_pj' => 'UMU',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $noRawat = json_decode($reg['body'], true)['data']['no_rawat'];
+
+        $ord = $this->app->handle('POST', '/api/v1/penunjang/radiologi/orders', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'dokter_perujuk' => 'DR001',
+            'items' => [['kd_jenis_prw' => 'RAD01', 'nm_perawatan' => 'Thorax PA', 'harga' => 125000, 'claim_type' => 'Tunai']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $ord['status']);
+        $noOrder = json_decode($ord['body'], true)['orders'][0]['no_order'];
+
+        // Sebelum bayar Kasir: validasi hasil radiologi harus ditolak (422)
+        $blocked = $this->app->handle('POST', '/api/v1/penunjang/radiologi/results', rawBody: json_encode([
+            'no_order' => $noOrder, 'hasil' => 'Normal',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(422, $blocked['status']);
+
+        // Bayar di Kasir -> validasi hasil radiologi terbuka (200)
+        $pay = $this->app->handle('POST', '/api/v1/kasir/pay', postData: ['no_rawat' => $noRawat], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pay['status']);
+
+        $ok = $this->app->handle('POST', '/api/v1/penunjang/radiologi/results', rawBody: json_encode([
+            'no_order' => $noOrder, 'hasil' => 'Normal',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $ok['status']);
     }
 }

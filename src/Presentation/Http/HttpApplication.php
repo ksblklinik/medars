@@ -314,7 +314,7 @@ final class HttpApplication
             new SaveLabResultUseCase($labRepo, $ledgerRepo, $tx),
             new DeleteLabOrderUseCase($labRepo, $tx, $ledgerRepo),
             new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx),
-            new SaveRadiologyResultUseCase($labRepo, $tx),
+            new SaveRadiologyResultUseCase($labRepo, $tx, $ledgerRepo),
             $this->renderer,
             $this->navBuilder,
             new \App\Application\Support\UseCase\DeleteRadiologyOrderUseCase($labRepo, $tx, $ledgerRepo)
@@ -361,12 +361,13 @@ final class HttpApplication
             $this->navBuilder
         );
         $hfisAntrolController = new HfisAntrolController(new \App\Infrastructure\Persistence\PdoHfisAntrolRepository($this->pdo));
+        $jknMobileRepo = new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo, $checkInMobileJknUseCase);
         $jknMobileController = new JknMobileController(
-            new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo),
+            $jknMobileRepo,
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
         $jknMobileFktpController = new JknMobileFktpController(
-            new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo),
+            $jknMobileRepo,
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
         $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));

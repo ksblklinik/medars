@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence;
 
+use App\Application\Registration\DTO\CheckInMobileJknCommand;
+use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Domain\Bridging\Repository\JknMobileRepositoryInterface;
 use PDO;
 
 final class PdoJknMobileRepository implements JknMobileRepositoryInterface
 {
-    public function __construct(private readonly PDO $pdo)
-    {
+    public function __construct(
+        private readonly PDO $pdo,
+        private readonly ?CheckInMobileJknUseCase $checkInUseCase = null,
+    ) {
     }
 
     public function verifyCredentials(string $username, string $password): bool
@@ -114,11 +118,39 @@ final class PdoJknMobileRepository implements JknMobileRepositoryInterface
         $dokStmt->execute([':kd' => $kodedokter]);
         $nmDokter = (string) ($dokStmt->fetchColumn() ?: $kodedokter);
 
+        // Sinkron ke booking_registrasi jika pasien/poli/dokter lokal sudah termapping & bridging aktif
+        $norm = trim((string) ($payload['norm'] ?? ''));
+        $simrsSynced = false;
+        if ($norm !== '' && $this->isSimrsSyncEnabled()) {
+            $hasPasien = $this->existsRow('SELECT 1 FROM pasien WHERE no_rkm_medis = :v LIMIT 1', $norm);
+            $hasPoli = $this->existsRow('SELECT 1 FROM poliklinik WHERE kd_poli = :v LIMIT 1', $kodepoli);
+            $hasDokter = $kodedokter !== '' && $this->existsRow('SELECT 1 FROM dokter WHERE kd_dokter = :v LIMIT 1', $kodedokter);
+            if ($hasPasien && $hasPoli && $hasDokter) {
+                $chkBk = $this->pdo->prepare('SELECT COUNT(*) FROM booking_registrasi WHERE no_rkm_medis = :rm AND tanggal_periksa = :tgl');
+                $chkBk->execute([':rm' => $norm, ':tgl' => $tgl]);
+                if ((int) $chkBk->fetchColumn() === 0) {
+                    $this->pdo->prepare(
+                        "INSERT INTO booking_registrasi (tanggal_booking, jam_booking, no_rkm_medis, tanggal_periksa, kd_dokter, kd_poli, no_reg, kd_pj, status)
+                         VALUES (:tb, :jb, :rm, :tp, :kd, :kp, :nr, 'BPJ', 'Belum')"
+                    )->execute([
+                        ':tb' => date('Y-m-d'),
+                        ':jb' => date('H:i:s'),
+                        ':rm' => $norm,
+                        ':tp' => $tgl,
+                        ':kd' => $kodedokter,
+                        ':kp' => $kodepoli,
+                        ':nr' => str_pad((string) $angka, 3, '0', STR_PAD_LEFT),
+                    ]);
+                    $simrsSynced = true;
+                }
+            }
+        }
+
         return [
             'nomorantrean' => $nomor,
             'angkaantrean' => $angka,
             'kodebooking' => $kodebooking,
-            'norm' => trim((string) ($payload['norm'] ?? '')),
+            'norm' => $norm,
             'namapoli' => $nmPoli,
             'namadokter' => $nmDokter,
             'estimasidilayani' => $estimasi,
@@ -126,6 +158,7 @@ final class PdoJknMobileRepository implements JknMobileRepositoryInterface
             'kuotajkn' => $kuotaJkn,
             'sisakuotanonjkn' => 10,
             'kuotanonjkn' => 10,
+            'simrs_synced' => $simrsSynced,
             'keterangan' => 'Peserta harap 60 menit lebih awal guna pencatatan administrasi.',
         ];
     }
@@ -185,23 +218,55 @@ final class PdoJknMobileRepository implements JknMobileRepositoryInterface
 
     public function batalAntrean(string $kodebooking, string $keterangan): bool
     {
+        $rowStmt = $this->pdo->prepare('SELECT norm, tanggalperiksa FROM referensi_mobilejkn_bpjs WHERE nobooking = :kb LIMIT 1');
+        $rowStmt->execute([':kb' => trim($kodebooking)]);
+        $row = $rowStmt->fetch(PDO::FETCH_ASSOC);
+
         $stmt = $this->pdo->prepare(
             "UPDATE referensi_mobilejkn_bpjs SET status = 'Batal', keterangan_batal = :ket WHERE nobooking = :kb"
         );
         $stmt->execute([':ket' => trim($keterangan), ':kb' => trim($kodebooking)]);
-        return $stmt->rowCount() > 0;
+        if ($stmt->rowCount() === 0) {
+            return false;
+        }
+        if ($row !== false && !empty($row['norm'])) {
+            $this->pdo->prepare(
+                "UPDATE booking_registrasi SET status = 'Batal' WHERE no_rkm_medis = :rm AND tanggal_periksa = :tgl AND status = 'Belum'"
+            )->execute([':rm' => (string) $row['norm'], ':tgl' => (string) $row['tanggalperiksa']]);
+        }
+        return true;
     }
 
     public function checkIn(string $kodebooking, int $waktuMs): ?array
     {
+        $rowStmt = $this->pdo->prepare('SELECT norm, tanggalperiksa FROM referensi_mobilejkn_bpjs WHERE nobooking = :kb LIMIT 1');
+        $rowStmt->execute([':kb' => trim($kodebooking)]);
+        $row = $rowStmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+
         $stmt = $this->pdo->prepare(
             "UPDATE referensi_mobilejkn_bpjs SET status = 'Checkin', validasi = :val WHERE nobooking = :kb"
         );
         $stmt->execute([':val' => (string) $waktuMs, ':kb' => trim($kodebooking)]);
-        if ($stmt->rowCount() === 0) {
-            return null;
+
+        $noRawat = '';
+        $norm = trim((string) ($row['norm'] ?? ''));
+        $tglStr = trim((string) ($row['tanggalperiksa'] ?? ''));
+        if ($this->checkInUseCase !== null && $norm !== '' && $tglStr !== '' && $this->isSimrsSyncEnabled()) {
+            try {
+                $dt = \DateTimeImmutable::createFromFormat('!Y-m-d', $tglStr) ?: null;
+                $reg = $this->checkInUseCase->execute(new CheckInMobileJknCommand($norm, $dt));
+                $noRawat = $reg->noRawat->value();
+                $this->pdo->prepare('UPDATE referensi_mobilejkn_bpjs SET no_rawat = :nr WHERE nobooking = :kb')
+                    ->execute([':nr' => $noRawat, ':kb' => trim($kodebooking)]);
+            } catch (\Throwable) {
+                // Tetap izinkan check-in Mobile JKN jika belum ada mapping booking_registrasi lokal
+            }
         }
-        return ['kodebooking' => trim($kodebooking), 'status' => 'Checkin', 'waktu' => $waktuMs];
+
+        return ['kodebooking' => trim($kodebooking), 'status' => 'Checkin', 'waktu' => $waktuMs, 'no_rawat' => $noRawat];
     }
 
     public function ambilAntreanFarmasi(string $kodebooking, string $jenisResep): ?array
@@ -302,5 +367,20 @@ final class PdoJknMobileRepository implements JknMobileRepositoryInterface
             ':tgl' => trim($tanggalperiksa),
         ]);
         return $stmt->rowCount() > 0;
+    }
+
+    private function isSimrsSyncEnabled(): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT value FROM mlite_settings WHERE module = 'jkn_mobile' AND field = 'sync_to_simrs' LIMIT 1");
+        $stmt->execute();
+        $val = $stmt->fetchColumn();
+        return $val === false || !in_array(strtolower(trim((string) $val)), ['0', 'false', 'off', 'no'], true);
+    }
+
+    private function existsRow(string $sql, string $param): bool
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':v' => $param]);
+        return $stmt->fetchColumn() !== false;
     }
 }
