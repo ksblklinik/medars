@@ -1340,4 +1340,35 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('text/csv', $csv['headers']['Content-Type']);
         $this->assertStringContainsString('Darah Lengkap', $csv['body']);
     }
+
+    public function testProfilUpdateAndPasswordChangeEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/profil');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Data Profil Pengguna', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $upd = $this->app->handle(
+            'POST',
+            '/api/v1/profil/update',
+            rawBody: json_encode(['fullname' => 'Admin Medars Baru', 'email' => 'admin2@medars.local']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $upd['status']);
+        $this->assertSame('Admin Medars Baru', json_decode($upd['body'], true)['data']['fullname']);
+
+        $pwd = $this->app->handle(
+            'POST',
+            '/api/v1/profil/password',
+            rawBody: json_encode([
+                'current_password' => 'AdminPass2026!',
+                'new_password' => 'NewSecret2026!',
+                'confirm_password' => 'NewSecret2026!',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $pwd['status']);
+        $this->assertSame('success', json_decode($pwd['body'], true)['status']);
+    }
 }

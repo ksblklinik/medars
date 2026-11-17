@@ -447,6 +447,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $profilController = new ProfilController(
+            $this->userRepo,
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1262,6 +1268,23 @@ final class HttpApplication
         $router->get('/api/v1/manajemen/dashboard', function () use ($manajemenController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['manajemen', 'laporan', 'admin']);
             return $manajemenController->apiDashboard($queryParams);
+        });
+
+        $router->get('/profil', function () use ($profilController): array {
+            $user = $this->requireAuthenticatedUser();
+            return $profilController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->post('/api/v1/profil/update', function () use ($profilController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $profilController->apiUpdateProfile($user, $data);
+        });
+        $router->post('/api/v1/profil/password', function () use ($profilController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $profilController->apiChangePassword($user, $data);
         });
 
         return $router->dispatch($method, $path);

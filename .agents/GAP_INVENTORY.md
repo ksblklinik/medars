@@ -88,7 +88,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
 | 46 | `portal_pasien` | ❌ Belum Ada | Portal mandiri pasien (lihat riwayat, hasil lab, booking online). |
 | 47 | `presensi` | ❌ Belum Ada | Modul absensi / presensi pegawai (lokasi/foto/jadwal shift). |
-| 48 | `profil` | ❌ Belum Ada | Halaman ubah profil, foto, & ganti password pengguna sendiri. |
+| 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |
 | 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar; belum ada filter/cari & reset password massal. |
 | 51 | `settings` | 🟡 Parsial | Sudah ada pengaturan dasar; belum ada tab khusus Bridging/WA/Tarif/Logo instansi lengkap. |

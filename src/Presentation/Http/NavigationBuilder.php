@@ -215,6 +215,14 @@ final class NavigationBuilder
                 'modules' => ['kepegawaian', 'admin'],
             ],
             [
+                'title' => 'Profil Saya',
+                'icon' => 'fa-user-gear',
+                'route' => '/profil',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'profil',
+                'modules' => ['*'],
+            ],
+            [
                 'title' => 'Pengaturan',
                 'icon' => 'fa-gear',
                 'route' => '/settings',
