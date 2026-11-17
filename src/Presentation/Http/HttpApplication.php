@@ -1111,6 +1111,16 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $suratController->apiCreate($user, $data);
         });
+        $router->get('/api/v1/rujukan-internal', function () use ($suratController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan', 'sep_internal']);
+            return $suratController->apiListRujukanInternal($queryParams);
+        });
+        $router->post('/api/v1/rujukan-internal', function () use ($suratController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan', 'sep_internal']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $suratController->apiCreateRujukanInternal($data);
+        });
 
         $router->get('/kepegawaian', function () use ($kepegawaianController): array {
             $user = $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);

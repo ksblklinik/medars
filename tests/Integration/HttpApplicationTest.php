@@ -1456,4 +1456,38 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('APOTEK UMUM MEDARS', $struk['body']);
         $this->assertStringContainsString('QRIS', $struk['body']);
     }
+
+    public function testRujukanInternalEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000130', 'Nadia', '1994-01-01', 'P');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U02', 'Poli Gigi', '1');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR02', 'drg. Nina', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/17/000130', '{$today}', '08:00:00', 'DR01', '000130', 'U01', 'BPJ', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/surat');
+        $this->assertSame(200, $page['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/rujukan-internal',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000130',
+                'kd_poli' => 'U02',
+                'kd_dokter' => 'DR02',
+                'catatan' => 'Konsul keluhan gigi',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $create['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/rujukan-internal', queryParams: ['q' => 'Nadia']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+    }
 }

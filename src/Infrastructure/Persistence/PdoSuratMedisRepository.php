@@ -197,4 +197,22 @@ final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $row === false ? null : $row;
     }
+
+    public function listRujukanInternal(string $q = ''): array
+    {
+        $like = '%' . trim($q) . '%';
+        $stmt = $this->pdo->prepare("
+            SELECT ri.no_rawat, ri.kd_dokter, ri.kd_poli, ri.catatan,
+                   p.nm_pasien, p.no_rkm_medis, pol.nm_poli, d.nm_dokter
+            FROM rujukan_internal ri
+            LEFT JOIN reg_periksa r ON ri.no_rawat = r.no_rawat
+            LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+            LEFT JOIN poliklinik pol ON ri.kd_poli = pol.kd_poli
+            LEFT JOIN dokter d ON ri.kd_dokter = d.kd_dokter
+            WHERE ri.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q OR COALESCE(pol.nm_poli, '') LIKE :q
+            ORDER BY ri.no_rawat DESC LIMIT 100
+        ");
+        $stmt->execute([':q' => $like]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

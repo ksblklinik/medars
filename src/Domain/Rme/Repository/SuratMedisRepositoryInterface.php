@@ -30,4 +30,9 @@ interface SuratMedisRepositoryInterface
      * @return array<string, mixed>|null
      */
     public function findSuratForPrint(string $type, string $noSurat): ?array;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listRujukanInternal(string $q = ''): array;
 }

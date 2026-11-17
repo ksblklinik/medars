@@ -6,6 +6,7 @@ namespace App\Presentation\Http;
 
 use App\Application\Rme\UseCase\CreateSuratMedisUseCase;
 use App\Domain\Registration\ValueObject\NoRawat;
+use App\Domain\Rme\Entity\RujukanInternal;
 use App\Domain\Rme\Repository\SuratMedisRepositoryInterface;
 use App\Domain\Security\Entity\UserAccount;
 use App\Presentation\View\ViewRenderer;
@@ -161,6 +162,36 @@ final readonly class SuratController
             'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
             'body' => $html,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListRujukanInternal(array $query = []): array
+    {
+        $q = trim((string) ($query['q'] ?? ''));
+        return $this->jsonResponse(['status' => 'success', 'data' => $this->repo->listRujukanInternal($q)]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiCreateRujukanInternal(array $payload): array
+    {
+        try {
+            $rujukan = new RujukanInternal(
+                noRawat: new NoRawat(trim((string) ($payload['no_rawat'] ?? ''))),
+                kdDokter: trim((string) ($payload['kd_dokter'] ?? '')),
+                kdPoli: trim((string) ($payload['kd_poli'] ?? '')),
+                catatan: trim((string) ($payload['catatan'] ?? '-')) ?: '-'
+            );
+            $this->createUseCase->createRujukanInternal($rujukan);
+            return $this->jsonResponse(['status' => 'success', 'message' => 'Rujukan / SEP Internal berhasil disimpan.']);
+        } catch (\Throwable $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
     }
 
     /**

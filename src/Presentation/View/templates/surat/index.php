@@ -16,6 +16,7 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabSuratSakit" data-type="sakit" type="button">Surat Sakit</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratHamil" data-type="hamil" type="button">Surat Hamil</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratNarkoba" data-type="narkoba" type="button">Surat Bebas Narkoba</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRujukanInternal" data-type="rujukan" type="button">Rujukan / SEP Internal</button></li>
     </ul>
 
     <div class="tab-content">
@@ -85,6 +86,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 4: Rujukan / SEP Internal -->
+        <div class="tab-pane fade" id="tabRujukanInternal">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Buat Rujukan / SEP Internal</div>
+                        <div class="card-body">
+                            <form id="formRujukanInternal" class="row g-2">
+                                <div class="col-12"><label class="form-label small mb-1">No. Rawat</label><input type="text" id="rujNoRawat" class="form-control form-control-sm" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Poli Tujuan</label><input type="text" id="rujPoli" class="form-control form-control-sm" placeholder="U02" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Dokter Tujuan</label><input type="text" id="rujDokter" class="form-control form-control-sm" placeholder="DR02" required></div>
+                                <div class="col-12"><label class="form-label small mb-1">Catatan Konsul</label><textarea id="rujCatatan" class="form-control form-control-sm" rows="2"></textarea></div>
+                                <div class="col-12 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Simpan Rujukan Internal</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0"><div class="card-body p-0 table-responsive"><table class="table table-sm table-hover align-middle mb-0 small"><thead class="table-light"><tr><th>No. Rawat</th><th>Pasien</th><th>Poli Tujuan</th><th>Dokter Tujuan</th><th>Catatan</th></tr></thead><tbody id="tbodyRujukanInternal"></tbody></table></div></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script src="/assets/js/modules/surat.js?v=20261117b"></script>
+<script src="/assets/js/modules/surat.js?v=20261117c"></script>

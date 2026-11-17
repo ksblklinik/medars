@@ -78,10 +78,44 @@
                     keperluan: document.getElementById('nrkKeperluan').value,
                 });
             });
+
+            document.getElementById('formRujukanInternal')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.apiFetch('/api/v1/rujukan-internal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        no_rawat: document.getElementById('rujNoRawat').value,
+                        kd_poli: document.getElementById('rujPoli').value,
+                        kd_dokter: document.getElementById('rujDokter').value,
+                        catatan: document.getElementById('rujCatatan').value,
+                    }),
+                })
+                .then(res => res.json())
+                .then(res => {
+                    this.showAlert(res.status === 'success' ? 'success' : 'danger', res.message || 'Selesai.');
+                    if (res.status === 'success') this.loadList('rujukan');
+                })
+                .catch(() => this.showAlert('danger', 'Gagal menyimpan rujukan internal.'));
+            });
         },
 
         loadList: function (type) {
             const q = document.getElementById('suratSearchInput')?.value.trim() || '';
+            if (type === 'rujukan') {
+                this.apiFetch(`/api/v1/rujukan-internal?q=${encodeURIComponent(q)}`)
+                    .then(res => res.json())
+                    .then(res => {
+                        const tbody = document.getElementById('tbodyRujukanInternal');
+                        const rows = (res && res.data) ? res.data : [];
+                        if (!tbody) return;
+                        tbody.innerHTML = rows.length
+                            ? rows.map(r => `<tr><td class="font-monospace">${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.nm_poli || r.kd_poli)}</td><td>${this.escapeHtml(r.nm_dokter || r.kd_dokter)}</td><td>${this.escapeHtml(r.catatan)}</td></tr>`).join('')
+                            : '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada rujukan internal.</td></tr>';
+                    })
+                    .catch(() => {});
+                return;
+            }
             this.apiFetch(`/api/v1/surat/list?type=${encodeURIComponent(type)}&q=${encodeURIComponent(q)}`)
                 .then(res => res.json())
                 .then(res => {
