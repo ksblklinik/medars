@@ -806,6 +806,41 @@ final class SchemaMigrator
                 id_user VARCHAR(50) NOT NULL DEFAULT 'system'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS paket_operasi (
+                kode_paket VARCHAR(20) PRIMARY KEY,
+                nm_perawatan VARCHAR(150) NOT NULL,
+                kategori VARCHAR(40) NOT NULL DEFAULT 'Bedah Minor',
+                tarif_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(15) NOT NULL DEFAULT 'Aktif'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS booking_operasi (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                kode_paket VARCHAR(20) NOT NULL,
+                tanggal VARCHAR(15) NOT NULL,
+                jam_mulai VARCHAR(10) NOT NULL DEFAULT '08:00',
+                jam_selesai VARCHAR(10) NOT NULL DEFAULT '09:00',
+                status VARCHAR(25) NOT NULL DEFAULT 'Menunggu',
+                kd_dokter VARCHAR(20) NOT NULL DEFAULT '',
+                kd_ruang_ok VARCHAR(20) NOT NULL DEFAULT 'OK-1'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS laporan_operasi (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                kode_paket VARCHAR(20) NOT NULL DEFAULT '',
+                tanggal VARCHAR(20) NOT NULL,
+                diagnosa_preop VARCHAR(200) NOT NULL DEFAULT '',
+                diagnosa_postop VARCHAR(200) NOT NULL DEFAULT '',
+                jaringan_dieksekusi VARCHAR(150) NOT NULL DEFAULT '',
+                permintaan_pa VARCHAR(10) NOT NULL DEFAULT 'Tidak',
+                operator1 VARCHAR(50) NOT NULL DEFAULT '',
+                asisten_operator1 VARCHAR(50) NOT NULL DEFAULT '',
+                dokter_anestesi VARCHAR(50) NOT NULL DEFAULT '',
+                laporan_operasi TEXT NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

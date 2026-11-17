@@ -36,7 +36,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 14 | `dokter_ranap` | 🟡 Parsial | Layar CPPT Dokter Ranap (`/dokter-ranap`, `pemeriksaan_ranap` UI & riwayat visite) sudah ada. Sisa: tab E-Resep Ranap & Resume Pulang langsung di layar Dokter Ranap. |
 | 15 | `apotek_ranap` | ✅ Selesai | Pelayanan E-Resep Rawat Inap terintegrasi di `/apotek-ralan` dengan filter `status_layanan=ranap` (`resep_obat.status='ranap'`). |
 | 16 | `kasir_rawat_inap` | ✅ Selesai | Billing akumulatif kamar (`ManageKamarInapUseCase`), tindakan, obat, & pelunasan pulang Ranap terintegrasi di `/kasir` dengan filter `status_lanjut=Ranap`. |
-| 17 | `operasi` | ❌ Belum Ada | Jadwal Operasi, laporan operasi, paket tindakan & tim bedah. |
+| 17 | `operasi` | ✅ Selesai | Modul Kamar Operasi (`/operasi`): jadwal booking OK (`booking_operasi`), laporan operasi & tim bedah (`laporan_operasi`), master paket tindakan (`paket_operasi`), & auto-posting ke `mlite_billing_ledger`. |
 | 18 | `ruang_tindakan` | ❌ Belum Ada | Layar input tindakan medis/keperawatan terpisah di ruang tindakan. |
 | 19 | `utd` | ❌ Belum Ada | Unit Transfusi Darah / Bank Darah (permintaan, crossmatch, stok kantong darah). |
 

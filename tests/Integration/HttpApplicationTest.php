@@ -1858,4 +1858,53 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $report['status']);
         $this->assertSame(240000, (int) json_decode($report['body'], true)['data']['total_omzet']);
     }
+
+    public function testOperasiEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/operasi');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Jadwal &amp; Booking Operasi', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $paket = $this->app->handle(
+            'POST',
+            '/api/v1/operasi/paket-save',
+            rawBody: json_encode(['kode_paket' => 'OP-99', 'nm_perawatan' => 'Sirkumsisi', 'tarif_total' => 850000]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $paket['status']);
+
+        $booking = $this->app->handle(
+            'POST',
+            '/api/v1/operasi/booking-save',
+            rawBody: json_encode(['no_rawat' => '2026/11/17/000040', 'kode_paket' => 'OP-99', 'kd_ruang_ok' => 'OK-2']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $booking['status']);
+        $bookingId = (int) json_decode($booking['body'], true)['data']['id'];
+
+        $statusRes = $this->app->handle(
+            'POST',
+            '/api/v1/operasi/booking-status',
+            rawBody: json_encode(['id' => $bookingId, 'status' => 'Selesai']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $statusRes['status']);
+
+        $laporan = $this->app->handle(
+            'POST',
+            '/api/v1/operasi/laporan-save',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000040',
+                'kode_paket' => 'OP-99',
+                'diagnosa_preop' => 'Fimosis',
+                'diagnosa_postop' => 'Post Sirkumsisi',
+                'operator1' => 'dr. Andi',
+                'laporan_operasi' => 'Tindakan selesai baik.',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $laporan['status']);
+    }
 }

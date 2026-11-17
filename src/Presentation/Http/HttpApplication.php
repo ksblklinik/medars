@@ -495,6 +495,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $operasiController = new OperasiController(
+            new \App\Infrastructure\Persistence\PdoOperasiRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1564,6 +1570,47 @@ final class HttpApplication
         $router->get('/api/v1/penjualan/report', function () use ($penjualanController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
             return $penjualanController->apiReport($queryParams);
+        });
+
+        $router->get('/operasi', function () use ($operasiController): array {
+            $user = $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            return $operasiController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/operasi/paket', function () use ($operasiController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            return $operasiController->apiPaketList($queryParams);
+        });
+        $router->post('/api/v1/operasi/paket-save', function () use ($operasiController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $operasiController->apiPaketSave($data);
+        });
+        $router->get('/api/v1/operasi/bookings', function () use ($operasiController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            return $operasiController->apiBookingList($queryParams);
+        });
+        $router->post('/api/v1/operasi/booking-save', function () use ($operasiController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $operasiController->apiBookingSave($data);
+        });
+        $router->post('/api/v1/operasi/booking-status', function () use ($operasiController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $operasiController->apiBookingStatus($data);
+        });
+        $router->get('/api/v1/operasi/laporan', function () use ($operasiController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            return $operasiController->apiLaporanList($queryParams);
+        });
+        $router->post('/api/v1/operasi/laporan-save', function () use ($operasiController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['operasi', 'rawat_inap', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $operasiController->apiLaporanSave($data);
         });
 
         return $router->dispatch($method, $path);

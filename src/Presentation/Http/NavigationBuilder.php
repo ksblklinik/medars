@@ -79,6 +79,14 @@ final class NavigationBuilder
                 'modules' => ['dokter_ranap', 'rawat_inap'],
             ],
             [
+                'title' => 'Kamar Operasi',
+                'icon' => 'fa-heart-circle-bolt',
+                'route' => '/operasi',
+                'category' => 'Layanan',
+                'module_key' => 'operasi',
+                'modules' => ['operasi', 'rawat_inap', 'dokter_ranap', 'admin'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',
