@@ -378,6 +378,11 @@ final class HttpApplication
             $this->renderer,
             $this->navBuilder
         );
+        $websiteBantuanController = new WebsiteBantuanController(
+            new \App\Infrastructure\Persistence\PdoWebsiteCmsRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1451,6 +1456,24 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['riwayat_simgos', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $riwayatSimgosController->apiImport($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/website', fn(): array => $websiteBantuanController->publicIndex());
+        $router->get('/website/cms', function () use ($websiteBantuanController): array {
+            $user = $this->requireAnyServiceModuleAccess(['website', 'admin']);
+            return $websiteBantuanController->adminWebsite($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/website/pages', function () use ($websiteBantuanController): array {
+            $this->requireAnyServiceModuleAccess(['website', 'admin']);
+            return $websiteBantuanController->apiPagesList();
+        });
+        $router->post('/api/v1/website/pages-save', function () use ($websiteBantuanController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['website', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $websiteBantuanController->apiPageSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/bantuan', function () use ($websiteBantuanController): array {
+            $user = $this->requireAuthenticatedUser();
+            return $websiteBantuanController->bantuanIndex($user);
         });
 
         // Audit ACID, Integritas Relasi & Rotasi Log (PLN-36)

@@ -135,6 +135,7 @@ class SchemaMigratorTest extends TestCase
             'wagateway_broadcast_templates',
             'mlite_homecare_careplan',
             'mlite_riwayat_simgos',
+            'mlite_website_pages',
         ];
 
         $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'");

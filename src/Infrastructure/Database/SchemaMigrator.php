@@ -1285,6 +1285,15 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_website_pages (
+                id {$bigAutoIncPk},
+                slug VARCHAR(80) NOT NULL UNIQUE,
+                title VARCHAR(150) NOT NULL,
+                content_html TEXT NOT NULL,
+                is_published INTEGER NOT NULL DEFAULT 1,
+                updated_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

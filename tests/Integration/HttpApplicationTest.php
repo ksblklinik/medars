@@ -2775,4 +2775,31 @@ class HttpApplicationTest extends TestCase
         $newHash = (string) $this->pdo->query("SELECT password FROM mlite_users WHERE username = 'staff1'")->fetchColumn();
         $this->assertTrue(password_verify('ResetBaru2026!', $newHash));
     }
+
+    public function testWebsiteCmsAndBantuanEndToEnd(): void
+    {
+        $pub = $this->app->handle('GET', '/website');
+        $this->assertSame(200, $pub['status']);
+        $this->assertStringContainsString('websitePublicContent', $pub['body']);
+
+        $this->session['user_id'] = 1;
+        $cms = $this->app->handle('GET', '/website/cms');
+        $this->assertSame(200, $cms['status']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $save = $this->app->handle('POST', '/api/v1/website/pages-save', postData: [
+            'slug' => 'layanan-igd',
+            'title' => 'IGD 24 Jam',
+            'content_html' => '<p>Siaga 24 Jam</p>',
+            'is_published' => 1,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $save['status']);
+
+        $pubAfter = $this->app->handle('GET', '/website');
+        $this->assertStringContainsString('IGD 24 Jam', $pubAfter['body']);
+
+        $bantuan = $this->app->handle('GET', '/bantuan');
+        $this->assertSame(200, $bantuan['status']);
+        $this->assertStringContainsString('bantuanPage', $bantuan['body']);
+    }
 }
