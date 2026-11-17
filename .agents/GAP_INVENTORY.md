@@ -14,7 +14,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
 | 1 | `pasien` | ✅ Selesai | Master Pasien (`/pasien`): CRUD lengkap, Auto RM (`max-id`), guard duplikat NIK, guard hapus pasien ber-riwayat, modal riwayat kunjungan, pagination, & cetak Kartu Berobat (`/pasien/kartu`). |
-| 2 | `master` | ❌ Belum Ada | UI CRUD Master Data: Poliklinik, Jadwal Dokter, Penjamin (`penjab`), Bangsal/Kamar, Tarif Tindakan (`jns_perawatan`), Penyakit ICD-10. (Saat ini baru ada repo backend tanpa UI). |
+| 2 | `master` | 🟡 Parsial | UI & API CRUD Master Data (`/master`) untuk Poliklinik, Dokter, Penjamin (`penjab`), Tarif Tindakan (`jns_perawatan`), & Jadwal Dokter sudah ada. Sisa: Bangsal/Kamar (Rawat Inap) & Penyakit ICD-10 UI. |
 | 3 | `kepegawaian` | ❌ Belum Ada | UI CRUD Dokter, Petugas, Pegawai & berkas SDM. (Saat ini baru ada repo backend). |
 | 4 | `surat` | 🟡 Parsial | Sudah ada `CreateSuratMedisUseCase`, belum ada halaman UI daftar surat & cetak PDF (Surat Sakit, Sehat, Hamil, Cuti Hamil, Rujukan, Bebas Narkoba). |
 | 5 | `rawat_jalan` | 🟡 Parsial | Filter periode tanggal multi-hari (`from`–`to`) & status (`stts`) serta ubah status periksa (`ClinicalGuardShield`) sudah ada. Sisa: ubah dokter/poli di UI, SEP/rujukan internal, upload berkas digital, cetak rincian/antrean. |

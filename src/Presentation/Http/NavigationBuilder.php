@@ -127,6 +127,14 @@ final class NavigationBuilder
                 'modules' => ['users'],
             ],
             [
+                'title' => 'Master Data',
+                'icon' => 'fa-database',
+                'route' => '/master',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'master',
+                'modules' => ['master', 'admin'],
+            ],
+            [
                 'title' => 'Pengaturan',
                 'icon' => 'fa-gear',
                 'route' => '/settings',

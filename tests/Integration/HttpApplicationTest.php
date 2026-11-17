@@ -930,4 +930,35 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $delRadRes['status']);
         $this->assertTrue(json_decode($delRadRes['body'], true)['ok']);
     }
+
+    public function testMasterDataEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/master');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Master Data Klinik', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/master/poliklinik/save',
+            rawBody: json_encode(['kd_poli' => 'MAT01', 'nm_poli' => 'Poli Mata', 'registrasi' => 30000]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/master/poliklinik', queryParams: ['q' => 'Mata']);
+        $this->assertSame(200, $list['status']);
+        $rows = json_decode($list['body'], true)['data'];
+        $this->assertCount(1, $rows);
+        $this->assertSame('Poli Mata', $rows[0]['nm_poli']);
+
+        $del = $this->app->handle(
+            'POST',
+            '/api/v1/master/poliklinik/delete',
+            rawBody: json_encode(['kd_poli' => 'MAT01']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $del['status']);
+    }
 }

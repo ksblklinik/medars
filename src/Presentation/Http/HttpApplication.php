@@ -377,6 +377,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $masterController = new MasterController(
+            new \App\Infrastructure\Persistence\PdoMasterDataRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -966,6 +972,29 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $pasienController->apiDelete($data);
         });
+
+        $router->get('/master', function () use ($masterController): array {
+            $user = $this->requireAnyServiceModuleAccess(['master', 'admin']);
+            return $masterController->index($user, $this->csrfGuard->getToken());
+        });
+        foreach (['poliklinik', 'dokter', 'penjab', 'jns_perawatan', 'jadwal'] as $entity) {
+            $router->get("/api/v1/master/{$entity}", function () use ($masterController, $entity, $queryParams): array {
+                $this->requireAnyServiceModuleAccess(['master', 'admin']);
+                return $masterController->apiList($entity, $queryParams);
+            });
+            $router->post("/api/v1/master/{$entity}/save", function () use ($masterController, $entity, $postData, $rawBody, $headers): array {
+                $this->requireAnyServiceModuleAccess(['master', 'admin']);
+                $this->assertCsrfHeaderOrPost($postData, $headers);
+                $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+                return $masterController->apiSave($entity, $data);
+            });
+            $router->post("/api/v1/master/{$entity}/delete", function () use ($masterController, $entity, $postData, $rawBody, $headers): array {
+                $this->requireAnyServiceModuleAccess(['master', 'admin']);
+                $this->assertCsrfHeaderOrPost($postData, $headers);
+                $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+                return $masterController->apiDelete($entity, $data);
+            });
+        }
 
         return $router->dispatch($method, $path);
     }
