@@ -120,6 +120,44 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12">
+                        <div class="row g-3">
+                            <div class="col-lg-5">
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-header bg-white py-2 fw-bold small text-medical-teal">Buat Order Lab Baru (Langsung)</div>
+                                    <div class="card-body">
+                                        <form id="formDirectLabOrder" class="row g-2 small">
+                                            <div class="col-6"><input type="text" id="labOrdRawat" class="form-control form-control-sm" placeholder="No. Rawat *" required></div>
+                                            <div class="col-6"><input type="text" id="labOrdKode" class="form-control form-control-sm" placeholder="Kode Paket (LAB01) *" required></div>
+                                            <div class="col-8"><input type="text" id="labOrdInfo" class="form-control form-control-sm" placeholder="Informasi Tambahan / Klinis"></div>
+                                            <div class="col-4"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Buat Order</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold small text-medical-teal">Master Parameter &amp; Nilai Rujukan Lab</span>
+                                        <button type="button" id="btnLoadLabTemplates" class="btn btn-xs btn-outline-teal">Muat Parameter</button>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <form id="formLabTemplateSave" class="row g-1 mb-2 small">
+                                            <div class="col-md-3"><input type="text" id="tplLabKd" class="form-control form-control-sm" placeholder="Kode Paket *" required></div>
+                                            <div class="col-md-3"><input type="text" id="tplLabPem" class="form-control form-control-sm" placeholder="Parameter *" required></div>
+                                            <div class="col-md-2"><input type="text" id="tplLabSat" class="form-control form-control-sm" placeholder="Satuan"></div>
+                                            <div class="col-md-2"><input type="text" id="tplLabRuj" class="form-control form-control-sm" placeholder="Rujukan"></div>
+                                            <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">Tambah</button></div>
+                                        </form>
+                                        <div class="table-responsive" style="max-height:150px; overflow-y:auto;">
+                                            <table class="table table-sm mb-0 small"><thead class="table-light"><tr><th>Paket</th><th>Parameter</th><th>Satuan</th><th>Nilai Rujukan</th></tr></thead><tbody id="tbodyLabTemplates"></tbody></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -243,4 +281,49 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fetcher = (url, opts) => (window.MedarsApp && window.MedarsApp.apiFetch) ? window.MedarsApp.apiFetch(url, opts) : fetch(url, opts);
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const loadTpl = async () => {
+        const res = await fetcher('/api/v1/penunjang/lab/templates');
+        const json = await res.json();
+        document.getElementById('tbodyLabTemplates').innerHTML = (json.data || []).map(r => `<tr>
+            <td><code>${esc(r.kd_jenis_prw)}</code></td><td>${esc(r.pemeriksaan)}</td><td>${esc(r.satuan)}</td><td>${esc(r.nilai_rujukan_ld)}</td>
+        </tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">Belum ada parameter rujukan.</td></tr>';
+    };
+    document.getElementById('btnLoadLabTemplates')?.addEventListener('click', loadTpl);
+    document.getElementById('formLabTemplateSave')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await fetcher('/api/v1/penunjang/lab/templates-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                kd_jenis_prw: document.getElementById('tplLabKd').value.trim(),
+                pemeriksaan: document.getElementById('tplLabPem').value.trim(),
+                satuan: document.getElementById('tplLabSat').value.trim(),
+                nilai_rujukan_ld: document.getElementById('tplLabRuj').value.trim() || '-',
+            }),
+        });
+        document.getElementById('formLabTemplateSave').reset();
+        loadTpl();
+    });
+    document.getElementById('formDirectLabOrder')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await fetcher('/api/v1/penunjang/lab/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                no_rawat: document.getElementById('labOrdRawat').value.trim(),
+                kd_jenis_prw: [document.getElementById('labOrdKode').value.trim()],
+                informasi_tambahan: document.getElementById('labOrdInfo').value.trim(),
+            }),
+        });
+        if (res.ok) {
+            document.getElementById('formDirectLabOrder').reset();
+            document.getElementById('btnRefreshLab')?.click();
+        }
+    });
+});
+</script>
 <script src="/assets/js/modules/support.js?v=20261117c" defer></script>

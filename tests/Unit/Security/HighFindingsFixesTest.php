@@ -102,6 +102,8 @@ class HighFindingsFixesTest extends TestCase
             public function findRadiologiResultsByNoRawat(NoRawat $noRawat): array { return $this->inner->findRadiologiResultsByNoRawat($noRawat); }
             public function markRadiologiResulted(string $noOrder, string $tgl, string $jam): void { $this->inner->markRadiologiResulted($noOrder, $tgl, $jam); }
             public function deleteRadiologiOrder(string $noOrder): void { $this->inner->deleteRadiologiOrder($noOrder); }
+            public function listLabTemplates(string $search = ''): array { return $this->inner->listLabTemplates($search); }
+            public function saveLabTemplate(array $data): array { return $this->inner->saveLabTemplate($data); }
         };
 
         $useCase = new CreateLabOrderUseCase($collidingRepo, $ledgerRepo, $this->tx);

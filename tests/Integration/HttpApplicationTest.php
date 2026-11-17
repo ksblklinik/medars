@@ -2304,4 +2304,25 @@ class HttpApplicationTest extends TestCase
         $resumeGet = $this->app->handle('GET', '/api/v1/dokter-ranap/resume', queryParams: ['no_rawat' => $noRawat]);
         $this->assertSame('A01.0', json_decode($resumeGet['body'], true)['data']['kd_diagnosa_utama']);
     }
+
+    public function testLabTemplatesAndDirectOrderEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/laboratorium');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Master Parameter &amp; Nilai Rujukan Lab', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $saveTpl = $this->app->handle('POST', '/api/v1/penunjang/lab/templates-save', rawBody: json_encode([
+            'kd_jenis_prw' => 'LAB01',
+            'pemeriksaan' => 'Hemoglobin',
+            'satuan' => 'g/dL',
+            'nilai_rujukan_ld' => '13.5 - 17.5',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $saveTpl['status']);
+
+        $listTpl = $this->app->handle('GET', '/api/v1/penunjang/lab/templates', queryParams: ['q' => 'Hemoglobin']);
+        $this->assertSame(200, $listTpl['status']);
+        $this->assertCount(1, json_decode($listTpl['body'], true)['data']);
+    }
 }

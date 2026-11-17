@@ -1081,6 +1081,15 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
             return $supportController->printLabResult($queryParams);
         });
+        $router->get('/api/v1/penunjang/lab/templates', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'igd']);
+            return $supportController->apiListLabTemplates($queryParams);
+        });
+        $router->post('/api/v1/penunjang/lab/templates-save', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $supportController->apiSaveLabTemplate($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
         $router->get('/penunjang/radiologi/cetak', function () use ($supportController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
             return $supportController->printRadiologyResult($queryParams);

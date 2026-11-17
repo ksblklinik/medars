@@ -63,4 +63,10 @@ interface LabRadiologyRepositoryInterface
     public function markRadiologiResulted(string $noOrder, string $tgl, string $jam): void;
 
     public function deleteRadiologiOrder(string $noOrder): void;
+
+    /** @return list<array<string, mixed>> */
+    public function listLabTemplates(string $search = ''): array;
+
+    /** @param array<string, mixed> $data */
+    public function saveLabTemplate(array $data): array;
 }

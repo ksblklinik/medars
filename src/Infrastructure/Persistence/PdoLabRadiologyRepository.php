@@ -331,4 +331,49 @@ final readonly class PdoLabRadiologyRepository implements LabRadiologyRepository
         $stmtOrder = $this->pdo->prepare('DELETE FROM permintaan_radiologi WHERE noorder = :noorder');
         $stmtOrder->execute([':noorder' => $noOrder]);
     }
+
+    public function listLabTemplates(string $search = ''): array
+    {
+        $sql = 'SELECT * FROM template_laboratorium';
+        $params = [];
+        $q = trim($search);
+        if ($q !== '') {
+            $sql .= ' WHERE kd_jenis_prw LIKE :q OR pemeriksaan LIKE :q';
+            $params[':q'] = '%' . $q . '%';
+        }
+        $sql .= ' ORDER BY kd_jenis_prw ASC, id ASC LIMIT 200';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function saveLabTemplate(array $data): array
+    {
+        $kd = trim((string) ($data['kd_jenis_prw'] ?? ''));
+        $pem = trim((string) ($data['pemeriksaan'] ?? ''));
+        $sat = trim((string) ($data['satuan'] ?? ''));
+        $ld = trim((string) ($data['nilai_rujukan_ld'] ?? '-')) ?: '-';
+        $la = trim((string) ($data['nilai_rujukan_la'] ?? $ld)) ?: '-';
+        $pd = trim((string) ($data['nilai_rujukan_pd'] ?? $ld)) ?: '-';
+        $pa = trim((string) ($data['nilai_rujukan_pa'] ?? $ld)) ?: '-';
+        $biaya = max(0.0, (float) ($data['biaya_item'] ?? 0));
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO template_laboratorium (kd_jenis_prw, pemeriksaan, satuan, nilai_rujukan_ld, nilai_rujukan_la, nilai_rujukan_pd, nilai_rujukan_pa, biaya_item)
+             VALUES (:kd, :pem, :sat, :ld, :la, :pd, :pa, :biaya)'
+        );
+        $stmt->execute([
+            ':kd' => $kd, ':pem' => $pem, ':sat' => $sat,
+            ':ld' => $ld, ':la' => $la, ':pd' => $pd, ':pa' => $pa, ':biaya' => $biaya,
+        ]);
+
+        return [
+            'id' => (int) $this->pdo->lastInsertId(),
+            'kd_jenis_prw' => $kd,
+            'pemeriksaan' => $pem,
+            'satuan' => $sat,
+            'nilai_rujukan_ld' => $ld,
+            'biaya_item' => $biaya,
+        ];
+    }
 }

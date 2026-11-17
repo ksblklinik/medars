@@ -611,6 +611,18 @@ final class SchemaMigrator
                 PRIMARY KEY (no_rawat, kd_jenis_prw, tgl_periksa, jam, pemeriksaan)
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS template_laboratorium (
+                id {$bigAutoIncPk},
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                pemeriksaan VARCHAR(120) NOT NULL,
+                satuan VARCHAR(30) NOT NULL DEFAULT '',
+                nilai_rujukan_ld VARCHAR(50) NOT NULL DEFAULT '-',
+                nilai_rujukan_la VARCHAR(50) NOT NULL DEFAULT '-',
+                nilai_rujukan_pd VARCHAR(50) NOT NULL DEFAULT '-',
+                nilai_rujukan_pa VARCHAR(50) NOT NULL DEFAULT '-',
+                biaya_item DECIMAL(15,2) NOT NULL DEFAULT 0
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS permintaan_radiologi (
                 noorder VARCHAR(20) PRIMARY KEY,
                 no_rawat VARCHAR(20) NOT NULL,

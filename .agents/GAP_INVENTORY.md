@@ -59,7 +59,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
-| 26 | `laboratorium` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`) & cetak hasil lab (`/penunjang/lab/cetak`) sudah ada. Sisa: master paket/parameter nilai rujukan & input order baru langsung di modul lab. |
+| 26 | `laboratorium` | ✅ Selesai | Filter periode multi-hari (`from`–`to`), cetak hasil lab (`/penunjang/lab/cetak`), input order lab langsung di modul lab, & master parameter nilai rujukan (`template_laboratorium`, `/api/v1/penunjang/lab/templates*`). |
 | 27 | `radiologi` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), hapus order radiologi (`DeleteRadiologyOrderUseCase`), & cetak expertise radiologi (`/penunjang/radiologi/cetak`) sudah ada. Sisa: viewer lampiran gambar. |
 | 28 | `orthanc` | ✅ Selesai | Integrasi PACS & DICOM Viewer Orthanc (`/orthanc`): tautan Study UID (`bridging_orthanc`), URL OHIF Viewer, filter modality, & simpan interpretasi radiologi. |
 | 29 | `laporan` | ✅ Selesai | Ringkasan kunjungan, top 10 ICD-10, pendapatan klaim, laporan rekonsiliasi order (`Pending`/`Cancelled`/`Void`), & export CSV/Excel (`/api/v1/laporan/export-csv`). |

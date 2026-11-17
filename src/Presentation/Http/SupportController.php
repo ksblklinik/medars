@@ -390,6 +390,30 @@ final readonly class SupportController
     }
 
     /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListLabTemplates(array $query = []): array
+    {
+        $q = trim((string) ($query['q'] ?? ''));
+        return $this->json(['status' => 'success', 'data' => $this->labRepo->listLabTemplates($q)]);
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSaveLabTemplate(array $postData = []): array
+    {
+        $kd = trim((string) ($postData['kd_jenis_prw'] ?? ''));
+        $pem = trim((string) ($postData['pemeriksaan'] ?? ''));
+        if ($kd === '' || $pem === '') {
+            return $this->json(['status' => 'error', 'message' => 'Kode paket lab dan nama parameter pemeriksaan wajib diisi.'], 422);
+        }
+        return $this->json(['status' => 'success', 'data' => $this->labRepo->saveLabTemplate($postData)], 201);
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return array{status: int, headers: array<string, string>, body: string}
      */
