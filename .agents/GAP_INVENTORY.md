@@ -91,7 +91,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |
 | 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |
-| 51 | `settings` | 🟡 Parsial | Sudah ada pengaturan dasar; belum ada tab khusus Bridging/WA/Tarif/Logo instansi lengkap. |
+| 51 | `settings` | ✅ Selesai | Pengaturan Sistem lengkap (`/settings`): tab Profil Instansi (`kode_rs`, `logo_url`), Pendaftaran, Farmasi, Bridging BPJS & SatuSehat, WhatsApp Gateway, serta Tarif & Billing. |
 | 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
 | 53 | `mlite_api_key` | ✅ Selesai | Manajemen API Key Eksternal (`/api-keys`): generate key ter-hash SHA-256 (`raw_key` tampil sekali), whitelist IP, scope method, toggle aktif/nonaktif, & hapus (`mlite_api_keys`). |
 | 54 | `modules` | ✅ Selesai | UI Manajer Modul SIMRS (`/modules`): daftar modul aktif/nonaktif/semua, pencarian, proteksi modul inti (`dashboard`, `users`, `settings`, `modules`, `profil`), toggle aktivasi, & atur urutan (`mlite_modules`). |

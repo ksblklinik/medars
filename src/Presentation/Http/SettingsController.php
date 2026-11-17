@@ -30,6 +30,9 @@ final class SettingsController
         $pendaftaran = $this->settingService->getAll('pendaftaran');
         $farmasi = $this->settingService->getAll('farmasi');
         $bpjs = $this->settingService->getAll('bpjs');
+        $bridging = $this->settingService->getAll('bridging');
+        $wagateway = $this->settingService->getAll('wagateway');
+        $tarif = $this->settingService->getAll('tarif');
         $csrfInput = $this->csrfGuard->tokenInputHtml();
         $csrfToken = $this->csrfGuard->getToken();
         $navBuilder = new NavigationBuilder();
@@ -43,6 +46,9 @@ final class SettingsController
             'pendaftaran' => $pendaftaran,
             'farmasi' => $farmasi,
             'bpjs' => $bpjs,
+            'bridging' => $bridging,
+            'wagateway' => $wagateway,
+            'tarif' => $tarif,
             'csrf_input' => $csrfInput,
             'csrf_token' => $csrfToken,
             'navigations' => $navBuilder->buildForUser($currentUser),

@@ -1745,4 +1745,32 @@ class HttpApplicationTest extends TestCase
         $notFound = $this->app->handle('GET', '/api/v1/verifikasi', queryParams: ['type' => 'sakit', 'no_surat' => 'PALSU-999']);
         $this->assertSame(404, $notFound['status']);
     }
+
+    public function testSettingsMultiTabSaveEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/settings');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Bridging BPJS &amp; SatuSehat', $page['body']);
+        $this->assertStringContainsString('WhatsApp Gateway', $page['body']);
+        $this->assertStringContainsString('Tarif &amp; Billing', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/settings/save', postData: [
+            '_csrf_token' => $csrf,
+            'settings' => [
+                'general' => ['nama_instansi' => 'Klinik Utama Medars', 'kode_rs' => '3201999'],
+                'bridging' => ['bpjs_consid' => '998877', 'satusehat_org_id' => 'ORG-123'],
+                'wagateway' => ['api_url' => 'http://127.0.0.1:3000', 'anti_ban_delay_ms' => '4000'],
+                'tarif' => ['ppn_persen' => '11', 'biaya_admin_ralan' => '15000'],
+            ],
+        ]);
+        $this->assertSame(302, $save['status']);
+
+        $reloaded = $this->app->handle('GET', '/settings');
+        $this->assertSame(200, $reloaded['status']);
+        $this->assertStringContainsString('Klinik Utama Medars', $reloaded['body']);
+        $this->assertStringContainsString('ORG-123', $reloaded['body']);
+        $this->assertStringContainsString('15000', $reloaded['body']);
+    }
 }
