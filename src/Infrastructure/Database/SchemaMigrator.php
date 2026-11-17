@@ -728,6 +728,19 @@ final class SchemaMigrator
                 status VARCHAR(20) NOT NULL DEFAULT 'Aktif'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_api_keys (
+                id {$bigAutoIncPk},
+                label VARCHAR(100) NOT NULL,
+                username VARCHAR(50) NOT NULL DEFAULT '',
+                api_key_hash VARCHAR(64) NOT NULL,
+                key_prefix VARCHAR(20) NOT NULL,
+                methods VARCHAR(100) NOT NULL DEFAULT 'GET',
+                ip_range VARCHAR(100) NOT NULL DEFAULT '*',
+                exp_time VARCHAR(25) NOT NULL DEFAULT '',
+                is_active INT NOT NULL DEFAULT 1,
+                created_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

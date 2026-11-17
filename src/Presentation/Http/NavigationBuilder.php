@@ -231,6 +231,14 @@ final class NavigationBuilder
                 'modules' => ['inventaris', 'admin'],
             ],
             [
+                'title' => 'API Key Eksternal',
+                'icon' => 'fa-key',
+                'route' => '/api-keys',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'mlite_api_key',
+                'modules' => ['mlite_api_key', 'admin'],
+            ],
+            [
                 'title' => 'Profil Saya',
                 'icon' => 'fa-user-gear',
                 'route' => '/profil',

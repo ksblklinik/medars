@@ -472,6 +472,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $apiKeyController = new ApiKeyController(
+            new \App\Infrastructure\Persistence\PdoApiKeyRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1386,6 +1392,33 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $inventarisController->apiDelete($data);
+        });
+
+        $router->get('/api-keys', function () use ($apiKeyController): array {
+            $user = $this->requireAnyServiceModuleAccess(['mlite_api_key', 'admin']);
+            return $apiKeyController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/api-keys', function () use ($apiKeyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['mlite_api_key', 'admin']);
+            return $apiKeyController->apiList($queryParams);
+        });
+        $router->post('/api/v1/api-keys/create', function () use ($apiKeyController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['mlite_api_key', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $apiKeyController->apiCreate($data);
+        });
+        $router->post('/api/v1/api-keys/toggle', function () use ($apiKeyController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['mlite_api_key', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $apiKeyController->apiToggle($data);
+        });
+        $router->post('/api/v1/api-keys/delete', function () use ($apiKeyController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['mlite_api_key', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $apiKeyController->apiDelete($data);
         });
 
         return $router->dispatch($method, $path);

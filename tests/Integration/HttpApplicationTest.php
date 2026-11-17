@@ -1622,4 +1622,51 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $del['status']);
     }
+
+    public function testApiKeyManagementEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/api-keys');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Manajemen API Key Eksternal', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/api-keys/create',
+            rawBody: json_encode([
+                'label' => 'LIS Lab Analyzer',
+                'username' => 'lis_svc',
+                'methods' => 'GET,POST',
+                'ip_range' => '192.168.1.0/24',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $create['status']);
+        $createdData = json_decode($create['body'], true)['data'];
+        $this->assertStringStartsWith('ksm_', $createdData['raw_key']);
+        $keyId = (int) $createdData['id'];
+
+        $list = $this->app->handle('GET', '/api/v1/api-keys', queryParams: ['q' => 'LIS']);
+        $this->assertSame(200, $list['status']);
+        $listData = json_decode($list['body'], true)['data'];
+        $this->assertCount(1, $listData);
+        $this->assertArrayNotHasKey('api_key_hash', $listData[0]);
+
+        $toggle = $this->app->handle(
+            'POST',
+            '/api/v1/api-keys/toggle',
+            rawBody: json_encode(['id' => $keyId, 'is_active' => false]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $toggle['status']);
+
+        $delete = $this->app->handle(
+            'POST',
+            '/api/v1/api-keys/delete',
+            rawBody: json_encode(['id' => $keyId]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $delete['status']);
+    }
 }

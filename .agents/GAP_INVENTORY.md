@@ -93,7 +93,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |
 | 51 | `settings` | 🟡 Parsial | Sudah ada pengaturan dasar; belum ada tab khusus Bridging/WA/Tarif/Logo instansi lengkap. |
 | 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
-| 53 | `mlite_api_key` | ❌ Belum Ada | Manajemen API Key eksternal & rate-limit token. |
+| 53 | `mlite_api_key` | ✅ Selesai | Manajemen API Key Eksternal (`/api-keys`): generate key ter-hash SHA-256 (`raw_key` tampil sekali), whitelist IP, scope method, toggle aktif/nonaktif, & hapus (`mlite_api_keys`). |
 | 54 | `modules` | ❌ Belum Ada | UI Module Manager (aktifkan/nonaktifkan/install plugin dari antarmuka admin). |
 | 55 | `dashboard` | 🟡 Parsial | Sudah ada 4 KPI + grid menu; belum ada grafik kunjungan/pendapatan & pengumuman internal. |
 | 56 | `website` | ⚪ Opsional | CMS halaman depan website klinik publik. |
