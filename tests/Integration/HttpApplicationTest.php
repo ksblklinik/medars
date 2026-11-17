@@ -2397,4 +2397,62 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/vclaim/rujukan')['body'], true)['data']);
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/vclaim/surat-kontrol')['body'], true)['data']);
     }
+
+    public function testPcareFktpEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/pcare');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Bridging FKTP PCare BPJS', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $pdf = $this->app->handle('POST', '/api/v1/pcare/pendaftaran-save', postData: [
+            'no_rawat' => '2026/11/17/000101',
+            'noKartu' => '0001234567890',
+            'nmPasien' => 'Siti FKTP',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $pdf['status']);
+
+        $knj = $this->app->handle('POST', '/api/v1/pcare/kunjungan-save', postData: [
+            'no_rawat' => '2026/11/17/000101',
+            'noKartu' => '0001234567890',
+            'nmPasien' => 'Siti FKTP',
+            'kdDiagnosa1' => 'J00',
+            'nmDiagnosa1' => 'Nasofaringitis',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $knj['status']);
+        $noKunjungan = json_decode($knj['body'], true)['data']['noKunjungan'];
+
+        $obt = $this->app->handle('POST', '/api/v1/pcare/obat-save', postData: [
+            'noKunjungan' => $noKunjungan,
+            'nmObat' => 'Paracetamol 500mg',
+            'jmlObat' => 10,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $obt['status']);
+
+        $tdk = $this->app->handle('POST', '/api/v1/pcare/tindakan-save', postData: [
+            'noKunjungan' => $noKunjungan,
+            'nmTindakan' => 'Cek Lab Darah Lengkap',
+            'biaya' => 45000,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $tdk['status']);
+
+        $ruj = $this->app->handle('POST', '/api/v1/pcare/rujukan-save', postData: [
+            'noKunjungan' => $noKunjungan,
+            'kdppk' => '0112R002',
+            'nmppk' => 'RSUD Rujukan',
+            'nmSubSpesialis' => 'Penyakit Dalam',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $ruj['status']);
+
+        $print = $this->app->handle('GET', '/pcare/rujukan/cetak', queryParams: ['no_kunjungan' => $noKunjungan]);
+        $this->assertSame(200, $print['status']);
+        $this->assertStringContainsString('SURAT RUJUKAN FKTP PCARE BPJS', $print['body']);
+
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/pendaftaran')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/kunjungan')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/obat')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/tindakan')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/rujukan')['body'], true)['data']);
+    }
 }

@@ -1081,6 +1081,81 @@ final class SchemaMigrator
                 nm_poli_bpjs VARCHAR(100) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS pcare_pendaftaran (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL DEFAULT '',
+                tglDaftar VARCHAR(15) NOT NULL,
+                noKartu VARCHAR(25) NOT NULL,
+                nmPasien VARCHAR(100) NOT NULL DEFAULT '',
+                kdPoli VARCHAR(15) NOT NULL DEFAULT '',
+                nmPoli VARCHAR(80) NOT NULL DEFAULT '',
+                keluhan VARCHAR(255) NOT NULL DEFAULT '',
+                kdSadar VARCHAR(10) NOT NULL DEFAULT '01',
+                sistole INTEGER NOT NULL DEFAULT 120,
+                diastole INTEGER NOT NULL DEFAULT 80,
+                beratBadan REAL NOT NULL DEFAULT 60,
+                tinggiBadan REAL NOT NULL DEFAULT 165,
+                respRate INTEGER NOT NULL DEFAULT 20,
+                heartRate INTEGER NOT NULL DEFAULT 80,
+                noUrut VARCHAR(15) NOT NULL DEFAULT '',
+                status VARCHAR(30) NOT NULL DEFAULT 'Terkirim',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pcare_kunjungan (
+                noKunjungan VARCHAR(40) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL DEFAULT '',
+                tglDaftar VARCHAR(15) NOT NULL,
+                noKartu VARCHAR(25) NOT NULL,
+                nmPasien VARCHAR(100) NOT NULL DEFAULT '',
+                kdPoli VARCHAR(15) NOT NULL DEFAULT '',
+                nmPoli VARCHAR(80) NOT NULL DEFAULT '',
+                keluhan VARCHAR(255) NOT NULL DEFAULT '',
+                kdDiagnosa1 VARCHAR(15) NOT NULL DEFAULT '',
+                nmDiagnosa1 VARCHAR(150) NOT NULL DEFAULT '',
+                kdStatusPulang VARCHAR(10) NOT NULL DEFAULT '3',
+                nmStatusPulang VARCHAR(80) NOT NULL DEFAULT 'Berobat Jalan',
+                tglPulang VARCHAR(15) NOT NULL DEFAULT '',
+                kdDokter VARCHAR(25) NOT NULL DEFAULT '',
+                nmDokter VARCHAR(100) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pcare_rujukan (
+                noKunjungan VARCHAR(40) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL DEFAULT '',
+                tglEstRujuk VARCHAR(15) NOT NULL,
+                kdppk VARCHAR(20) NOT NULL DEFAULT '',
+                nmppk VARCHAR(120) NOT NULL DEFAULT '',
+                kdSubSpesialis VARCHAR(20) NOT NULL DEFAULT '',
+                nmSubSpesialis VARCHAR(100) NOT NULL DEFAULT '',
+                catatan VARCHAR(255) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pcare_obat (
+                id {$bigAutoIncPk},
+                noKunjungan VARCHAR(40) NOT NULL,
+                kdObatSK VARCHAR(30) NOT NULL DEFAULT '',
+                kdObat VARCHAR(30) NOT NULL DEFAULT '',
+                nmObat VARCHAR(120) NOT NULL DEFAULT '',
+                signa1 INTEGER NOT NULL DEFAULT 3,
+                signa2 INTEGER NOT NULL DEFAULT 1,
+                jmlObat REAL NOT NULL DEFAULT 1,
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS pcare_tindakan (
+                id {$bigAutoIncPk},
+                noKunjungan VARCHAR(40) NOT NULL,
+                kdTindakanSK VARCHAR(30) NOT NULL DEFAULT '',
+                kdTindakan VARCHAR(30) NOT NULL DEFAULT '',
+                nmTindakan VARCHAR(150) NOT NULL DEFAULT '',
+                biaya REAL NOT NULL DEFAULT 0,
+                keterangan VARCHAR(200) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

@@ -121,6 +121,11 @@ class SchemaMigratorTest extends TestCase
             'mlite_homecare_preceptor_sk',
             'rawat_jl_dr',
             'resume_pasien',
+            'pcare_pendaftaran',
+            'pcare_kunjungan',
+            'pcare_rujukan',
+            'pcare_obat',
+            'pcare_tindakan',
         ];
 
         $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'");

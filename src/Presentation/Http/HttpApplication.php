@@ -355,6 +355,11 @@ final class HttpApplication
             $vedikaRepo
         );
         $vclaimController = new VclaimController(new \App\Infrastructure\Persistence\PdoVclaimRepository($this->pdo));
+        $pcareController = new PcareController(
+            new \App\Infrastructure\Persistence\PdoPcareRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1186,6 +1191,59 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $vclaimController->apiSuratKontrolSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/pcare', function () use ($pcareController): array {
+            $user = $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/pcare/rujukan/cetak', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->printRujukan($queryParams);
+        });
+        $router->get('/api/v1/pcare/pendaftaran', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->apiPendaftaranList($queryParams);
+        });
+        $router->post('/api/v1/pcare/pendaftaran-save', function () use ($pcareController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pcareController->apiPendaftaranSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/pcare/kunjungan', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->apiKunjunganList($queryParams);
+        });
+        $router->post('/api/v1/pcare/kunjungan-save', function () use ($pcareController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pcareController->apiKunjunganSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/pcare/rujukan', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->apiRujukanList($queryParams);
+        });
+        $router->post('/api/v1/pcare/rujukan-save', function () use ($pcareController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pcareController->apiRujukanSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/pcare/obat', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->apiObatList($queryParams);
+        });
+        $router->post('/api/v1/pcare/obat-save', function () use ($pcareController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pcareController->apiObatSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/pcare/tindakan', function () use ($pcareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            return $pcareController->apiTindakanList($queryParams);
+        });
+        $router->post('/api/v1/pcare/tindakan-save', function () use ($pcareController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pcareController->apiTindakanSave($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)
