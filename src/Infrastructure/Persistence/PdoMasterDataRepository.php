@@ -68,6 +68,28 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
                  ORDER BY nama ASC LIMIT 100',
                 [':q' => $like]
             ),
+            'bangsal' => $this->fetchAll(
+                'SELECT kd_bangsal, nm_bangsal, status
+                 FROM bangsal
+                 WHERE kd_bangsal LIKE :q OR nm_bangsal LIKE :q
+                 ORDER BY nm_bangsal ASC LIMIT 100',
+                [':q' => $like]
+            ),
+            'kamar' => $this->fetchAll(
+                'SELECT k.kd_kamar, k.kd_bangsal, COALESCE(b.nm_bangsal, k.kd_bangsal) AS nm_bangsal, k.trf_kamar, k.status, k.kelas, k.statusdata
+                 FROM kamar k
+                 LEFT JOIN bangsal b ON k.kd_bangsal = b.kd_bangsal
+                 WHERE k.kd_kamar LIKE :q OR k.kd_bangsal LIKE :q OR k.kelas LIKE :q OR COALESCE(b.nm_bangsal, \'\') LIKE :q
+                 ORDER BY k.kd_kamar ASC LIMIT 100',
+                [':q' => $like]
+            ),
+            'penyakit' => $this->fetchAll(
+                'SELECT kd_penyakit, nm_penyakit, nm_indonesia, status, skdi_level
+                 FROM penyakit
+                 WHERE kd_penyakit LIKE :q OR nm_penyakit LIKE :q OR nm_indonesia LIKE :q
+                 ORDER BY kd_penyakit ASC LIMIT 100',
+                [':q' => $like]
+            ),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -82,6 +104,9 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'jadwal' => $this->saveJadwal($payload),
             'pegawai' => $this->savePegawai($payload),
             'petugas' => $this->savePetugas($payload),
+            'bangsal' => $this->saveBangsal($payload),
+            'kamar' => $this->saveKamar($payload),
+            'penyakit' => $this->savePenyakit($payload),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -96,6 +121,9 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'jadwal' => $this->deleteJadwal($keys),
             'pegawai' => $this->deletePegawai((string) ($keys['nik'] ?? '')),
             'petugas' => $this->deletePetugas((string) ($keys['nip'] ?? '')),
+            'bangsal' => $this->deleteBangsal((string) ($keys['kd_bangsal'] ?? '')),
+            'kamar' => $this->deleteKamar((string) ($keys['kd_kamar'] ?? '')),
+            'penyakit' => $this->deletePenyakit((string) ($keys['kd_penyakit'] ?? '')),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -392,6 +420,98 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             throw new \InvalidArgumentException('NIP petugas wajib diisi.');
         }
         $this->pdo->prepare('DELETE FROM petugas WHERE nip = :k')->execute([':k' => $k]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function saveBangsal(array $p): void
+    {
+        $k = trim((string) ($p['kd_bangsal'] ?? ''));
+        $nm = trim((string) ($p['nm_bangsal'] ?? ''));
+        if ($k === '' || $nm === '') {
+            throw new \InvalidArgumentException('Kode bangsal dan nama bangsal wajib diisi.');
+        }
+        $exists = $this->exists('SELECT 1 FROM bangsal WHERE kd_bangsal = :k', [':k' => $k]);
+        $sql = $exists
+            ? 'UPDATE bangsal SET nm_bangsal = :nm, status = :st WHERE kd_bangsal = :k'
+            : 'INSERT INTO bangsal (kd_bangsal, nm_bangsal, status) VALUES (:k, :nm, :st)';
+        $this->pdo->prepare($sql)->execute([':k' => $k, ':nm' => $nm, ':st' => (string) ($p['status'] ?? '1')]);
+    }
+
+    private function deleteBangsal(string $kd): void
+    {
+        $k = trim($kd);
+        if ($k === '') {
+            throw new \InvalidArgumentException('Kode bangsal wajib diisi.');
+        }
+        $this->pdo->prepare('DELETE FROM bangsal WHERE kd_bangsal = :k')->execute([':k' => $k]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function saveKamar(array $p): void
+    {
+        $k = trim((string) ($p['kd_kamar'] ?? ''));
+        $kb = trim((string) ($p['kd_bangsal'] ?? ''));
+        if ($k === '' || $kb === '') {
+            throw new \InvalidArgumentException('Kode kamar dan kode bangsal wajib diisi.');
+        }
+        $exists = $this->exists('SELECT 1 FROM kamar WHERE kd_kamar = :k', [':k' => $k]);
+        $params = [
+            ':k' => $k,
+            ':kb' => $kb,
+            ':trf' => (float) ($p['trf_kamar'] ?? 0),
+            ':st' => (string) ($p['status'] ?? 'KOSONG'),
+            ':kls' => (string) ($p['kelas'] ?? 'Kelas 3'),
+        ];
+        $sql = $exists
+            ? 'UPDATE kamar SET kd_bangsal = :kb, trf_kamar = :trf, status = :st, kelas = :kls WHERE kd_kamar = :k'
+            : "INSERT INTO kamar (kd_kamar, kd_bangsal, trf_kamar, status, kelas, statusdata) VALUES (:k, :kb, :trf, :st, :kls, '1')";
+        $this->pdo->prepare($sql)->execute($params);
+    }
+
+    private function deleteKamar(string $kd): void
+    {
+        $k = trim($kd);
+        if ($k === '') {
+            throw new \InvalidArgumentException('Kode kamar wajib diisi.');
+        }
+        $this->pdo->prepare('DELETE FROM kamar WHERE kd_kamar = :k')->execute([':k' => $k]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function savePenyakit(array $p): void
+    {
+        $k = strtoupper(trim((string) ($p['kd_penyakit'] ?? '')));
+        $nm = trim((string) ($p['nm_penyakit'] ?? ''));
+        if ($k === '' || $nm === '') {
+            throw new \InvalidArgumentException('Kode ICD-10 dan nama penyakit wajib diisi.');
+        }
+        $exists = $this->exists('SELECT 1 FROM penyakit WHERE kd_penyakit = :k', [':k' => $k]);
+        $params = [
+            ':k' => $k,
+            ':nm' => $nm,
+            ':idn' => trim((string) ($p['nm_indonesia'] ?? '')),
+            ':st' => trim((string) ($p['status'] ?? 'Tidak Menular')) ?: 'Tidak Menular',
+            ':skdi' => trim((string) ($p['skdi_level'] ?? '4A')) ?: '4A',
+        ];
+        $sql = $exists
+            ? 'UPDATE penyakit SET nm_penyakit = :nm, nm_indonesia = :idn, status = :st, skdi_level = :skdi WHERE kd_penyakit = :k'
+            : 'INSERT INTO penyakit (kd_penyakit, nm_penyakit, nm_indonesia, status, skdi_level) VALUES (:k, :nm, :idn, :st, :skdi)';
+        $this->pdo->prepare($sql)->execute($params);
+    }
+
+    private function deletePenyakit(string $kd): void
+    {
+        $k = strtoupper(trim($kd));
+        if ($k === '') {
+            throw new \InvalidArgumentException('Kode ICD-10 wajib diisi.');
+        }
+        $this->pdo->prepare('DELETE FROM penyakit WHERE kd_penyakit = :k')->execute([':k' => $k]);
     }
 
     /**

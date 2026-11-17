@@ -107,6 +107,37 @@
                     room: document.getElementById('jadwalRoom').value,
                 });
             });
+
+            document.getElementById('formBangsal')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveEntity('bangsal', {
+                    kd_bangsal: document.getElementById('bangsalKd').value,
+                    nm_bangsal: document.getElementById('bangsalNm').value,
+                    status: document.getElementById('bangsalStatus').value,
+                });
+            });
+
+            document.getElementById('formKamar')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveEntity('kamar', {
+                    kd_kamar: document.getElementById('kamarKd').value,
+                    kd_bangsal: document.getElementById('kamarBangsal').value,
+                    kelas: document.getElementById('kamarKelas').value,
+                    trf_kamar: document.getElementById('kamarTarif').value,
+                    status: document.getElementById('kamarStatus').value,
+                });
+            });
+
+            document.getElementById('formPenyakit')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveEntity('penyakit', {
+                    kd_penyakit: document.getElementById('penyakitKd').value,
+                    nm_penyakit: document.getElementById('penyakitNm').value,
+                    nm_indonesia: document.getElementById('penyakitIdn').value,
+                    status: document.getElementById('penyakitStatus').value,
+                    skdi_level: document.getElementById('penyakitSkdi').value,
+                });
+            });
         },
 
         loadEntity: function (entity) {
@@ -155,6 +186,9 @@
                 penjab: 'tbodyPenjab',
                 jns_perawatan: 'tbodyTarif',
                 jadwal: 'tbodyJadwal',
+                bangsal: 'tbodyBangsal',
+                kamar: 'tbodyKamar',
+                penyakit: 'tbodyPenyakit',
             };
             const tbody = document.getElementById(mapId[entity]);
             if (!tbody) return;
@@ -178,6 +212,15 @@
                 } else if (entity === 'jns_perawatan') {
                     delKeys = { kd_jenis_prw: r.kd_jenis_prw };
                     tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.kd_jenis_prw)}</td><td>${this.escapeHtml(r.nm_perawatan)}</td><td class="text-end">Rp ${this.escapeHtml(Number(r.total_byrdr || 0).toLocaleString('id-ID'))}</td><td>${this.escapeHtml(r.status === '1' ? 'Aktif' : 'Nonaktif')}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
+                } else if (entity === 'bangsal') {
+                    delKeys = { kd_bangsal: r.kd_bangsal };
+                    tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.kd_bangsal)}</td><td>${this.escapeHtml(r.nm_bangsal)}</td><td>${this.escapeHtml(r.status === '1' ? 'Aktif' : 'Nonaktif')}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
+                } else if (entity === 'kamar') {
+                    delKeys = { kd_kamar: r.kd_kamar };
+                    tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.kd_kamar)}</td><td>${this.escapeHtml(r.nm_bangsal || r.kd_bangsal)}</td><td>${this.escapeHtml(r.kelas)}</td><td class="text-end">Rp ${this.escapeHtml(Number(r.trf_kamar || 0).toLocaleString('id-ID'))}</td><td>${this.escapeHtml(r.status)}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
+                } else if (entity === 'penyakit') {
+                    delKeys = { kd_penyakit: r.kd_penyakit };
+                    tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.kd_penyakit)}</td><td>${this.escapeHtml(r.nm_penyakit)}</td><td>${this.escapeHtml(r.nm_indonesia)}</td><td>${this.escapeHtml(r.status)}</td><td>${this.escapeHtml(r.skdi_level)}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
                 } else {
                     delKeys = { kd_dokter: r.kd_dokter, kd_poli: r.kd_poli, hari_kerja: r.hari_kerja, jam_mulai: r.jam_mulai };
                     tr.innerHTML = `<td>${this.escapeHtml(r.nm_dokter || r.kd_dokter)}</td><td>${this.escapeHtml(r.nm_poli || r.kd_poli)}</td><td>${this.escapeHtml(r.hari_kerja)}</td><td>${this.escapeHtml(r.jam_mulai)} - ${this.escapeHtml(r.jam_selesai)}</td><td>${this.escapeHtml(r.kuota)}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;

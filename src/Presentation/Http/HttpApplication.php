@@ -1218,7 +1218,7 @@ final class HttpApplication
             $user = $this->requireAnyServiceModuleAccess(['master', 'admin']);
             return $masterController->index($user, $this->csrfGuard->getToken());
         });
-        foreach (['poliklinik', 'dokter', 'penjab', 'jns_perawatan', 'jadwal'] as $entity) {
+        foreach (['poliklinik', 'dokter', 'penjab', 'jns_perawatan', 'jadwal', 'bangsal', 'kamar', 'penyakit'] as $entity) {
             $router->get("/api/v1/master/{$entity}", function () use ($masterController, $entity, $queryParams): array {
                 $this->requireAnyServiceModuleAccess(['master', 'admin']);
                 return $masterController->apiList($entity, $queryParams);

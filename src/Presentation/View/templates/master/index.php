@@ -18,6 +18,9 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPenjab" data-entity="penjab" type="button">Penjamin (Cara Bayar)</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabTarif" data-entity="jns_perawatan" type="button">Tarif Tindakan</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabJadwal" data-entity="jadwal" type="button">Jadwal Dokter</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBangsal" data-entity="bangsal" type="button">Bangsal</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabKamar" data-entity="kamar" type="button">Kamar Inap</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPenyakit" data-entity="penyakit" type="button">Penyakit (ICD-10)</button></li>
     </ul>
 
     <div class="tab-content">
@@ -180,6 +183,97 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 6: Bangsal -->
+        <div class="tab-pane fade" id="tabBangsal">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Form Bangsal</div>
+                        <div class="card-body">
+                            <form id="formBangsal" class="row g-2">
+                                <div class="col-5"><label class="form-label small mb-1">Kode Bangsal</label><input type="text" id="bangsalKd" class="form-control form-control-sm" required></div>
+                                <div class="col-7"><label class="form-label small mb-1">Nama Bangsal</label><input type="text" id="bangsalNm" class="form-control form-control-sm" required></div>
+                                <div class="col-12"><label class="form-label small mb-1">Status</label><select id="bangsalStatus" class="form-select form-select-sm"><option value="1">Aktif</option><option value="0">Nonaktif</option></select></div>
+                                <div class="col-12 d-flex gap-2 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white">Simpan</button><button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0 table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 small">
+                                <thead class="table-light"><tr><th>Kode</th><th>Nama Bangsal</th><th>Status</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody id="tbodyBangsal"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 7: Kamar Inap -->
+        <div class="tab-pane fade" id="tabKamar">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Form Kamar Inap</div>
+                        <div class="card-body">
+                            <form id="formKamar" class="row g-2">
+                                <div class="col-6"><label class="form-label small mb-1">Kode Kamar</label><input type="text" id="kamarKd" class="form-control form-control-sm" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Kode Bangsal</label><input type="text" id="kamarBangsal" class="form-control form-control-sm" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Kelas</label><select id="kamarKelas" class="form-select form-select-sm"><option>Kelas 3</option><option>Kelas 2</option><option>Kelas 1</option><option>VIP</option></select></div>
+                                <div class="col-6"><label class="form-label small mb-1">Tarif/Hari (Rp)</label><input type="number" id="kamarTarif" class="form-control form-control-sm" value="150000" min="0"></div>
+                                <div class="col-12"><label class="form-label small mb-1">Status</label><select id="kamarStatus" class="form-select form-select-sm"><option value="KOSONG">KOSONG</option><option value="ISI">ISI</option></select></div>
+                                <div class="col-12 d-flex gap-2 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white">Simpan</button><button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0 table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 small">
+                                <thead class="table-light"><tr><th>Kode Kamar</th><th>Bangsal</th><th>Kelas</th><th class="text-end">Tarif</th><th>Status</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody id="tbodyKamar"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 8: Penyakit ICD-10 -->
+        <div class="tab-pane fade" id="tabPenyakit">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Form Penyakit (ICD-10)</div>
+                        <div class="card-body">
+                            <form id="formPenyakit" class="row g-2">
+                                <div class="col-4"><label class="form-label small mb-1">ICD-10</label><input type="text" id="penyakitKd" class="form-control form-control-sm" placeholder="J06.9" required></div>
+                                <div class="col-8"><label class="form-label small mb-1">Nama Penyakit</label><input type="text" id="penyakitNm" class="form-control form-control-sm" required></div>
+                                <div class="col-12"><label class="form-label small mb-1">Nama Indonesia</label><input type="text" id="penyakitIdn" class="form-control form-control-sm"></div>
+                                <div class="col-6"><label class="form-label small mb-1">Kategori</label><select id="penyakitStatus" class="form-select form-select-sm"><option value="Tidak Menular">Tidak Menular</option><option value="Menular">Menular</option></select></div>
+                                <div class="col-6"><label class="form-label small mb-1">Level SKDI</label><input type="text" id="penyakitSkdi" class="form-control form-control-sm" value="4A"></div>
+                                <div class="col-12 d-flex gap-2 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white">Simpan</button><button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0 table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0 small">
+                                <thead class="table-light"><tr><th>Kode</th><th>Nama Penyakit</th><th>Indonesia</th><th>Status</th><th>SKDI</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody id="tbodyPenyakit"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script src="/assets/js/modules/master.js?v=20261117b"></script>
+<script src="/assets/js/modules/master.js?v=20261117c"></script>

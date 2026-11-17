@@ -2074,4 +2074,25 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $api['status']);
         $this->assertTrue(json_decode($api['body'], true)['ok']);
     }
+
+    public function testMasterBangsalKamarPenyakitEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/master');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Penyakit (ICD-10)', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $bSave = $this->app->handle('POST', '/api/v1/master/bangsal/save', rawBody: json_encode(['kd_bangsal' => 'B99', 'nm_bangsal' => 'Melati']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $bSave['status']);
+
+        $kSave = $this->app->handle('POST', '/api/v1/master/kamar/save', rawBody: json_encode(['kd_kamar' => 'K99', 'kd_bangsal' => 'B99', 'kelas' => 'VIP', 'trf_kamar' => 500000]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $kSave['status']);
+
+        $pSave = $this->app->handle('POST', '/api/v1/master/penyakit/save', rawBody: json_encode(['kd_penyakit' => 'A09', 'nm_penyakit' => 'Diarrhoea', 'nm_indonesia' => 'Diare Akut', 'skdi_level' => '4A']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pSave['status']);
+
+        $pList = $this->app->handle('GET', '/api/v1/master/penyakit', queryParams: ['q' => 'A09']);
+        $this->assertCount(1, json_decode($pList['body'], true)['data']);
+    }
 }
