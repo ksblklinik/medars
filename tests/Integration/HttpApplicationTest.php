@@ -2802,4 +2802,40 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $bantuan['status']);
         $this->assertStringContainsString('bantuanPage', $bantuan['body']);
     }
+
+    public function testCrossModuleSyncNavigationAndAssetsConsistency(): void
+    {
+        $this->session['user_id'] = 1;
+        $navRoutes = [
+            '/', '/frontoffice', '/pasien', '/pendaftaran', '/dokter-ralan', '/igd',
+            '/rawat-inap', '/dokter-ranap', '/operasi', '/ruang-tindakan', '/utd', '/surat',
+            '/farmasi', '/farmasi-gudang', '/kasir', '/keuangan', '/orthanc', '/jasa-medis',
+            '/laboratorium', '/radiologi', '/laporan', '/manajemen', '/penjualan',
+            '/bridging', '/pcare', '/veronisa', '/riwayat-simgos', '/wagateway', '/chat',
+            '/smartagent', '/homecare', '/audit', '/users', '/master', '/kepegawaian',
+            '/presensi', '/inventaris', '/api-keys', '/modules', '/website/cms', '/bantuan',
+            '/profil', '/settings', '/display-lean', '/display-farmasi', '/display-kasir', '/website', '/portal-pasien',
+        ];
+
+        foreach ($navRoutes as $route) {
+            $res = $this->app->handle('GET', $route);
+            $this->assertSame(200, $res['status'], "Route {$route} gagal dirender (HTTP {$res['status']}).");
+            $this->assertStringNotContainsString('data-toggle="tab"', $res['body'], "Route {$route} masih memakai Bootstrap 3 data-toggle.");
+            $this->assertStringNotContainsString('/assets/css/bootstrap.min.css', $res['body'], "Route {$route} mereferensikan CSS yang tidak ada.");
+        }
+
+        // Verify SatuSehat FHIR enqueue appears in Bridging Sync Queue
+        $dash = $this->app->handle('GET', '/bridging');
+        $this->assertStringContainsString('/pcare', $dash['body']);
+        $this->assertStringContainsString('/riwayat-simgos', $dash['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+        $enqueue = $this->app->handle('POST', '/api/v1/bridging/satusehat/fhir-enqueue', rawBody: json_encode([
+            'resource_type' => 'Observation',
+            'no_rawat' => '2026/11/17/000999',
+            'note' => 'TD 120/80',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $enqueue['status']);
+        $pendingCount = (int) $this->pdo->query("SELECT COUNT(*) FROM bridging_sync_queue WHERE no_rawat = '2026/11/17/000999' AND resource_type = 'Observation'")->fetchColumn();
+        $this->assertSame(1, $pendingCount);
+    }
 }

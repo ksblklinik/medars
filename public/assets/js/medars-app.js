@@ -294,6 +294,9 @@
         if (csrfToken && !headers['X-CSRF-Token']) {
             headers['X-CSRF-Token'] = csrfToken;
         }
+        if (typeof opts.body === 'string' && !headers['Content-Type']) {
+            headers['Content-Type'] = 'application/json';
+        }
         opts.headers = headers;
 
         return fetch(url, opts).then(res => {
@@ -305,13 +308,18 @@
         });
     };
 
+    const apiJson = function (url, options) {
+        return apiFetch(url, options).then(res => res.json());
+    };
+
     // Ekspor API ke global window untuk diakses modul-modul
     window.Medars = {
         viewport: AppViewport,
         modal: AppModal,
         hotkeys: AppHotkeys,
         sse: AppSSE,
-        apiFetch: apiFetch
+        apiFetch: apiFetch,
+        apiJson: apiJson
     };
     window.MedarsApp = window.Medars;
 

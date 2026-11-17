@@ -30,7 +30,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
+    const api = window.MedarsApp && window.MedarsApp.apiJson ? window.MedarsApp.apiJson : null;
     if (!api) return;
 
     async function loadPages() {

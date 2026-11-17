@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars((string) ($judul ?? 'SIMRS Medars'), ENT_QUOTES, 'UTF-8') ?></title>
-    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/medars-app.css?v=20261116b" rel="stylesheet">
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; margin: 0; }
         .hero { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: #fff; padding: 48px 20px; text-align: center; }

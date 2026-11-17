@@ -122,59 +122,54 @@
         </div>
     </div>
 
-    <div class="col-md-12" id="vclaimPanel">
-        <div class="panel panel-default">
-            <div class="panel-heading" style="background:#00897b;color:#fff;font-weight:bold;">
-                VClaim BPJS (Cari Peserta, Buat &amp; Cetak SEP, Rujukan &amp; Surat Kontrol)
+    <!-- Panel 3: VClaim BPJS -->
+    <div class="col-12" id="vclaimPanel">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-id-card me-1"></i> VClaim BPJS (Cari Peserta, Buat &amp; Cetak SEP, Rujukan &amp; Surat Kontrol)</h6>
             </div>
-            <div class="panel-body">
-                <div class="row" style="margin-bottom:14px;">
+            <div class="card-body">
+                <div class="row g-2 mb-3 align-items-end">
                     <div class="col-md-5">
-                        <label>Cari Peserta BPJS (No. Kartu / NIK / No. RM)</label>
-                        <div class="input-group">
-                            <input type="text" id="vclaimCariPeserta" class="form-control input-sm" placeholder="Contoh: 0001234567890">
-                            <span class="input-group-btn">
-                                <button type="button" id="btnVclaimCariPeserta" class="btn btn-primary btn-sm">Cari Peserta</button>
-                            </span>
+                        <label class="form-label small mb-1">Cari Peserta BPJS (No. Kartu / NIK / No. RM)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="vclaimCariPeserta" class="form-control" placeholder="Contoh: 0001234567890">
+                            <button type="button" id="btnVclaimCariPeserta" class="btn btn-medical-teal">Cari Peserta</button>
                         </div>
                     </div>
-                    <div class="col-md-7" id="vclaimPesertaResult" style="padding-top:22px;font-size:13px;"></div>
+                    <div class="col-md-7 small" id="vclaimPesertaResult"></div>
                 </div>
 
-                <ul class="nav nav-tabs" style="margin-bottom:12px;">
-                    <li class="active"><a href="#tabVclaimSep" data-toggle="tab">SEP BPJS</a></li>
-                    <li><a href="#tabVclaimRujukan" data-toggle="tab">Rujukan Keluar</a></li>
-                    <li><a href="#tabVclaimKontrol" data-toggle="tab">Surat Kontrol</a></li>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabVclaimSep" type="button">SEP BPJS</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVclaimRujukan" type="button">Rujukan Keluar</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVclaimKontrol" type="button">Surat Kontrol</button></li>
                 </ul>
 
                 <div class="tab-content">
-                    <div class="tab-pane active" id="tabVclaimSep">
-                        <div class="row">
+                    <div class="tab-pane fade show active" id="tabVclaimSep">
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <form id="formVclaimSep">
-                                    <div class="form-group"><label>No. Rawat *</label><input type="text" id="sepNoRawat" class="form-control input-sm" required></div>
-                                    <div class="form-group"><label>No. Kartu BPJS *</label><input type="text" id="sepNoKartu" class="form-control input-sm" required></div>
-                                    <div class="form-group"><label>Nama Peserta</label><input type="text" id="sepNama" class="form-control input-sm"></div>
-                                    <div class="row">
-                                        <div class="col-xs-5 form-group"><label>Kode Poli</label><input type="text" id="sepKdPoli" class="form-control input-sm" placeholder="INT"></div>
-                                        <div class="col-xs-7 form-group"><label>Nama Poli</label><input type="text" id="sepNmPoli" class="form-control input-sm" placeholder="Penyakit Dalam"></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-xs-4 form-group"><label>ICD-10</label><input type="text" id="sepDiag" class="form-control input-sm" placeholder="J00"></div>
-                                        <div class="col-xs-8 form-group"><label>Diagnosa Awal</label><input type="text" id="sepNmDiag" class="form-control input-sm"></div>
-                                    </div>
-                                    <div class="form-group"><label>Catatan</label><input type="text" id="sepCatatan" class="form-control input-sm"></div>
-                                    <button type="submit" class="btn btn-success btn-sm">Simpan &amp; Terbitkan SEP</button>
+                                <form id="formVclaimSep" class="row g-2">
+                                    <div class="col-12"><label class="form-label small mb-0">No. Rawat *</label><input type="text" id="sepNoRawat" class="form-control form-control-sm" required></div>
+                                    <div class="col-12"><label class="form-label small mb-0">No. Kartu BPJS *</label><input type="text" id="sepNoKartu" class="form-control form-control-sm" required></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Nama Peserta</label><input type="text" id="sepNama" class="form-control form-control-sm"></div>
+                                    <div class="col-4"><label class="form-label small mb-0">Kode Poli</label><input type="text" id="sepKdPoli" class="form-control form-control-sm" placeholder="INT"></div>
+                                    <div class="col-8"><label class="form-label small mb-0">Nama Poli</label><input type="text" id="sepNmPoli" class="form-control form-control-sm" placeholder="Penyakit Dalam"></div>
+                                    <div class="col-4"><label class="form-label small mb-0">ICD-10</label><input type="text" id="sepDiag" class="form-control form-control-sm" placeholder="J00"></div>
+                                    <div class="col-8"><label class="form-label small mb-0">Diagnosa Awal</label><input type="text" id="sepNmDiag" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Catatan</label><input type="text" id="sepCatatan" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><button type="submit" class="btn btn-success btn-sm">Simpan &amp; Terbitkan SEP</button></div>
                                 </form>
                             </div>
                             <div class="col-md-8">
-                                <div class="form-inline" style="margin-bottom:8px;">
-                                    <input type="text" id="sepFilterQ" class="form-control input-sm" placeholder="Cari No. SEP / Rawat / Nama">
-                                    <button type="button" id="btnReloadSep" class="btn btn-default btn-sm">Muat SEP</button>
+                                <div class="d-flex gap-2 mb-2">
+                                    <input type="text" id="sepFilterQ" class="form-control form-control-sm" style="max-width:240px;" placeholder="Cari No. SEP / Rawat / Nama">
+                                    <button type="button" id="btnReloadSep" class="btn btn-outline-secondary btn-sm">Muat SEP</button>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                        <thead><tr><th>No. SEP</th><th>Tgl SEP</th><th>No. Rawat</th><th>Peserta</th><th>Poli / Diagnosa</th><th>Aksi</th></tr></thead>
+                                    <table class="table table-bordered table-sm" style="font-size:12px;">
+                                        <thead class="table-light"><tr><th>No. SEP</th><th>Tgl SEP</th><th>No. Rawat</th><th>Peserta</th><th>Poli / Diagnosa</th><th>Aksi</th></tr></thead>
                                         <tbody id="vclaimSepBody"><tr><td colspan="6" class="text-center text-muted">Belum ada data SEP.</td></tr></tbody>
                                     </table>
                                 </div>
@@ -182,23 +177,23 @@
                         </div>
                     </div>
 
-                    <div class="tab-pane" id="tabVclaimRujukan">
-                        <div class="row">
+                    <div class="tab-pane fade" id="tabVclaimRujukan">
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <form id="formVclaimRujukan">
-                                    <div class="form-group"><label>No. SEP Asal *</label><input type="text" id="rujNoSep" class="form-control input-sm" required></div>
-                                    <div class="form-group"><label>PPK Dirujuk (Kode)</label><input type="text" id="rujPpk" class="form-control input-sm" placeholder="0112R002"></div>
-                                    <div class="form-group"><label>Nama PPK Dirujuk</label><input type="text" id="rujNmPpk" class="form-control input-sm" placeholder="RSUD Rujukan"></div>
-                                    <div class="form-group"><label>Diagnosa Rujukan</label><input type="text" id="rujDiag" class="form-control input-sm" placeholder="I10"></div>
-                                    <div class="form-group"><label>Catatan</label><input type="text" id="rujCatatan" class="form-control input-sm"></div>
-                                    <button type="submit" class="btn btn-success btn-sm">Buat Rujukan</button>
+                                <form id="formVclaimRujukan" class="row g-2">
+                                    <div class="col-12"><label class="form-label small mb-0">No. SEP Asal *</label><input type="text" id="rujNoSep" class="form-control form-control-sm" required></div>
+                                    <div class="col-12"><label class="form-label small mb-0">PPK Dirujuk (Kode)</label><input type="text" id="rujPpk" class="form-control form-control-sm" placeholder="0112R002"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Nama PPK Dirujuk</label><input type="text" id="rujNmPpk" class="form-control form-control-sm" placeholder="RSUD Rujukan"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Diagnosa Rujukan</label><input type="text" id="rujDiag" class="form-control form-control-sm" placeholder="I10"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Catatan</label><input type="text" id="rujCatatan" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><button type="submit" class="btn btn-success btn-sm">Buat Rujukan</button></div>
                                 </form>
                             </div>
                             <div class="col-md-8">
-                                <button type="button" id="btnReloadRujukan" class="btn btn-default btn-sm" style="margin-bottom:8px;">Muat Rujukan</button>
+                                <button type="button" id="btnReloadRujukan" class="btn btn-outline-secondary btn-sm mb-2">Muat Rujukan</button>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                        <thead><tr><th>No. Rujukan</th><th>Tgl</th><th>No. SEP</th><th>PPK Dirujuk</th><th>Diagnosa</th></tr></thead>
+                                    <table class="table table-bordered table-sm" style="font-size:12px;">
+                                        <thead class="table-light"><tr><th>No. Rujukan</th><th>Tgl</th><th>No. SEP</th><th>PPK Dirujuk</th><th>Diagnosa</th></tr></thead>
                                         <tbody id="vclaimRujukanBody"><tr><td colspan="5" class="text-center text-muted">Belum ada rujukan.</td></tr></tbody>
                                     </table>
                                 </div>
@@ -206,22 +201,22 @@
                         </div>
                     </div>
 
-                    <div class="tab-pane" id="tabVclaimKontrol">
-                        <div class="row">
+                    <div class="tab-pane fade" id="tabVclaimKontrol">
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <form id="formVclaimKontrol">
-                                    <div class="form-group"><label>No. SEP *</label><input type="text" id="skNoSep" class="form-control input-sm" required></div>
-                                    <div class="form-group"><label>Tgl Rencana Kontrol</label><input type="date" id="skTglRencana" class="form-control input-sm"></div>
-                                    <div class="form-group"><label>Nama Dokter BPJS</label><input type="text" id="skNmDokter" class="form-control input-sm"></div>
-                                    <div class="form-group"><label>Nama Poli BPJS</label><input type="text" id="skNmPoli" class="form-control input-sm"></div>
-                                    <button type="submit" class="btn btn-success btn-sm">Buat Surat Kontrol</button>
+                                <form id="formVclaimKontrol" class="row g-2">
+                                    <div class="col-12"><label class="form-label small mb-0">No. SEP *</label><input type="text" id="skNoSep" class="form-control form-control-sm" required></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Tgl Rencana Kontrol</label><input type="date" id="skTglRencana" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Nama Dokter BPJS</label><input type="text" id="skNmDokter" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><label class="form-label small mb-0">Nama Poli BPJS</label><input type="text" id="skNmPoli" class="form-control form-control-sm"></div>
+                                    <div class="col-12"><button type="submit" class="btn btn-success btn-sm">Buat Surat Kontrol</button></div>
                                 </form>
                             </div>
                             <div class="col-md-8">
-                                <button type="button" id="btnReloadKontrol" class="btn btn-default btn-sm" style="margin-bottom:8px;">Muat Surat Kontrol</button>
+                                <button type="button" id="btnReloadKontrol" class="btn btn-outline-secondary btn-sm mb-2">Muat Surat Kontrol</button>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                        <thead><tr><th>No. Surat</th><th>Tgl Rencana</th><th>No. SEP</th><th>Dokter</th><th>Poli</th></tr></thead>
+                                    <table class="table table-bordered table-sm" style="font-size:12px;">
+                                        <thead class="table-light"><tr><th>No. Surat</th><th>Tgl Rencana</th><th>No. SEP</th><th>Dokter</th><th>Poli</th></tr></thead>
                                         <tbody id="vclaimKontrolBody"><tr><td colspan="5" class="text-center text-muted">Belum ada surat kontrol.</td></tr></tbody>
                                     </table>
                                 </div>
@@ -232,136 +227,39 @@
             </div>
         </div>
     </div>
-</div>
-<script src="/assets/js/modules/bridging.js?v=20261117b" defer></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
-    if (!api) return;
 
-    document.getElementById('btnVclaimCariPeserta')?.addEventListener('click', async () => {
-        const q = document.getElementById('vclaimCariPeserta').value.trim();
-        const box = document.getElementById('vclaimPesertaResult');
-        const res = await api('/api/v1/bridging/vclaim/peserta?no_kartu=' + encodeURIComponent(q));
-        if (res.status === 'success' && res.data) {
-            box.innerHTML = '<span class="label label-success">Aktif</span> <strong>' + esc(res.data.nm_pasien) + '</strong> | No. RM: ' + esc(res.data.no_rkm_medis) + ' | Kartu: ' + esc(res.data.no_peserta || '-');
-            document.getElementById('sepNoKartu').value = res.data.no_peserta || q;
-            document.getElementById('sepNama').value = res.data.nm_pasien || '';
-        } else {
-            box.innerHTML = '<span class="text-danger">' + esc(res.message || 'Peserta tidak ditemukan') + '</span>';
-        }
-    });
-
-    async function loadSep() {
-        const q = document.getElementById('sepFilterQ').value.trim();
-        const res = await api('/api/v1/bridging/vclaim/sep?q=' + encodeURIComponent(q));
-        const tb = document.getElementById('vclaimSepBody');
-        const rows = res.data || [];
-        tb.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_sep) + '</td><td>' + esc(r.tglsep) + '</td><td>' + esc(r.no_rawat) + '</td><td>' + esc(r.nama_pasien) + ' (' + esc(r.no_kartu) + ')</td><td>' + esc(r.nmpolitujuan || r.kdpolitujuan) + ' / ' + esc(r.diagawal) + '</td><td><a class="btn btn-xs btn-info" target="_blank" href="/bridging/vclaim/sep/cetak?no_sep=' + encodeURIComponent(r.no_sep) + '">Cetak</a></td></tr>').join('') : '<tr><td colspan="6" class="text-center text-muted">Belum ada data SEP.</td></tr>';
-    }
-
-    async function loadRujukan() {
-        const res = await api('/api/v1/bridging/vclaim/rujukan');
-        const tb = document.getElementById('vclaimRujukanBody');
-        const rows = res.data || [];
-        tb.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_rujukan) + '</td><td>' + esc(r.tgl_rujukan) + '</td><td>' + esc(r.no_sep) + '</td><td>' + esc(r.nm_ppk_dirujuk || r.ppk_dirujuk) + '</td><td>' + esc(r.diag_rujukan) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada rujukan.</td></tr>';
-    }
-
-    async function loadKontrol() {
-        const res = await api('/api/v1/bridging/vclaim/surat-kontrol');
-        const tb = document.getElementById('vclaimKontrolBody');
-        const rows = res.data || [];
-        tb.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_surat) + '</td><td>' + esc(r.tgl_rencana) + '</td><td>' + esc(r.no_sep) + '</td><td>' + esc(r.nm_dokter_bpjs) + '</td><td>' + esc(r.nm_poli_bpjs) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada surat kontrol.</td></tr>';
-    }
-
-    document.getElementById('formVclaimSep')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const res = await api('/api/v1/bridging/vclaim/sep-save', {
-            method: 'POST',
-            body: JSON.stringify({
-                no_rawat: document.getElementById('sepNoRawat').value,
-                no_kartu: document.getElementById('sepNoKartu').value,
-                nama_pasien: document.getElementById('sepNama').value,
-                kdpolitujuan: document.getElementById('sepKdPoli').value,
-                nmpolitujuan: document.getElementById('sepNmPoli').value,
-                diagawal: document.getElementById('sepDiag').value,
-                nmdiagnosaawal: document.getElementById('sepNmDiag').value,
-                catatan: document.getElementById('sepCatatan').value,
-            }),
-        });
-        if (res.status === 'success') { loadSep(); }
-    });
-
-    document.getElementById('formVclaimRujukan')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const res = await api('/api/v1/bridging/vclaim/rujukan-save', {
-            method: 'POST',
-            body: JSON.stringify({
-                no_sep: document.getElementById('rujNoSep').value,
-                ppk_dirujuk: document.getElementById('rujPpk').value,
-                nm_ppk_dirujuk: document.getElementById('rujNmPpk').value,
-                diag_rujukan: document.getElementById('rujDiag').value,
-                catatan: document.getElementById('rujCatatan').value,
-            }),
-        });
-        if (res.status === 'success') { loadRujukan(); }
-    });
-
-    document.getElementById('formVclaimKontrol')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const res = await api('/api/v1/bridging/vclaim/surat-kontrol-save', {
-            method: 'POST',
-            body: JSON.stringify({
-                no_sep: document.getElementById('skNoSep').value,
-                tgl_rencana: document.getElementById('skTglRencana').value,
-                nm_dokter_bpjs: document.getElementById('skNmDokter').value,
-                nm_poli_bpjs: document.getElementById('skNmPoli').value,
-            }),
-        });
-        if (res.status === 'success') { loadKontrol(); }
-    });
-
-    document.getElementById('btnReloadSep')?.addEventListener('click', loadSep);
-    document.getElementById('btnReloadRujukan')?.addEventListener('click', loadRujukan);
-    document.getElementById('btnReloadKontrol')?.addEventListener('click', loadKontrol);
-    loadSep();
-    loadRujukan();
-    loadKontrol();
-});
-</script>
-<div class="row" style="margin-top:14px;" id="hfisAntrolPanel">
-    <div class="col-md-12">
-        <div class="panel panel-default">
-            <div class="panel-heading" style="background:#00897b;color:#fff;font-weight:bold;">
-                HFIS Jadwal Dokter &amp; Antrean Online BPJS (Antrol Task ID 1–7)
+    <!-- Panel 4: HFIS & Antrol -->
+    <div class="col-12" id="hfisAntrolPanel">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-calendar-check me-1"></i> HFIS Jadwal Dokter &amp; Antrean Online BPJS (Antrol Task ID 1–7)</h6>
             </div>
-            <div class="panel-body">
-                <div class="row">
+            <div class="card-body">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h5>Sinkron Jadwal Dokter HFIS</h5>
-                        <form id="formHfisSync" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
-                            <input type="text" id="hfisKdPoli" class="form-control input-sm" placeholder="Kd Poli (INT)" required>
-                            <input type="text" id="hfisNmPoli" class="form-control input-sm" placeholder="Nama Poli">
-                            <input type="text" id="hfisKdDokter" class="form-control input-sm" placeholder="Kd Dokter BPJS" required>
-                            <input type="text" id="hfisNmDokter" class="form-control input-sm" placeholder="Nama Dokter">
-                            <input type="text" id="hfisNamaHari" class="form-control input-sm" value="SENIN" placeholder="Hari">
-                            <input type="text" id="hfisJadwal" class="form-control input-sm" value="08:00-12:00" placeholder="Jam">
+                        <h6 class="small fw-bold">Sinkron Jadwal Dokter HFIS</h6>
+                        <form id="formHfisSync" class="d-flex flex-wrap gap-2 mb-2">
+                            <input type="text" id="hfisKdPoli" class="form-control form-control-sm" style="max-width:110px;" placeholder="Kd Poli (INT)" required>
+                            <input type="text" id="hfisNmPoli" class="form-control form-control-sm" style="max-width:140px;" placeholder="Nama Poli">
+                            <input type="text" id="hfisKdDokter" class="form-control form-control-sm" style="max-width:120px;" placeholder="Kd Dokter BPJS" required>
+                            <input type="text" id="hfisNmDokter" class="form-control form-control-sm" style="max-width:150px;" placeholder="Nama Dokter">
+                            <input type="text" id="hfisNamaHari" class="form-control form-control-sm" style="max-width:100px;" value="SENIN" placeholder="Hari">
+                            <input type="text" id="hfisJadwal" class="form-control form-control-sm" style="max-width:120px;" value="08:00-12:00" placeholder="Jam">
                             <button type="submit" class="btn btn-success btn-sm">Sinkron HFIS</button>
                         </form>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                <thead><tr><th>Poli</th><th>Dokter</th><th>Hari</th><th>Jadwal</th><th>Kuota</th></tr></thead>
+                            <table class="table table-bordered table-sm" style="font-size:12px;">
+                                <thead class="table-light"><tr><th>Poli</th><th>Dokter</th><th>Hari</th><th>Jadwal</th><th>Kuota</th></tr></thead>
                                 <tbody id="hfisJadwalBody"><tr><td colspan="5" class="text-center text-muted">Belum ada jadwal HFIS.</td></tr></tbody>
                             </table>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <h5>Antrean Online BPJS (Antrol Task ID 1–7)</h5>
-                        <form id="formAntrolPush" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
-                            <input type="text" id="antrolKodeBooking" class="form-control input-sm" placeholder="Kode Booking" required>
-                            <input type="text" id="antrolNoRawat" class="form-control input-sm" placeholder="No. Rawat">
-                            <select id="antrolTaskId" class="form-control input-sm">
+                        <h6 class="small fw-bold">Antrean Online BPJS (Antrol Task ID 1–7)</h6>
+                        <form id="formAntrolPush" class="d-flex flex-wrap gap-2 mb-2">
+                            <input type="text" id="antrolKodeBooking" class="form-control form-control-sm" style="max-width:150px;" placeholder="Kode Booking" required>
+                            <input type="text" id="antrolNoRawat" class="form-control form-control-sm" style="max-width:140px;" placeholder="No. Rawat">
+                            <select id="antrolTaskId" class="form-select form-select-sm" style="max-width:210px;">
                                 <option value="1">Task 1 - Mulai Tunggu Admisi</option>
                                 <option value="2">Task 2 - Selesai Admisi</option>
                                 <option value="3">Task 3 - Mulai Tunggu Poli</option>
@@ -373,8 +271,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <button type="submit" class="btn btn-primary btn-sm">Kirim Task Antrol</button>
                         </form>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                <thead><tr><th>Kode Booking</th><th>No. Rawat</th><th>Task ID</th><th>Status</th><th>Respon</th></tr></thead>
+                            <table class="table table-bordered table-sm" style="font-size:12px;">
+                                <thead class="table-light"><tr><th>Kode Booking</th><th>No. Rawat</th><th>Task ID</th><th>Status</th><th>Respon</th></tr></thead>
                                 <tbody id="antrolTaskBody"><tr><td colspan="5" class="text-center text-muted">Belum ada log antrol.</td></tr></tbody>
                             </table>
                         </div>
@@ -383,78 +281,48 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
-    if (!api) return;
 
-    async function loadHfis() {
-        const res = await api('/api/v1/bridging/hfis/jadwal');
-        const rows = res.data || [];
-        document.getElementById('hfisJadwalBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.nm_poli_bpjs || r.kd_poli_bpjs) + '</td><td>' + esc(r.nm_dokter_bpjs || r.kd_dokter_bpjs) + '</td><td>' + esc(r.nama_hari) + '</td><td>' + esc(r.jadwal) + '</td><td>' + esc(r.kapasitas_pasien) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada jadwal HFIS.</td></tr>';
-    }
-    async function loadAntrol() {
-        const res = await api('/api/v1/bridging/antrol/tasks');
-        const rows = res.data || [];
-        document.getElementById('antrolTaskBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.kodebooking) + '</td><td>' + esc(r.no_rawat) + '</td><td>Task ' + esc(r.task_id) + '</td><td>' + esc(r.status_sync) + '</td><td>' + esc(r.response_code) + ' ' + esc(r.response_msg) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada log antrol.</td></tr>';
-    }
-    document.getElementById('formHfisSync')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const res = await api('/api/v1/bridging/hfis/jadwal-sync', { method: 'POST', body: JSON.stringify({ kd_poli_bpjs: hfisKdPoli.value, nm_poli_bpjs: hfisNmPoli.value, kd_dokter_bpjs: hfisKdDokter.value, nm_dokter_bpjs: hfisNmDokter.value, nama_hari: hfisNamaHari.value, jadwal: hfisJadwal.value }) });
-        if (res.status === 'success') loadHfis();
-    });
-    document.getElementById('formAntrolPush')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const res = await api('/api/v1/bridging/antrol/task-push', { method: 'POST', body: JSON.stringify({ kodebooking: antrolKodeBooking.value, no_rawat: antrolNoRawat.value, task_id: antrolTaskId.value }) });
-        if (res.status === 'success') loadAntrol();
-    });
-    loadHfis();
-    loadAntrol();
-});
-</script>
-<div class="row" style="margin-top:14px;" id="satuSehatPanel">
-    <div class="col-md-12">
-        <div class="panel panel-default">
-            <div class="panel-heading" style="background:#00897b;color:#fff;font-weight:bold;">
-                SatuSehat Kemenkes (Mapping IHS ID &amp; Antrean FHIR Observation / MedicationRequest / ServiceRequest)
+    <!-- Panel 5: SatuSehat FHIR -->
+    <div class="col-12" id="satuSehatPanel">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-hospital me-1"></i> SatuSehat Kemenkes (Mapping IHS ID &amp; Antrean FHIR Observation / MedicationRequest / ServiceRequest)</h6>
             </div>
-            <div class="panel-body">
-                <div class="row">
+            <div class="card-body">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h5>Mapping IHS ID (Location / Practitioner / Patient / Organization)</h5>
-                        <form id="formSsMapping" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
-                            <select id="ssEntityType" class="form-control input-sm">
+                        <h6 class="small fw-bold">Mapping IHS ID (Location / Practitioner / Patient / Organization)</h6>
+                        <form id="formSsMapping" class="d-flex flex-wrap gap-2 mb-2">
+                            <select id="ssEntityType" class="form-select form-select-sm" style="max-width:155px;">
                                 <option value="location">Location (Poli)</option>
-                                <option value="practitioner">Practitioner (Dokter/Nakes)</option>
+                                <option value="practitioner">Practitioner (Nakes)</option>
                                 <option value="patient">Patient (Pasien)</option>
                                 <option value="organization">Organization (Unit)</option>
                             </select>
-                            <input type="text" id="ssLocalCode" class="form-control input-sm" placeholder="Kode Lokal" required>
-                            <input type="text" id="ssLocalName" class="form-control input-sm" placeholder="Nama Lokal">
-                            <input type="text" id="ssIhsId" class="form-control input-sm" placeholder="IHS ID SatuSehat" required>
+                            <input type="text" id="ssLocalCode" class="form-control form-control-sm" style="max-width:110px;" placeholder="Kode Lokal" required>
+                            <input type="text" id="ssLocalName" class="form-control form-control-sm" style="max-width:130px;" placeholder="Nama Lokal">
+                            <input type="text" id="ssIhsId" class="form-control form-control-sm" style="max-width:150px;" placeholder="IHS ID SatuSehat" required>
                             <button type="submit" class="btn btn-success btn-sm">Simpan Mapping IHS</button>
                         </form>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-condensed" style="font-size:12px;">
-                                <thead><tr><th>Tipe</th><th>Kode Lokal</th><th>Nama</th><th>IHS ID</th></tr></thead>
+                            <table class="table table-bordered table-sm" style="font-size:12px;">
+                                <thead class="table-light"><tr><th>Tipe</th><th>Kode Lokal</th><th>Nama</th><th>IHS ID</th></tr></thead>
                                 <tbody id="ssMappingBody"><tr><td colspan="4" class="text-center text-muted">Belum ada mapping IHS ID.</td></tr></tbody>
                             </table>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <h5>Kirim Antrean FHIR Resource (Observation / MedicationRequest / ServiceRequest)</h5>
-                        <form id="formSsFhir" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
-                            <select id="ssFhirType" class="form-control input-sm">
+                        <h6 class="small fw-bold">Kirim Antrean FHIR Resource (Observation / MedicationRequest / ServiceRequest)</h6>
+                        <form id="formSsFhir" class="d-flex flex-wrap gap-2 mb-2">
+                            <select id="ssFhirType" class="form-select form-select-sm" style="max-width:210px;">
                                 <option value="Observation">Observation (TTV / Lab)</option>
                                 <option value="MedicationRequest">MedicationRequest (E-Resep)</option>
                                 <option value="ServiceRequest">ServiceRequest (Order Lab/Rad)</option>
                                 <option value="Encounter">Encounter</option>
                                 <option value="Condition">Condition</option>
                             </select>
-                            <input type="text" id="ssFhirNoRawat" class="form-control input-sm" placeholder="No. Rawat" required>
-                            <input type="text" id="ssFhirNote" class="form-control input-sm" placeholder="Ringkasan / Kode LOINC/KFA">
+                            <input type="text" id="ssFhirNoRawat" class="form-control form-control-sm" style="max-width:140px;" placeholder="No. Rawat" required>
+                            <input type="text" id="ssFhirNote" class="form-control form-control-sm" style="max-width:180px;" placeholder="Kode LOINC / KFA">
                             <button type="submit" class="btn btn-primary btn-sm">Antrekan FHIR</button>
                         </form>
                         <div id="ssFhirFeedback" class="small text-muted"></div>
@@ -464,30 +332,97 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
+<script src="/assets/js/modules/bridging.js?v=20261117b" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
+    const api = window.MedarsApp && window.MedarsApp.apiJson ? window.MedarsApp.apiJson : null;
     if (!api) return;
 
+    document.getElementById('btnVclaimCariPeserta')?.addEventListener('click', async () => {
+        const q = vclaimCariPeserta.value.trim();
+        const res = await api('/api/v1/bridging/vclaim/peserta?no_kartu=' + encodeURIComponent(q));
+        if (res.status === 'success' && res.data) {
+            vclaimPesertaResult.innerHTML = '<span class="badge bg-success">Aktif</span> <strong>' + esc(res.data.nm_pasien) + '</strong> | No. RM: ' + esc(res.data.no_rkm_medis) + ' | Kartu: ' + esc(res.data.no_peserta || '-');
+            sepNoKartu.value = res.data.no_peserta || q;
+            sepNama.value = res.data.nm_pasien || '';
+        } else {
+            vclaimPesertaResult.innerHTML = '<span class="text-danger">' + esc(res.message || 'Peserta tidak ditemukan') + '</span>';
+        }
+    });
+
+    async function loadSep() {
+        const res = await api('/api/v1/bridging/vclaim/sep?q=' + encodeURIComponent(sepFilterQ.value.trim()));
+        const rows = res.data || [];
+        vclaimSepBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_sep) + '</td><td>' + esc(r.tglsep) + '</td><td>' + esc(r.no_rawat) + '</td><td>' + esc(r.nama_pasien) + ' (' + esc(r.no_kartu) + ')</td><td>' + esc(r.nmpolitujuan || r.kdpolitujuan) + ' / ' + esc(r.diagawal) + '</td><td><a class="btn btn-xs btn-info" target="_blank" href="/bridging/vclaim/sep/cetak?no_sep=' + encodeURIComponent(r.no_sep) + '">Cetak</a></td></tr>').join('') : '<tr><td colspan="6" class="text-center text-muted">Belum ada data SEP.</td></tr>';
+    }
+    async function loadRujukan() {
+        const res = await api('/api/v1/bridging/vclaim/rujukan');
+        const rows = res.data || [];
+        vclaimRujukanBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_rujukan) + '</td><td>' + esc(r.tgl_rujukan) + '</td><td>' + esc(r.no_sep) + '</td><td>' + esc(r.nm_ppk_dirujuk || r.ppk_dirujuk) + '</td><td>' + esc(r.diag_rujukan) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada rujukan.</td></tr>';
+    }
+    async function loadKontrol() {
+        const res = await api('/api/v1/bridging/vclaim/surat-kontrol');
+        const rows = res.data || [];
+        vclaimKontrolBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.no_surat) + '</td><td>' + esc(r.tgl_rencana) + '</td><td>' + esc(r.no_sep) + '</td><td>' + esc(r.nm_dokter_bpjs) + '</td><td>' + esc(r.nm_poli_bpjs) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada surat kontrol.</td></tr>';
+    }
+    async function loadHfis() {
+        const res = await api('/api/v1/bridging/hfis/jadwal');
+        const rows = res.data || [];
+        hfisJadwalBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.nm_poli_bpjs || r.kd_poli_bpjs) + '</td><td>' + esc(r.nm_dokter_bpjs || r.kd_dokter_bpjs) + '</td><td>' + esc(r.nama_hari) + '</td><td>' + esc(r.jadwal) + '</td><td>' + esc(r.kapasitas_pasien) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada jadwal HFIS.</td></tr>';
+    }
+    async function loadAntrol() {
+        const res = await api('/api/v1/bridging/antrol/tasks');
+        const rows = res.data || [];
+        antrolTaskBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.kodebooking) + '</td><td>' + esc(r.no_rawat) + '</td><td>Task ' + esc(r.task_id) + '</td><td>' + esc(r.status_sync) + '</td><td>' + esc(r.response_code) + ' ' + esc(r.response_msg) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada log antrol.</td></tr>';
+    }
     async function loadMappings() {
         const res = await api('/api/v1/bridging/satusehat/mappings');
         const rows = res.data || [];
-        document.getElementById('ssMappingBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.entity_type) + '</td><td>' + esc(r.local_code) + '</td><td>' + esc(r.local_name) + '</td><td>' + esc(r.ihs_id) + '</td></tr>').join('') : '<tr><td colspan="4" class="text-center text-muted">Belum ada mapping IHS ID.</td></tr>';
+        ssMappingBody.innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.entity_type) + '</td><td>' + esc(r.local_code) + '</td><td>' + esc(r.local_name) + '</td><td>' + esc(r.ihs_id) + '</td></tr>').join('') : '<tr><td colspan="4" class="text-center text-muted">Belum ada mapping IHS ID.</td></tr>';
     }
-    document.getElementById('formSsMapping')?.addEventListener('submit', async (e) => {
+
+    formVclaimSep?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/vclaim/sep-save', { method: 'POST', body: JSON.stringify({ no_rawat: sepNoRawat.value, no_kartu: sepNoKartu.value, nama_pasien: sepNama.value, kdpolitujuan: sepKdPoli.value, nmpolitujuan: sepNmPoli.value, diagawal: sepDiag.value, nmdiagnosaawal: sepNmDiag.value, catatan: sepCatatan.value }) });
+        if (res.status === 'success') loadSep();
+    });
+    formVclaimRujukan?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/vclaim/rujukan-save', { method: 'POST', body: JSON.stringify({ no_sep: rujNoSep.value, ppk_dirujuk: rujPpk.value, nm_ppk_dirujuk: rujNmPpk.value, diag_rujukan: rujDiag.value, catatan: rujCatatan.value }) });
+        if (res.status === 'success') loadRujukan();
+    });
+    formVclaimKontrol?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/vclaim/surat-kontrol-save', { method: 'POST', body: JSON.stringify({ no_sep: skNoSep.value, tgl_rencana: skTglRencana.value, nm_dokter_bpjs: skNmDokter.value, nm_poli_bpjs: skNmPoli.value }) });
+        if (res.status === 'success') loadKontrol();
+    });
+    formHfisSync?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/hfis/jadwal-sync', { method: 'POST', body: JSON.stringify({ kd_poli_bpjs: hfisKdPoli.value, nm_poli_bpjs: hfisNmPoli.value, kd_dokter_bpjs: hfisKdDokter.value, nm_dokter_bpjs: hfisNmDokter.value, nama_hari: hfisNamaHari.value, jadwal: hfisJadwal.value }) });
+        if (res.status === 'success') loadHfis();
+    });
+    formAntrolPush?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/antrol/task-push', { method: 'POST', body: JSON.stringify({ kodebooking: antrolKodeBooking.value, no_rawat: antrolNoRawat.value, task_id: antrolTaskId.value }) });
+        if (res.status === 'success') loadAntrol();
+    });
+    formSsMapping?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const res = await api('/api/v1/bridging/satusehat/mappings-save', { method: 'POST', body: JSON.stringify({ entity_type: ssEntityType.value, local_code: ssLocalCode.value, local_name: ssLocalName.value, ihs_id: ssIhsId.value }) });
         if (res.status === 'success') loadMappings();
     });
-    document.getElementById('formSsFhir')?.addEventListener('submit', async (e) => {
+    formSsFhir?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const res = await api('/api/v1/bridging/satusehat/fhir-enqueue', { method: 'POST', body: JSON.stringify({ resource_type: ssFhirType.value, no_rawat: ssFhirNoRawat.value, note: ssFhirNote.value }) });
-        const fb = document.getElementById('ssFhirFeedback');
         if (res.status === 'success' && res.data) {
-            fb.innerHTML = '<span class="text-success">Berhasil masuk antrean FHIR: ' + esc(res.data.resource_type) + ' (' + esc(res.data.no_rawat) + ')</span>';
+            ssFhirFeedback.innerHTML = '<span class="text-success">Berhasil masuk antrean FHIR: ' + esc(res.data.resource_type) + ' (' + esc(res.data.no_rawat) + ')</span>';
         }
     });
-    loadMappings();
+
+    btnReloadSep?.addEventListener('click', loadSep);
+    btnReloadRujukan?.addEventListener('click', loadRujukan);
+    btnReloadKontrol?.addEventListener('click', loadKontrol);
+    loadSep(); loadRujukan(); loadKontrol(); loadHfis(); loadAntrol(); loadMappings();
 });
 </script>

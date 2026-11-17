@@ -47,6 +47,21 @@ final class PdoModuleRepository implements ModuleRepositoryInterface
         ['dir' => 'settings', 'name' => 'Pengaturan Sistem', 'category' => 'Inti Sistem', 'description' => 'Konfigurasi identitas klinik, bridging & parameter sistem.'],
         ['dir' => 'modules', 'name' => 'Manajer Modul', 'category' => 'Inti Sistem', 'description' => 'Aktivasi, penonaktifan & urutan modul aplikasi.'],
         ['dir' => 'profil', 'name' => 'Profil Saya', 'category' => 'Inti Sistem', 'description' => 'Pengaturan akun pribadi & ganti password.'],
+        ['dir' => 'operasi', 'name' => 'Kamar Operasi', 'category' => 'Layanan Pasien', 'description' => 'Booking jadwal & laporan tindakan kamar operasi.'],
+        ['dir' => 'ruang_tindakan', 'name' => 'Ruang Tindakan', 'category' => 'Layanan Pasien', 'description' => 'Pelaksanaan tindakan medis & BHP poliklinik.'],
+        ['dir' => 'utd', 'name' => 'Bank Darah (UTD)', 'category' => 'Klinis & Penunjang', 'description' => 'Stok kantong darah, donor & permintaan transfusi.'],
+        ['dir' => 'orthanc', 'name' => 'Orthanc PACS', 'category' => 'Klinis & Penunjang', 'description' => 'Integrasi PACS DICOM & OHIF Viewer radiologi.'],
+        ['dir' => 'penjualan', 'name' => 'Penjualan Non-Resep', 'category' => 'Farmasi & Logistik', 'description' => 'Penjualan bebas ritel non-resep & faktur tunai.'],
+        ['dir' => 'bridging_bpjs', 'name' => 'Bridging BPJS & SatuSehat', 'category' => 'Integrasi & Analitik', 'description' => 'VClaim SEP/Rujukan, HFIS, Antrol, & SatuSehat FHIR.'],
+        ['dir' => 'pcare', 'name' => 'PCare BPJS FKTP', 'category' => 'Integrasi & Analitik', 'description' => 'Pendaftaran, kunjungan, obat, tindakan, & rujukan FKTP.'],
+        ['dir' => 'veronisa', 'name' => 'Veronisa Klaim', 'category' => 'Integrasi & Analitik', 'description' => 'Verifikasi klaim non-kapitasi/PRB & mapping DPHO.'],
+        ['dir' => 'anjungan', 'name' => 'Anjungan & Display TV', 'category' => 'Layanan Pasien', 'description' => 'Kiosk mandiri, tiket thermal, Display LEAN, Farmasi & Kasir.'],
+        ['dir' => 'wagateway', 'name' => 'WhatsApp Gateway CRM', 'category' => 'Integrasi & Analitik', 'description' => 'Multi-session WA, live chat 2-arah CS, broadcast & AI draft.'],
+        ['dir' => 'chat', 'name' => 'Live Chat Staf', 'category' => 'Integrasi & Analitik', 'description' => 'Kanal komunikasi internal staf antar unit layanan.'],
+        ['dir' => 'smartagent', 'name' => 'SmartAgent AI & Vault', 'category' => 'Integrasi & Analitik', 'description' => 'Asisten AI klinis PDT, grounding ICD-10 & Knowledge Vault.'],
+        ['dir' => 'riwayat_simgos', 'name' => 'Riwayat Migrasi SIMGOS', 'category' => 'Manajemen & Sistem', 'description' => 'Arsip & viewer riwayat klinis migrasi SIMGOS lama.'],
+        ['dir' => 'website', 'name' => 'CMS Website Publik', 'category' => 'Manajemen & Sistem', 'description' => 'Editor halaman depan publik klinik & layanan.'],
+        ['dir' => 'bantuan', 'name' => 'Bantuan & Panduan', 'category' => 'Manajemen & Sistem', 'description' => 'Dokumentasi & panduan penggunaan internal SIMRS.'],
     ];
 
     public function __construct(private readonly PDO $pdo)
