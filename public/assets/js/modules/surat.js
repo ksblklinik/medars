@@ -68,6 +68,33 @@
                 });
             });
 
+            document.getElementById('formSuratSehat')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.createSurat({
+                    type: 'sehat',
+                    no_rawat: document.getElementById('sehatNoRawat').value,
+                    tanggalsurat: document.getElementById('sehatTgl').value,
+                    berat: document.getElementById('sehatBb').value,
+                    tinggi: document.getElementById('sehatTb').value,
+                    tensi: document.getElementById('sehatTd').value,
+                    suhu: document.getElementById('sehatSuhu').value,
+                    butawarna: document.getElementById('sehatBw').value,
+                    kesimpulan: document.getElementById('sehatKesimpulan').value,
+                    keperluan: document.getElementById('sehatKeperluan').value,
+                });
+            });
+
+            document.getElementById('formSuratCutiHamil')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.createSurat({
+                    type: 'cuti_hamil',
+                    no_rawat: document.getElementById('cutiNoRawat').value,
+                    keterangan_hamil: document.getElementById('cutiKet').value,
+                    terhitung_mulai: document.getElementById('cutiMulai').value,
+                    perkiraan_lahir: document.getElementById('cutiHpl').value,
+                });
+            });
+
             document.getElementById('formSuratNarkoba')?.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.createSurat({
@@ -140,7 +167,7 @@
         },
 
         renderTable: function (type, rows) {
-            const map = { sakit: 'tbodySuratSakit', hamil: 'tbodySuratHamil', narkoba: 'tbodySuratNarkoba' };
+            const map = { sakit: 'tbodySuratSakit', hamil: 'tbodySuratHamil', narkoba: 'tbodySuratNarkoba', sehat: 'tbodySuratSehat', cuti_hamil: 'tbodySuratCutiHamil' };
             const tbody = document.getElementById(map[type]);
             if (!tbody) return;
             if (!rows.length) {
@@ -155,6 +182,10 @@
                     cols = `<td class="font-monospace">${this.escapeHtml(r.no_surat)}</td><td>${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.tanggalawal)} s/d ${this.escapeHtml(r.tanggalakhir)}</td><td>${this.escapeHtml(r.lamasakit)}</td>`;
                 } else if (type === 'hamil') {
                     cols = `<td class="font-monospace">${this.escapeHtml(r.no_surat)}</td><td>${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.tanggalperiksa)}</td><td>${this.escapeHtml(r.hasilperiksa)}</td>`;
+                } else if (type === 'sehat') {
+                    cols = `<td class="font-monospace">${this.escapeHtml(r.no_surat)}</td><td>${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.tanggalsurat)}</td><td>${this.escapeHtml(r.keperluan)} (${this.escapeHtml(r.kesimpulan)})</td>`;
+                } else if (type === 'cuti_hamil') {
+                    cols = `<td class="font-monospace">${this.escapeHtml(r.no_surat)}</td><td>${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.terhitung_mulai)}</td><td>${this.escapeHtml(r.perkiraan_lahir)} (${this.escapeHtml(r.keterangan_hamil)})</td>`;
                 } else {
                     cols = `<td class="font-monospace">${this.escapeHtml(r.no_surat)}</td><td>${this.escapeHtml(r.no_rawat)}</td><td>${this.escapeHtml(r.nm_pasien || '-')}</td><td>${this.escapeHtml(r.tanggal)}</td><td>${this.escapeHtml(r.keperluan)}</td>`;
                 }

@@ -19,6 +19,12 @@ interface SuratMedisRepositoryInterface
 
     public function saveSuratBebasNarkoba(SuratBebasNarkoba $surat): void;
 
+    /** @param array<string, mixed> $data */
+    public function saveSuratSehat(array $data): string;
+
+    /** @param array<string, mixed> $data */
+    public function saveSuratCutiHamil(array $data): string;
+
     public function saveRujukanInternal(RujukanInternal $rujukan): void;
 
     /**

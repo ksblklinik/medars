@@ -34,6 +34,16 @@ final class VerifySuratUseCaseTest extends TestCase
             {
             }
 
+            public function saveSuratSehat(array $data): string
+            {
+                return 'SKD-001';
+            }
+
+            public function saveSuratCutiHamil(array $data): string
+            {
+                return 'SCH-001';
+            }
+
             public function saveRujukanInternal(RujukanInternal $rujukan): void
             {
             }

@@ -16,6 +16,8 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabSuratSakit" data-type="sakit" type="button">Surat Sakit</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratHamil" data-type="hamil" type="button">Surat Hamil</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratNarkoba" data-type="narkoba" type="button">Surat Bebas Narkoba</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratSehat" data-type="sehat" type="button">Surat Sehat</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSuratCutiHamil" data-type="cuti_hamil" type="button">Surat Cuti Hamil</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRujukanInternal" data-type="rujukan" type="button">Rujukan / SEP Internal</button></li>
     </ul>
 
@@ -109,6 +111,57 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 5: Surat Sehat -->
+        <div class="tab-pane fade" id="tabSuratSehat">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Terbitkan Surat Keterangan Sehat</div>
+                        <div class="card-body">
+                            <form id="formSuratSehat" class="row g-2">
+                                <div class="col-7"><label class="form-label small mb-1">No. Rawat</label><input type="text" id="sehatNoRawat" class="form-control form-control-sm" required></div>
+                                <div class="col-5"><label class="form-label small mb-1">Tanggal</label><input type="date" id="sehatTgl" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" required></div>
+                                <div class="col-3"><label class="form-label small mb-1">BB (kg)</label><input type="text" id="sehatBb" class="form-control form-control-sm" placeholder="65"></div>
+                                <div class="col-3"><label class="form-label small mb-1">TB (cm)</label><input type="text" id="sehatTb" class="form-control form-control-sm" placeholder="170"></div>
+                                <div class="col-3"><label class="form-label small mb-1">TD</label><input type="text" id="sehatTd" class="form-control form-control-sm" placeholder="120/80"></div>
+                                <div class="col-3"><label class="form-label small mb-1">Suhu</label><input type="text" id="sehatSuhu" class="form-control form-control-sm" placeholder="36.5"></div>
+                                <div class="col-6"><label class="form-label small mb-1">Buta Warna</label><select id="sehatBw" class="form-select form-select-sm"><option value="Tidak">Tidak</option><option value="Ya">Ya</option></select></div>
+                                <div class="col-6"><label class="form-label small mb-1">Kesimpulan</label><select id="sehatKesimpulan" class="form-select form-select-sm"><option value="Sehat">Sehat</option><option value="Tidak Sehat">Tidak Sehat</option></select></div>
+                                <div class="col-12"><label class="form-label small mb-1">Keperluan</label><input type="text" id="sehatKeperluan" class="form-control form-control-sm" value="Melamar Pekerjaan" required></div>
+                                <div class="col-12 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Terbitkan Surat Sehat</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0"><div class="card-body p-0 table-responsive"><table class="table table-sm table-hover align-middle mb-0 small"><thead class="table-light"><tr><th>No. Surat</th><th>No. Rawat</th><th>Pasien</th><th>Tgl Surat</th><th>Keperluan / Hasil</th><th class="text-center">Aksi</th></tr></thead><tbody id="tbodySuratSehat"></tbody></table></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: Surat Cuti Hamil -->
+        <div class="tab-pane fade" id="tabSuratCutiHamil">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Terbitkan Surat Cuti Hamil</div>
+                        <div class="card-body">
+                            <form id="formSuratCutiHamil" class="row g-2">
+                                <div class="col-12"><label class="form-label small mb-1">No. Rawat</label><input type="text" id="cutiNoRawat" class="form-control form-control-sm" required></div>
+                                <div class="col-12"><label class="form-label small mb-1">Keterangan Kehamilan</label><input type="text" id="cutiKet" class="form-control form-control-sm" value="G1P0A0 Hamil 36 Minggu" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Terhitung Mulai</label><input type="date" id="cutiMulai" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Perkiraan Lahir</label><input type="date" id="cutiHpl" class="form-control form-control-sm" value="<?= date('Y-m-d', strtotime('+30 days')) ?>" required></div>
+                                <div class="col-12 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Terbitkan Surat Cuti Hamil</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0"><div class="card-body p-0 table-responsive"><table class="table table-sm table-hover align-middle mb-0 small"><thead class="table-light"><tr><th>No. Surat</th><th>No. Rawat</th><th>Pasien</th><th>Mulai Cuti</th><th>HPL / Ket</th><th class="text-center">Aksi</th></tr></thead><tbody id="tbodySuratCutiHamil"></tbody></table></div></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script src="/assets/js/modules/surat.js?v=20261117c"></script>
+<script src="/assets/js/modules/surat.js?v=20261117d"></script>

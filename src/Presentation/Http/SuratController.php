@@ -94,6 +94,8 @@ final readonly class SuratController
                     trim((string) ($payload['benzodiazepin'] ?? 'NEGATIF')),
                     trim((string) ($payload['cocain'] ?? 'NEGATIF'))
                 )->noSurat,
+                'sehat' => $this->repo->saveSuratSehat(array_merge($payload, ['no_rawat' => $noRawat->value()])),
+                'cuti_hamil' => $this->repo->saveSuratCutiHamil(array_merge($payload, ['no_rawat' => $noRawat->value()])),
                 default => throw new \InvalidArgumentException("Jenis surat tidak dikenal: '{$type}'."),
             };
 
@@ -133,12 +135,16 @@ final readonly class SuratController
         $title = match ($type) {
             'hamil' => 'SURAT KETERANGAN PEMERIKSAAN KEHAMILAN',
             'narkoba' => 'SURAT KETERANGAN BEBAS NARKOBA',
+            'sehat' => 'SURAT KETERANGAN SEHAT',
+            'cuti_hamil' => 'SURAT KETERANGAN CUTI HAMIL',
             default => 'SURAT KETERANGAN SAKIT',
         };
 
         $detail = match ($type) {
             'hamil' => '<p>Berdasarkan pemeriksaan pada tanggal <strong>' . $e($row['tanggalperiksa']) . '</strong>, yang bersangkutan dinyatakan: <strong>' . $e($row['hasilperiksa']) . '</strong>.</p>',
             'narkoba' => '<p>Untuk keperluan: <strong>' . $e($row['keperluan']) . '</strong> (' . $e($row['kategori']) . '). Hasil uji laboratorium: Opiat <strong>' . $e($row['opiat']) . '</strong>, Ganja <strong>' . $e($row['ganja']) . '</strong>, Amphetamin <strong>' . $e($row['amphetamin']) . '</strong>, Methamphetamin <strong>' . $e($row['methamphetamin']) . '</strong>, Benzodiazepin <strong>' . $e($row['benzodiazepin']) . '</strong>, Cocain <strong>' . $e($row['cocain']) . '</strong>.</p>',
+            'sehat' => '<p>Pada tanggal <strong>' . $e($row['tanggalsurat']) . '</strong> telah diperiksa (BB: ' . $e($row['berat']) . ' kg, TB: ' . $e($row['tinggi']) . ' cm, TD: ' . $e($row['tensi']) . ', Suhu: ' . $e($row['suhu']) . '&deg;C, Buta Warna: ' . $e($row['butawarna']) . ') untuk keperluan <strong>' . $e($row['keperluan']) . '</strong> dan dinyatakan: <strong>' . $e($row['kesimpulan']) . '</strong>.</p>',
+            'cuti_hamil' => '<p>Berdasarkan pemeriksaan kehamilan (<strong>' . $e($row['keterangan_hamil']) . '</strong>), yang bersangkutan diberikan cuti hamil terhitung mulai tanggal <strong>' . $e($row['terhitung_mulai']) . '</strong> dengan hari perkiraan lahir <strong>' . $e($row['perkiraan_lahir']) . '</strong>.</p>',
             default => '<p>Yang bersangkutan perlu beristirahat karena sakit selama <strong>' . $e($row['lamasakit']) . '</strong> terhitung mulai tanggal <strong>' . $e($row['tanggalawal']) . '</strong> sampai dengan <strong>' . $e($row['tanggalakhir']) . '</strong>.</p>',
         };
 

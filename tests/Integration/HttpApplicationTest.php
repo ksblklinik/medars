@@ -2122,4 +2122,44 @@ class HttpApplicationTest extends TestCase
         $del = $this->app->handle('POST', '/api/v1/kepegawaian/sdm_berkas/delete', rawBody: json_encode(['id' => $rows[0]['id']]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(200, $del['status']);
     }
+
+    public function testSuratSehatDanCutiHamilEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/surat');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Surat Sehat', $page['body']);
+        $this->assertStringContainsString('Surat Cuti Hamil', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $sehat = $this->app->handle('POST', '/api/v1/surat/create', rawBody: json_encode([
+            'type' => 'sehat',
+            'no_rawat' => '2026/11/17/000040',
+            'berat' => '64',
+            'tinggi' => '170',
+            'tensi' => '120/80',
+            'keperluan' => 'CPNS',
+            'kesimpulan' => 'Sehat',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $sehat['status']);
+        $noSehat = json_decode($sehat['body'], true)['data']['no_surat'];
+
+        $cetakSehat = $this->app->handle('GET', '/surat/cetak', queryParams: ['type' => 'sehat', 'no_surat' => $noSehat]);
+        $this->assertSame(200, $cetakSehat['status']);
+        $this->assertStringContainsString('SURAT KETERANGAN SEHAT', $cetakSehat['body']);
+
+        $cuti = $this->app->handle('POST', '/api/v1/surat/create', rawBody: json_encode([
+            'type' => 'cuti_hamil',
+            'no_rawat' => '2026/11/17/000040',
+            'keterangan_hamil' => 'G1P0A0 36 Minggu',
+            'terhitung_mulai' => '2026-11-17',
+            'perkiraan_lahir' => '2026-12-17',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $cuti['status']);
+        $noCuti = json_decode($cuti['body'], true)['data']['no_surat'];
+
+        $cetakCuti = $this->app->handle('GET', '/surat/cetak', queryParams: ['type' => 'cuti_hamil', 'no_surat' => $noCuti]);
+        $this->assertSame(200, $cetakCuti['status']);
+        $this->assertStringContainsString('SURAT KETERANGAN CUTI HAMIL', $cetakCuti['body']);
+    }
 }

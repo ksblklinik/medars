@@ -331,6 +331,27 @@ final class SchemaMigrator
                 hasilperiksa VARCHAR(100) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS surat_sehat (
+                no_surat VARCHAR(50) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tanggalsurat VARCHAR(15) NOT NULL,
+                berat VARCHAR(15) NOT NULL DEFAULT '',
+                tinggi VARCHAR(15) NOT NULL DEFAULT '',
+                tensi VARCHAR(20) NOT NULL DEFAULT '',
+                suhu VARCHAR(15) NOT NULL DEFAULT '',
+                butawarna VARCHAR(25) NOT NULL DEFAULT 'Tidak',
+                keperluan VARCHAR(150) NOT NULL DEFAULT 'Administrasi',
+                kesimpulan VARCHAR(30) NOT NULL DEFAULT 'Sehat'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS surat_cuti_hamil (
+                no_surat VARCHAR(50) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                keterangan_hamil VARCHAR(150) NOT NULL DEFAULT '',
+                terhitung_mulai VARCHAR(15) NOT NULL,
+                perkiraan_lahir VARCHAR(15) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS surat_bebas_narkoba (
                 no_surat VARCHAR(50) PRIMARY KEY,
                 no_rawat VARCHAR(20) NOT NULL,

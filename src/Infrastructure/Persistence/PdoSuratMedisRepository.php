@@ -13,7 +13,7 @@ use PDO;
 
 final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
 {
-    private const ALLOWED_TABLES = ['surat_sakit', 'surat_hamil', 'surat_bebas_narkoba'];
+    private const ALLOWED_TABLES = ['surat_sakit', 'surat_hamil', 'surat_bebas_narkoba', 'surat_sehat', 'surat_cuti_hamil'];
 
     public function __construct(
         private readonly PDO $pdo,
@@ -154,6 +154,24 @@ final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
                 WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
                 ORDER BY s.tanggal DESC, s.no_surat DESC LIMIT 100
             ",
+            'sehat' => "
+                SELECT s.no_surat, s.no_rawat, s.tanggalsurat, s.berat, s.tinggi, s.tensi, s.suhu, s.butawarna, s.keperluan, s.kesimpulan,
+                       p.no_rkm_medis, p.nm_pasien
+                FROM surat_sehat s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
+                ORDER BY s.tanggalsurat DESC, s.no_surat DESC LIMIT 100
+            ",
+            'cuti_hamil' => "
+                SELECT s.no_surat, s.no_rawat, s.keterangan_hamil, s.terhitung_mulai, s.perkiraan_lahir,
+                       p.no_rkm_medis, p.nm_pasien
+                FROM surat_cuti_hamil s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
+                ORDER BY s.terhitung_mulai DESC, s.no_surat DESC LIMIT 100
+            ",
             default => throw new \InvalidArgumentException("Jenis surat tidak dikenal: '{$type}'."),
         };
 
@@ -189,6 +207,22 @@ final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
                 LEFT JOIN dokter d ON s.kd_dokter = d.kd_dokter
                 WHERE s.no_surat = :ns LIMIT 1
             ",
+            'sehat' => "
+                SELECT s.*, p.no_rkm_medis, p.nm_pasien, p.tgl_lahir, p.jk, p.alamat, d.nm_dokter
+                FROM surat_sehat s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
+                WHERE s.no_surat = :ns LIMIT 1
+            ",
+            'cuti_hamil' => "
+                SELECT s.*, p.no_rkm_medis, p.nm_pasien, p.tgl_lahir, p.jk, p.alamat, d.nm_dokter
+                FROM surat_cuti_hamil s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
+                WHERE s.no_surat = :ns LIMIT 1
+            ",
             default => throw new \InvalidArgumentException("Jenis surat tidak dikenal: '{$type}'."),
         };
 
@@ -214,5 +248,46 @@ final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
         ");
         $stmt->execute([':q' => $like]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function saveSuratSehat(array $data): string
+    {
+        $noSurat = $this->getNextSuratNumber('SKD-' . date('Ym') . '-', 'surat_sehat');
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO surat_sehat (no_surat, no_rawat, tanggalsurat, berat, tinggi, tensi, suhu, butawarna, keperluan, kesimpulan)
+             VALUES (:ns, :nr, :tgl, :bb, :tb, :td, :sh, :bw, :kp, :ks)'
+        );
+        $stmt->execute([
+            ':ns' => $noSurat,
+            ':nr' => trim((string) ($data['no_rawat'] ?? '')),
+            ':tgl' => trim((string) ($data['tanggalsurat'] ?? date('Y-m-d'))) ?: date('Y-m-d'),
+            ':bb' => trim((string) ($data['berat'] ?? '')),
+            ':tb' => trim((string) ($data['tinggi'] ?? '')),
+            ':td' => trim((string) ($data['tensi'] ?? '')),
+            ':sh' => trim((string) ($data['suhu'] ?? '')),
+            ':bw' => trim((string) ($data['butawarna'] ?? 'Tidak')) ?: 'Tidak',
+            ':kp' => trim((string) ($data['keperluan'] ?? 'Administrasi')) ?: 'Administrasi',
+            ':ks' => trim((string) ($data['kesimpulan'] ?? 'Sehat')) ?: 'Sehat',
+        ]);
+        return $noSurat;
+    }
+
+    /** @param array<string, mixed> $data */
+    public function saveSuratCutiHamil(array $data): string
+    {
+        $noSurat = $this->getNextSuratNumber('SCH-' . date('Ym') . '-', 'surat_cuti_hamil');
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO surat_cuti_hamil (no_surat, no_rawat, keterangan_hamil, terhitung_mulai, perkiraan_lahir)
+             VALUES (:ns, :nr, :kh, :tm, :pl)'
+        );
+        $stmt->execute([
+            ':ns' => $noSurat,
+            ':nr' => trim((string) ($data['no_rawat'] ?? '')),
+            ':kh' => trim((string) ($data['keterangan_hamil'] ?? 'Hamil Trimester III')) ?: 'Hamil Trimester III',
+            ':tm' => trim((string) ($data['terhitung_mulai'] ?? date('Y-m-d'))) ?: date('Y-m-d'),
+            ':pl' => trim((string) ($data['perkiraan_lahir'] ?? date('Y-m-d', strtotime('+30 days')))) ?: date('Y-m-d', strtotime('+30 days')),
+        ]);
+        return $noSurat;
     }
 }
