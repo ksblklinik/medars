@@ -2015,4 +2015,23 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $msgs['status']);
         $this->assertCount(1, json_decode($msgs['body'], true)['data']);
     }
+
+    public function testOrthancPacsEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/orthanc');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Orthanc PACS', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/api/v1/orthanc/studies-save', rawBody: json_encode(['no_rawat' => '2026/11/17/000040', 'study_uid' => '1.2.840.999.1', 'modality' => 'CR', 'study_description' => 'Thorax AP']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $save['status']);
+        $id = (int) json_decode($save['body'], true)['data']['id'];
+
+        $baca = $this->app->handle('POST', '/api/v1/orthanc/studies-interpretasi', rawBody: json_encode(['id' => $id, 'hasil_baca' => 'Tidak tampak infiltrat.']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $baca['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/orthanc/studies', queryParams: ['q' => 'Thorax']);
+        $this->assertSame('Tidak tampak infiltrat.', json_decode($list['body'], true)['data'][0]['hasil_baca']);
+    }
 }

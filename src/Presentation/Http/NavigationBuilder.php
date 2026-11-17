@@ -143,6 +143,14 @@ final class NavigationBuilder
                 'modules' => ['keuangan', 'kasir', 'admin'],
             ],
             [
+                'title' => 'Orthanc PACS',
+                'icon' => 'fa-x-ray',
+                'route' => '/orthanc',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'orthanc',
+                'modules' => ['orthanc', 'radiologi', 'dokter_ralan', 'admin'],
+            ],
+            [
                 'title' => 'Jasa Medis',
                 'icon' => 'fa-hand-holding-medical',
                 'route' => '/jasa-medis',

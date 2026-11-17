@@ -68,6 +68,7 @@ class SchemaMigratorTest extends TestCase
             'mlite_chat_conversations',
             'mlite_chat_messages',
             'mlite_chat_quick_responses',
+            'bridging_orthanc',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

@@ -525,6 +525,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $orthancController = new OrthancController(
+            new \App\Infrastructure\Persistence\PdoOrthancRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1780,6 +1786,30 @@ final class HttpApplication
             $this->requireAuthenticatedUser();
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $chatController->apiQuickResponseDelete($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+
+        $router->get('/orthanc', function () use ($orthancController): array {
+            $user = $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
+            return $orthancController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/orthanc/studies', function () use ($orthancController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
+            return $orthancController->apiStudies($queryParams);
+        });
+        $router->post('/api/v1/orthanc/studies-save', function () use ($orthancController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $orthancController->apiSaveStudy($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/orthanc/studies-interpretasi', function () use ($orthancController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $orthancController->apiUpdateHasilBaca($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/orthanc/studies-delete', function () use ($orthancController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $orthancController->apiDeleteStudy($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         return $router->dispatch($method, $path);

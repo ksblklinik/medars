@@ -942,6 +942,21 @@ final class SchemaMigrator
                 created_by VARCHAR(50) NOT NULL DEFAULT 'system'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS bridging_orthanc (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                study_uid VARCHAR(120) NOT NULL,
+                series_uid VARCHAR(120) NOT NULL DEFAULT '',
+                modality VARCHAR(20) NOT NULL DEFAULT 'CR',
+                study_description VARCHAR(200) NOT NULL DEFAULT '',
+                patient_name VARCHAR(120) NOT NULL DEFAULT '',
+                tgl_periksa VARCHAR(15) NOT NULL,
+                hasil_baca TEXT NOT NULL,
+                dokter_radiologi VARCHAR(80) NOT NULL DEFAULT '',
+                viewer_url VARCHAR(255) NOT NULL DEFAULT '',
+                created_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,
