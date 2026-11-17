@@ -293,6 +293,24 @@ final readonly class PdoLabRadiologyRepository implements LabRadiologyRepository
         ]);
     }
 
+    public function findRadiologiResultsByNoRawat(NoRawat $noRawat): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT no_rawat, tgl_periksa, jam, hasil FROM hasil_radiologi WHERE no_rawat = :nr ORDER BY tgl_periksa DESC, jam DESC'
+        );
+        $stmt->execute([':nr' => $noRawat->value()]);
+        $res = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            $res[] = new HasilRadiologi(
+                noRawat: new NoRawat((string) $r['no_rawat']),
+                tglPeriksa: (string) $r['tgl_periksa'],
+                jam: (string) $r['jam'],
+                hasil: (string) $r['hasil'],
+            );
+        }
+        return $res;
+    }
+
     public function markRadiologiResulted(string $noOrder, string $tgl, string $jam): void
     {
         $stmt = $this->pdo->prepare(
@@ -303,5 +321,14 @@ final readonly class PdoLabRadiologyRepository implements LabRadiologyRepository
             ':jam' => $jam,
             ':noorder' => $noOrder,
         ]);
+    }
+
+    public function deleteRadiologiOrder(string $noOrder): void
+    {
+        $stmtItems = $this->pdo->prepare('DELETE FROM permintaan_pemeriksaan_radiologi WHERE noorder = :noorder');
+        $stmtItems->execute([':noorder' => $noOrder]);
+
+        $stmtOrder = $this->pdo->prepare('DELETE FROM permintaan_radiologi WHERE noorder = :noorder');
+        $stmtOrder->execute([':noorder' => $noOrder]);
     }
 }

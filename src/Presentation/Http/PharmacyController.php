@@ -30,8 +30,7 @@ final readonly class PharmacyController
         private SaveCopyResepUseCase $copyResepUseCase,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{status: int, headers: array<string, string>, body: string}
@@ -209,7 +208,7 @@ final readonly class PharmacyController
                     'no_resep' => $resep->noResep->value(),
                 ],
             ]);
-        } catch (\DomainException|\InvalidArgumentException $e) {
+        } catch (\DomainException | \InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -232,7 +231,7 @@ final readonly class PharmacyController
                 'status' => 'success',
                 'message' => "Resep {$noResep->value()} berhasil divalidasi & diserahkan dari depo {$depo->value()}.",
             ]);
-        } catch (InsufficientStockException|\DomainException|\InvalidArgumentException $e) {
+        } catch (InsufficientStockException | \DomainException | \InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -251,7 +250,7 @@ final readonly class PharmacyController
                 'status' => 'success',
                 'message' => "Resep {$noResep->value()} berhasil dihapus.",
             ]);
-        } catch (\DomainException|\InvalidArgumentException $e) {
+        } catch (\DomainException | \InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -274,7 +273,7 @@ final readonly class PharmacyController
                 'message' => "Copy resep berhasil dibuat: {$copied->noResep->value()}.",
                 'data' => ['no_resep' => $copied->noResep->value()],
             ]);
-        } catch (\DomainException|\InvalidArgumentException $e) {
+        } catch (\DomainException | \InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -298,7 +297,7 @@ final readonly class PharmacyController
         }
 
         $items = $this->findResepItems($noResep);
-        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $e = static fn(mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
         $cards = '';
         foreach ($items as $it) {
             $cards .= '<div class="etiket-card">'
@@ -347,7 +346,7 @@ final readonly class PharmacyController
         }
 
         $items = $this->findResepItems($noResep);
-        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $e = static fn(mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
         $rowsHtml = '';
         foreach ($items as $idx => $it) {
             $rowsHtml .= '<tr>'

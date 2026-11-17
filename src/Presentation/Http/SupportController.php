@@ -7,6 +7,7 @@ namespace App\Presentation\Http;
 use App\Application\Support\UseCase\CreateLabOrderUseCase;
 use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
 use App\Application\Support\UseCase\DeleteLabOrderUseCase;
+use App\Application\Support\UseCase\DeleteRadiologyOrderUseCase;
 use App\Application\Support\UseCase\SaveLabResultUseCase;
 use App\Application\Support\UseCase\SaveRadiologyResultUseCase;
 use App\Domain\Registration\ValueObject\NoRawat;
@@ -27,6 +28,7 @@ final readonly class SupportController
         private SaveRadiologyResultUseCase $saveRadiologyResultUseCase,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
+        private ?DeleteRadiologyOrderUseCase $deleteRadUseCase = null,
     ) {}
 
     /**
@@ -242,6 +244,117 @@ final readonly class SupportController
             'top_diseases' => $this->reportRepo->getTopDiseases($from, $to, 10),
             'revenue_by_claim' => $this->reportRepo->getRevenueByClaimType($from, $to),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function deleteRadiologyOrder(array $payload): array
+    {
+        try {
+            if ($this->deleteRadUseCase === null) {
+                throw new \DomainException('Layanan hapus order radiologi belum dikonfigurasi.');
+            }
+            $this->deleteRadUseCase->execute(trim((string) ($payload['noorder'] ?? '')));
+            return $this->json(['ok' => true, 'message' => 'Order radiologi berhasil dihapus.']);
+        } catch (\Throwable $e) {
+            return $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printLabResult(array $query): array
+    {
+        $noOrder = trim((string) ($query['noorder'] ?? ''));
+        $order = $noOrder !== '' ? $this->labRepo->findLabOrder($noOrder) : null;
+        if ($order === null) {
+            return [
+                'status' => 404,
+                'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+                'body' => '<h3>Order laboratorium tidak ditemukan.</h3>',
+            ];
+        }
+
+        $results = $this->labRepo->findLabResultsByNoRawat($order->noRawat);
+        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $rowsHtml = '';
+        foreach ($results as $r) {
+            $rowsHtml .= '<tr>'
+                . '<td>' . $e($r->kdJenisPrw) . '</td>'
+                . '<td>' . $e($r->idTemplate) . '</td>'
+                . '<td><strong>' . $e($r->nilai) . '</strong></td>'
+                . '<td>' . $e($r->nilaiRujukan) . '</td>'
+                . '<td>' . $e($r->keterangan) . '</td>'
+                . '</tr>';
+        }
+
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Hasil Lab ' . $e($noOrder) . '</title>'
+            . '<style>body{font-family:Arial,sans-serif;margin:20px;max-width:760px}h2{margin:0 0 6px;color:#00897b}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:6px 8px;font-size:13px;text-align:left}th{background:#f1f5f9}@media print{.no-print{display:none}}</style>'
+            . '</head><body>'
+            . '<div class="no-print" style="margin-bottom:12px;"><button onclick="window.print()">Cetak Hasil Lab</button></div>'
+            . '<h2>HASIL PEMERIKSAAN LABORATORIUM</h2>'
+            . '<div style="font-size:13px;">No. Order: <strong>' . $e($order->noOrder) . '</strong> | No. Rawat: ' . $e($order->noRawat->value()) . ' | Tgl. Order: ' . $e($order->tglPermintaan) . '</div>'
+            . '<table><thead><tr><th>Kode</th><th>Parameter</th><th>Hasil</th><th>Nilai Rujukan</th><th>Keterangan</th></tr></thead><tbody>'
+            . ($rowsHtml !== '' ? $rowsHtml : '<tr><td colspan="5">Belum ada hasil laboratorium tercatat.</td></tr>')
+            . '</tbody></table>'
+            . '<div style="margin-top:28px;text-align:right;font-size:13px;">Analis / Penanggung Jawab Lab<br><br><br>(__________________________)</div>'
+            . '</body></html>';
+
+        return [
+            'status' => 200,
+            'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+            'body' => $html,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printRadiologyResult(array $query): array
+    {
+        $noOrder = trim((string) ($query['noorder'] ?? ''));
+        $order = $noOrder !== '' ? $this->labRepo->findRadiologiOrder($noOrder) : null;
+        if ($order === null) {
+            return [
+                'status' => 404,
+                'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+                'body' => '<h3>Order radiologi tidak ditemukan.</h3>',
+            ];
+        }
+
+        $results = $this->labRepo->findRadiologiResultsByNoRawat($order->noRawat);
+        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $blocks = '';
+        foreach ($results as $r) {
+            $blocks .= '<div style="border:1px solid #ccc;padding:12px;margin-top:12px;background:#fafafa;">'
+                . '<div style="font-size:12px;color:#555;margin-bottom:6px;">Tanggal Periksa: ' . $e($r->tglPeriksa) . ' ' . $e($r->jam) . '</div>'
+                . '<div style="white-space:pre-wrap;font-size:14px;">' . $e($r->hasil) . '</div>'
+                . '</div>';
+        }
+        if ($blocks === '') {
+            $blocks = '<p>Belum ada expertise radiologi tercatat.</p>';
+        }
+
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Expertise Radiologi ' . $e($noOrder) . '</title>'
+            . '<style>body{font-family:Arial,sans-serif;margin:20px;max-width:760px}h2{margin:0 0 6px;color:#00897b}@media print{.no-print{display:none}}</style>'
+            . '</head><body>'
+            . '<div class="no-print" style="margin-bottom:12px;"><button onclick="window.print()">Cetak Expertise Radiologi</button></div>'
+            . '<h2>HASIL EXPERTISE RADIOLOGI</h2>'
+            . '<div style="font-size:13px;">No. Order: <strong>' . $e($order->noOrder) . '</strong> | No. Rawat: ' . $e($order->noRawat->value()) . ' | Tgl. Order: ' . $e($order->tglPermintaan) . '</div>'
+            . $blocks
+            . '<div style="margin-top:28px;text-align:right;font-size:13px;">Dokter Spesialis Radiologi<br><br><br>(__________________________)</div>'
+            . '</body></html>';
+
+        return [
+            'status' => 200,
+            'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+            'body' => $html,
+        ];
     }
 
     /**

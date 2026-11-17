@@ -59,8 +59,8 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
-| 26 | `laboratorium` | 🟡 Parsial | Belum ada master paket/parameter nilai rujukan, cetak hasil lab PDF, & input order baru langsung di modul lab. |
-| 27 | `radiologi` | 🟡 Parsial | Belum ada cetak expertise radiologi PDF, hapus order radiologi, & viewer lampiran gambar. |
+| 26 | `laboratorium` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`) & cetak hasil lab (`/penunjang/lab/cetak`) sudah ada. Sisa: master paket/parameter nilai rujukan & input order baru langsung di modul lab. |
+| 27 | `radiologi` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), hapus order radiologi (`DeleteRadiologyOrderUseCase`), & cetak expertise radiologi (`/penunjang/radiologi/cetak`) sudah ada. Sisa: viewer lampiran gambar. |
 | 28 | `orthanc` | ❌ Belum Ada | Integrasi PACS / DICOM viewer Orthanc & interpretasi citra. |
 | 29 | `laporan` | 🟡 Parsial | Baru ada ringkasan kunjungan, top 10 ICD, & pendapatan klaim; belum ada export Excel/PDF & laporan rekonsiliasi order. |
 | 30 | `manajemen` | ❌ Belum Ada | Dashboard Eksekutif Manajemen & LEAN Analytics Board penuh (grafik tren, overtime dokter, net signed avg per poli). |

@@ -21,10 +21,20 @@
         return res.json();
     }
 
+    function getPeriodQuery() {
+        const from = document.getElementById('supportFilterFrom')?.value || '';
+        const to = document.getElementById('supportFilterTo')?.value || '';
+        const params = new URLSearchParams();
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        const qs = params.toString();
+        return qs ? '?' + qs : '';
+    }
+
     async function loadLabOrders() {
         const tbody = document.getElementById('labOrdersBody');
         if (!tbody) return;
-        const data = await apiFetch('/api/v1/penunjang/lab/orders');
+        const data = await apiFetch('/api/v1/penunjang/lab/orders' + getPeriodQuery());
         if (!data.ok || !data.orders.length) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3 small">Belum ada order lab hari ini.</td></tr>';
             return;
@@ -55,7 +65,7 @@
     async function loadRadOrders() {
         const tbody = document.getElementById('radOrdersBody');
         if (!tbody) return;
-        const data = await apiFetch('/api/v1/penunjang/radiologi/orders');
+        const data = await apiFetch('/api/v1/penunjang/radiologi/orders' + getPeriodQuery());
         if (!data.ok || !data.orders.length) {
             tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3 small">Belum ada order radiologi hari ini.</td></tr>';
             return;
@@ -99,6 +109,39 @@
 
     document.getElementById('btnRefreshLab')?.addEventListener('click', loadLabOrders);
     document.getElementById('btnRefreshRad')?.addEventListener('click', loadRadOrders);
+    document.getElementById('btnFilterSupport')?.addEventListener('click', () => {
+        loadLabOrders();
+        loadRadOrders();
+    });
+    ['supportFilterFrom', 'supportFilterTo'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            loadLabOrders();
+            loadRadOrders();
+        });
+    });
+    document.getElementById('btnPrintLabResult')?.addEventListener('click', () => {
+        const noOrder = document.getElementById('labNoOrder')?.value.trim() || '';
+        if (!noOrder) return;
+        window.open('/penunjang/lab/cetak?noorder=' + encodeURIComponent(noOrder), '_blank');
+    });
+    document.getElementById('btnPrintRadResult')?.addEventListener('click', () => {
+        const noOrder = document.getElementById('radNoOrder')?.value.trim() || '';
+        if (!noOrder) return;
+        window.open('/penunjang/radiologi/cetak?noorder=' + encodeURIComponent(noOrder), '_blank');
+    });
+    document.getElementById('btnDeleteRadOrder')?.addEventListener('click', async () => {
+        const noOrder = document.getElementById('radNoOrder')?.value.trim() || '';
+        if (!noOrder) return;
+        const data = await apiFetch('/api/v1/penunjang/radiologi/orders/delete', {
+            method: 'POST',
+            body: JSON.stringify({ noorder: noOrder }),
+        });
+        const fb = document.getElementById('radResultFeedback');
+        fb.innerHTML = data.ok
+            ? `<div class="alert alert-info py-2 small">Order radiologi ${escapeHtml(noOrder)} dihapus.</div>`
+            : `<div class="alert alert-danger py-2 small">${escapeHtml(data.message || data.error)}</div>`;
+        loadRadOrders();
+    });
     document.getElementById('btnLoadReports')?.addEventListener('click', loadOperationalReports);
 
     document.getElementById('formLabResult')?.addEventListener('submit', async (e) => {

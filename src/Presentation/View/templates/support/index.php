@@ -11,8 +11,14 @@
             <option value="terkunci">Terkunci Kasir</option>
         </select>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode: <?= date('d-m-Y') ?></span>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="width: auto;">
+            <span class="input-group-text bg-white text-muted">Dari</span>
+            <input type="date" id="supportFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
+            <span class="input-group-text bg-white text-muted">s/d</span>
+            <input type="date" id="supportFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
+            <button type="button" id="btnFilterSupport" class="btn btn-outline-teal">Filter</button>
+        </div>
     </div>
 </div>
 
@@ -98,9 +104,12 @@
                                             <input type="text" class="form-control form-control-sm" id="labRujukan" value="13.0 - 17.0">
                                         </div>
                                     </div>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex flex-wrap gap-2">
                                         <button type="submit" class="btn btn-sm btn-medical-teal" id="btnSaveLabResult">
                                             <i class="fa fa-check-circle me-1"></i> Simpan &amp; Validasi Hasil
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-teal" id="btnPrintLabResult">
+                                            <i class="fa fa-print me-1"></i> Cetak Hasil
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteLabOrder">
                                             <i class="fa fa-trash me-1"></i> Hapus Order
@@ -154,9 +163,17 @@
                                         <label class="form-label small fw-semibold">Expertise / Kesan Klinis</label>
                                         <textarea class="form-control form-control-sm" id="radExpertise" rows="5" required placeholder="Cor dan pulmo dalam batas normal..."></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-medical-teal">
-                                        <i class="fa fa-save me-1"></i> Simpan Expertise
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="submit" class="btn btn-sm btn-medical-teal">
+                                            <i class="fa fa-save me-1"></i> Simpan Expertise
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-teal" id="btnPrintRadResult">
+                                            <i class="fa fa-print me-1"></i> Cetak Expertise
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnDeleteRadOrder">
+                                            <i class="fa fa-trash me-1"></i> Hapus Order
+                                        </button>
+                                    </div>
                                 </form>
                                 <div id="radResultFeedback" class="mt-3"></div>
                             </div>
@@ -212,4 +229,4 @@
         </div>
     </div>
 </div>
-<script src="/assets/js/modules/support.js" defer></script>
+<script src="/assets/js/modules/support.js?v=20261117b" defer></script>

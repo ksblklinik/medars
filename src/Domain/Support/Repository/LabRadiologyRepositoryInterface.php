@@ -55,5 +55,12 @@ interface LabRadiologyRepositoryInterface
 
     public function saveHasilRadiologi(HasilRadiologi $hasil): void;
 
+    /**
+     * @return list<HasilRadiologi>
+     */
+    public function findRadiologiResultsByNoRawat(NoRawat $noRawat): array;
+
     public function markRadiologiResulted(string $noOrder, string $tgl, string $jam): void;
+
+    public function deleteRadiologiOrder(string $noOrder): void;
 }

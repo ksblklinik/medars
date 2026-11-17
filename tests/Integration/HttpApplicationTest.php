@@ -842,4 +842,92 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('KUITANSI &amp; RINCIAN BILLING 4-PILAR', $faktur['body']);
         $this->assertStringContainsString('Konsultasi Spesialis', $faktur['body']);
     }
+
+    public function testLabAndRadiologiDeepeningEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000030', 'Rina Kartika', '1992-07-20', 'P');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR03', 'dr. Hendra', '1');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U03', 'Poli Anak', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_bayar)
+            VALUES ('003', '2026/11/17/000030', '{$today}', '08:30:00', 'DR03', '000030', 'U03', 'A09', 'Belum', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $labPage = $this->app->handle('GET', '/laboratorium');
+        $this->assertSame(200, $labPage['status']);
+        $this->assertStringContainsString('supportFilterFrom', $labPage['body']);
+        $this->assertStringContainsString('btnPrintLabResult', $labPage['body']);
+        $this->assertStringContainsString('btnDeleteRadOrder', $labPage['body']);
+        $this->assertStringContainsString('btnPrintRadResult', $labPage['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Create Lab order & print Lab result
+        $labOrderRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/lab/orders',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000030',
+                'dokter_perujuk' => 'DR03',
+                'items' => [['kd_jenis_prw' => 'LAB01', 'nm_perawatan' => 'Darah Lengkap', 'harga' => 75000, 'claim_type' => 'Tunai']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $labOrderRes['status']);
+        $labNoOrder = json_decode($labOrderRes['body'], true)['orders'][0]['no_order'];
+
+        $cetakLab = $this->app->handle('GET', '/penunjang/lab/cetak', queryParams: ['noorder' => $labNoOrder]);
+        $this->assertSame(200, $cetakLab['status']);
+        $this->assertStringContainsString('HASIL PEMERIKSAAN LABORATORIUM', $cetakLab['body']);
+
+        // 2. Create Radiology order, save expertise, & print Expertise
+        $radOrderRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/radiologi/orders',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000030',
+                'dokter_perujuk' => 'DR03',
+                'items' => [['kd_jenis_prw' => 'RAD01', 'nm_perawatan' => 'Thorax PA', 'harga' => 150000, 'claim_type' => 'Tunai']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $radOrderRes['status']);
+        $radNoOrder = json_decode($radOrderRes['body'], true)['orders'][0]['no_order'];
+
+        $radResultRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/radiologi/results',
+            rawBody: json_encode(['no_order' => $radNoOrder, 'hasil' => 'Cor dan pulmo normal']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $radResultRes['status']);
+
+        $cetakRad = $this->app->handle('GET', '/penunjang/radiologi/cetak', queryParams: ['noorder' => $radNoOrder]);
+        $this->assertSame(200, $cetakRad['status']);
+        $this->assertStringContainsString('HASIL EXPERTISE RADIOLOGI', $cetakRad['body']);
+        $this->assertStringContainsString('Cor dan pulmo normal', $cetakRad['body']);
+
+        // 3. Create another Radiology order & delete it cleanly
+        $radOrder2 = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/radiologi/orders',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000030',
+                'dokter_perujuk' => 'DR03',
+                'items' => [['kd_jenis_prw' => 'RAD02', 'nm_perawatan' => 'USG Abdomen', 'harga' => 250000, 'claim_type' => 'Tunai']],
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $radNoOrder2 = json_decode($radOrder2['body'], true)['orders'][0]['no_order'];
+
+        $delRadRes = $this->app->handle(
+            'POST',
+            '/api/v1/penunjang/radiologi/orders/delete',
+            rawBody: json_encode(['noorder' => $radNoOrder2]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $delRadRes['status']);
+        $this->assertTrue(json_decode($delRadRes['body'], true)['ok']);
+    }
 }
