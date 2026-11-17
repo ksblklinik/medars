@@ -460,6 +460,12 @@ final class HttpApplication
             $this->renderer
         );
 
+        $presensiController = new PresensiController(
+            new \App\Infrastructure\Persistence\PdoPresensiRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1332,6 +1338,27 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $profilController->apiChangePassword($user, $data);
+        });
+
+        $router->get('/presensi', function () use ($presensiController): array {
+            $user = $this->requireAuthenticatedUser();
+            return $presensiController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/presensi/list', function () use ($presensiController, $queryParams): array {
+            $this->requireAuthenticatedUser();
+            return $presensiController->apiList($queryParams);
+        });
+        $router->post('/api/v1/presensi/clock-in', function () use ($presensiController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $presensiController->apiClockIn($user, $data);
+        });
+        $router->post('/api/v1/presensi/clock-out', function () use ($presensiController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $presensiController->apiClockOut($user, $data);
         });
 
         return $router->dispatch($method, $path);

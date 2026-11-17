@@ -717,6 +717,18 @@ final class SchemaMigrator
                 catatan TEXT
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_presensi (
+                id {$bigAutoIncPk},
+                nip VARCHAR(30) NOT NULL,
+                tgl_presensi VARCHAR(15) NOT NULL,
+                jam_masuk VARCHAR(10) NOT NULL,
+                jam_pulang VARCHAR(10) NOT NULL DEFAULT '',
+                shift VARCHAR(20) NOT NULL DEFAULT 'Pagi',
+                status VARCHAR(20) NOT NULL DEFAULT 'Hadir',
+                lokasi VARCHAR(100) NOT NULL DEFAULT 'Klinik',
+                keterangan VARCHAR(255) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_homecare_kunjungan (
                 id {$bigAutoIncPk},
                 no_rawat VARCHAR(20) NOT NULL,

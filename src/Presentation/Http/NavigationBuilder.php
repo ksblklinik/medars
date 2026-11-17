@@ -215,6 +215,14 @@ final class NavigationBuilder
                 'modules' => ['kepegawaian', 'admin'],
             ],
             [
+                'title' => 'Presensi',
+                'icon' => 'fa-clock',
+                'route' => '/presensi',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'presensi',
+                'modules' => ['*'],
+            ],
+            [
                 'title' => 'Profil Saya',
                 'icon' => 'fa-user-gear',
                 'route' => '/profil',

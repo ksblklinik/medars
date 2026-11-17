@@ -87,7 +87,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 44 | `wagateway` | 🟡 Parsial | Sudah ada kirim satuan, webhook QR, whitelist; belum ada UI live chat 2-arah sesi `cs`, template broadcast terjadwal, & AI draft CS. |
 | 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
 | 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |
-| 47 | `presensi` | ❌ Belum Ada | Modul absensi / presensi pegawai (lokasi/foto/jadwal shift). |
+| 47 | `presensi` | ✅ Selesai | Modul absensi / presensi shift pegawai (`/presensi`): clock-in, clock-out, anti-duplikasi harian, & riwayat presensi (`mlite_presensi`). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |
 | 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |

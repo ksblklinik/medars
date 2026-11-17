@@ -1564,4 +1564,33 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $kasirIgd['status']);
         $this->assertCount(1, json_decode($kasirIgd['body'], true));
     }
+
+    public function testPresensiEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/presensi');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Presensi &amp; Absensi Shift Pegawai', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $in = $this->app->handle(
+            'POST',
+            '/api/v1/presensi/clock-in',
+            rawBody: json_encode(['shift' => 'Pagi', 'lokasi' => 'Poli Umum']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $in['status']);
+
+        $out = $this->app->handle(
+            'POST',
+            '/api/v1/presensi/clock-out',
+            rawBody: json_encode([]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $out['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/presensi/list');
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+    }
 }
