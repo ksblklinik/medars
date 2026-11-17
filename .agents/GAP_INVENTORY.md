@@ -83,7 +83,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
-| 43 | `anjungan` | 🟡 Parsial | Sudah ada Display TV & Kiosk dasar; belum ada cetak tiket thermal, display LEAN TV, & antrean farmasi/kasir terpisah. |
+| 43 | `anjungan` | ✅ Selesai | Lengkap: Display TV, Kiosk, cetak tiket thermal (`/anjungan/tiket/cetak`), Display LEAN TV (`/display-lean`), serta antrean & display terpisah Farmasi (`/display-farmasi`) & Kasir (`/display-kasir`) (`mlite_antrian_loket`, `/api/v1/anjungan/*`). |
 | 44 | `wagateway` | 🟡 Parsial | Sudah ada kirim satuan, webhook QR, whitelist; belum ada UI live chat 2-arah sesi `cs`, template broadcast terjadwal, & AI draft CS. |
 | 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
 | 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |

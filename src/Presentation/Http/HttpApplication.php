@@ -370,6 +370,7 @@ final class HttpApplication
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
         $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));
+        $anjunganController = new AnjunganController(new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1303,6 +1304,17 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'satu_sehat', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $satuSehatController->apiFhirEnqueue($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/display-lean', fn(): array => $anjunganController->displayLeanTv());
+        $router->get('/display-farmasi', fn(): array => $anjunganController->displayUnitTv('Farmasi'));
+        $router->get('/display-kasir', fn(): array => $anjunganController->displayUnitTv('Kasir'));
+        $router->get('/anjungan/tiket/cetak', fn(): array => $anjunganController->printThermalTicket($queryParams));
+        $router->post('/api/v1/anjungan/tiket', fn(): array => $anjunganController->apiIssueTicket($this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->get('/api/v1/anjungan/antrean', fn(): array => $anjunganController->apiListQueue($queryParams));
+        $router->post('/api/v1/anjungan/panggil', function () use ($anjunganController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['anjungan', 'farmasi', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $anjunganController->apiCallNext($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)

@@ -2628,4 +2628,44 @@ class HttpApplicationTest extends TestCase
             $this->assertSame($resType, json_decode($qRes['body'], true)['data']['resource_type']);
         }
     }
+
+    public function testAnjunganThermalLeanFarmasiKasirEndToEnd(): void
+    {
+        $fRes = $this->app->handle('POST', '/api/v1/anjungan/tiket', postData: [
+            'type' => 'Farmasi',
+            'no_rawat' => '2026/11/17/000301',
+            'nm_pasien' => 'Budi Antre',
+            'nama_loket' => 'Loket Obat 1',
+        ]);
+        $this->assertSame(201, $fRes['status']);
+        $fData = json_decode($fRes['body'], true)['data'];
+        $this->assertSame('F001', $fData['noantrian']);
+
+        $kRes = $this->app->handle('POST', '/api/v1/anjungan/tiket', postData: [
+            'type' => 'Kasir',
+            'no_rawat' => '2026/11/17/000301',
+            'nm_pasien' => 'Budi Antre',
+            'nama_loket' => 'Kasir 1',
+        ]);
+        $this->assertSame(201, $kRes['status']);
+        $this->assertSame('K001', json_decode($kRes['body'], true)['data']['noantrian']);
+
+        $cetak = $this->app->handle('GET', '/anjungan/tiket/cetak', queryParams: ['id' => $fData['id']]);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('F001', $cetak['body']);
+
+        $lean = $this->app->handle('GET', '/display-lean');
+        $this->assertSame(200, $lean['status']);
+        $this->assertStringContainsString('DISPLAY LEAN TV', $lean['body']);
+
+        $this->assertSame(200, $this->app->handle('GET', '/display-farmasi')['status']);
+        $this->assertSame(200, $this->app->handle('GET', '/display-kasir')['status']);
+
+        $this->session['user_id'] = 1;
+        $this->app->handle('GET', '/kiosk');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+        $call = $this->app->handle('POST', '/api/v1/anjungan/panggil', postData: ['type' => 'Farmasi'], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $call['status']);
+        $this->assertSame('F001', json_decode($call['body'], true)['data']['noantrian']);
+    }
 }

@@ -1220,6 +1220,20 @@ final class SchemaMigrator
                 updated_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_antrian_loket (
+                id {$bigAutoIncPk},
+                type VARCHAR(25) NOT NULL,
+                noantrian VARCHAR(20) NOT NULL,
+                no_rawat VARCHAR(25) NOT NULL DEFAULT '',
+                no_rkm_medis VARCHAR(20) NOT NULL DEFAULT '',
+                nm_pasien VARCHAR(100) NOT NULL DEFAULT '',
+                nama_loket VARCHAR(50) NOT NULL DEFAULT '',
+                postdate VARCHAR(15) NOT NULL,
+                start_time VARCHAR(15) NOT NULL DEFAULT '',
+                end_time VARCHAR(15) NOT NULL DEFAULT '',
+                status INTEGER NOT NULL DEFAULT 0
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,
