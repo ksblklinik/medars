@@ -133,6 +133,7 @@ class SchemaMigratorTest extends TestCase
             'mlite_antrian_loket',
             'wagateway_cs_chat',
             'wagateway_broadcast_templates',
+            'mlite_homecare_careplan',
         ];
 
         $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'");

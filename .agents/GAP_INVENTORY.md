@@ -85,7 +85,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | :-: | :--- | :---: | :--- |
 | 43 | `anjungan` | ✅ Selesai | Lengkap: Display TV, Kiosk, cetak tiket thermal (`/anjungan/tiket/cetak`), Display LEAN TV (`/display-lean`), serta antrean & display terpisah Farmasi (`/display-farmasi`) & Kasir (`/display-kasir`) (`mlite_antrian_loket`, `/api/v1/anjungan/*`). |
 | 44 | `wagateway` | ✅ Selesai | Lengkap: kirim satuan, webhook QR, whitelist + UI live chat 2-arah sesi `cs` (`wagateway_cs_chat`), template broadcast terjadwal (`wagateway_broadcast_templates`), & AI draft CS (`/api/v1/wagateway/ai-draft`) di `/wagateway`. |
-| 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
+| 45 | `home_care` | ✅ Selesai | Lengkap: jadwal, Privacy Shield, preceptor + PWA manifest (`/homecare-manifest.json`), service worker (`/homecare-sw.js`), sign-off care plan DPJP (`mlite_homecare_careplan`), & pembayaran Midtrans/Kasera UI (`/api/v1/homecare/careplans*`). |
 | 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |
 | 47 | `presensi` | ✅ Selesai | Modul absensi / presensi shift pegawai (`/presensi`): clock-in, clock-out, anti-duplikasi harian, & riwayat presensi (`mlite_presensi`). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |

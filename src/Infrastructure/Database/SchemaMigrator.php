@@ -1255,6 +1255,21 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_homecare_careplan (
+                id {$bigAutoIncPk},
+                kunjungan_id INTEGER NOT NULL DEFAULT 0,
+                no_rawat VARCHAR(25) NOT NULL,
+                care_plan TEXT NOT NULL,
+                dpjp_signed INTEGER NOT NULL DEFAULT 0,
+                dpjp_signed_by VARCHAR(60) NOT NULL DEFAULT '',
+                dpjp_signed_at VARCHAR(30) NOT NULL DEFAULT '',
+                nominal_tagihan REAL NOT NULL DEFAULT 0,
+                payment_ref VARCHAR(80) NOT NULL DEFAULT '',
+                payment_gateway VARCHAR(30) NOT NULL DEFAULT 'Kasera',
+                status_bayar VARCHAR(20) NOT NULL DEFAULT 'Belum',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

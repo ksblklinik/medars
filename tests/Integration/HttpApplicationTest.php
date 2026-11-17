@@ -2701,4 +2701,33 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/wagateway/cs-chat', queryParams: ['phone' => '628123456789'])['body'], true)['data']);
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/wagateway/broadcasts')['body'], true)['data']);
     }
+
+    public function testHomeCarePwaCarePlanSignOffAndPaymentEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/homecare');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('/homecare-manifest.json', $page['body']);
+        $this->assertStringContainsString('homecarePwaCarePlanPanel', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $cp = $this->app->handle('POST', '/api/v1/homecare/careplans-save', postData: [
+            'no_rawat' => '2026/11/17/000401',
+            'care_plan' => 'Ganti verban & cek tanda vital',
+            'nominal_tagihan' => 250000,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $cp['status']);
+        $cpId = (int) json_decode($cp['body'], true)['data']['id'];
+
+        $sign = $this->app->handle('POST', '/api/v1/homecare/careplans-signoff', postData: ['id' => $cpId], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $sign['status']);
+        $this->assertSame(1, (int) json_decode($sign['body'], true)['data']['dpjp_signed']);
+
+        $pay = $this->app->handle('POST', '/api/v1/homecare/careplans-pay', postData: [
+            'id' => $cpId,
+            'payment_gateway' => 'Midtrans',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pay['status']);
+        $this->assertSame('Lunas', json_decode($pay['body'], true)['data']['status_bayar']);
+    }
 }

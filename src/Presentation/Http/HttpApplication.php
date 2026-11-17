@@ -372,6 +372,7 @@ final class HttpApplication
         $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));
         $anjunganController = new AnjunganController(new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo));
         $waCrmController = new WaCrmController(new \App\Infrastructure\Persistence\PdoWaCrmRepository($this->pdo));
+        $homeCareExtrasController = new HomeCareExtrasController(new \App\Infrastructure\Persistence\PdoHomeCareCarePlanRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1402,6 +1403,25 @@ final class HttpApplication
         $router->get('/api/v1/homecare/supervisor/visits', function () use ($communicationController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'admin']);
             return $communicationController->apiSupervisorVisits($queryParams);
+        });
+        $router->get('/api/v1/homecare/careplans', function () use ($homeCareExtrasController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'dokter_ralan', 'admin']);
+            return $homeCareExtrasController->apiCarePlanList($queryParams);
+        });
+        $router->post('/api/v1/homecare/careplans-save', function () use ($homeCareExtrasController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'dokter_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $homeCareExtrasController->apiCarePlanSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/homecare/careplans-signoff', function () use ($homeCareExtrasController, $postData, $rawBody, $headers): array {
+            $actor = $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'dokter_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $homeCareExtrasController->apiSignOffDpjp($actor, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/homecare/careplans-pay', function () use ($homeCareExtrasController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $homeCareExtrasController->apiPayCarePlan($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // Audit ACID, Integritas Relasi & Rotasi Log (PLN-36)

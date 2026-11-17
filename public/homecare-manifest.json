@@ -1,0 +1,9 @@
+{
+  "name": "Medars Homecare PWA",
+  "short_name": "Medars Homecare",
+  "start_url": "/homecare",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00897b",
+  "description": "Aplikasi Homecare & Trias Preceptorship SIMRS Medars"
+}
