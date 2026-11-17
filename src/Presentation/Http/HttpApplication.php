@@ -434,6 +434,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $jasaMedisController = new JasaMedisController(
+            new \App\Infrastructure\Persistence\PdoJasaMedisRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1223,6 +1229,19 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $keuanganController->apiSaveRekening($data);
+        });
+
+        $router->get('/jasa-medis', function () use ($jasaMedisController): array {
+            $user = $this->requireAnyServiceModuleAccess(['jasa_medis', 'keuangan', 'admin']);
+            return $jasaMedisController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/jasa-medis/cetak', function () use ($jasaMedisController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['jasa_medis', 'keuangan', 'admin']);
+            return $jasaMedisController->printRekap($queryParams);
+        });
+        $router->get('/api/v1/jasa-medis/summary', function () use ($jasaMedisController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['jasa_medis', 'keuangan', 'admin']);
+            return $jasaMedisController->apiSummary($queryParams);
         });
 
         return $router->dispatch($method, $path);

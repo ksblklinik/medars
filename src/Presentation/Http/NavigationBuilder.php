@@ -119,6 +119,14 @@ final class NavigationBuilder
                 'modules' => ['keuangan', 'kasir', 'admin'],
             ],
             [
+                'title' => 'Jasa Medis',
+                'icon' => 'fa-hand-holding-medical',
+                'route' => '/jasa-medis',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'jasa_medis',
+                'modules' => ['jasa_medis', 'keuangan', 'admin'],
+            ],
+            [
                 'title' => 'Laboratorium',
                 'icon' => 'fa-flask',
                 'route' => '/laboratorium',

@@ -1265,4 +1265,34 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(250000, $json['laba_rugi']['total_beban']);
         $this->assertCount(2, $json['jurnal']);
     }
+
+    public function testJasaMedisEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Andi', '1');
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000090', 'Sari', '1991-01-01', 'P');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/17/000090', '{$today}', '08:00:00', 'DR01', '000090', 'U01', 'A09', 'Belum Bayar');
+            INSERT INTO jns_perawatan (kd_jenis_prw, nm_perawatan, material, tarif_tindakandr, total_byrdr, status)
+            VALUES ('TND01', 'Konsultasi Poli', 10000, 40000, 50000, '1');
+            INSERT INTO rawat_jl_dr (no_rawat, kd_jenis_prw, kd_dokter, tgl_perawatan, jam_rawat, material, tarif_tindakandr, biaya_rawat, jenis_klaim)
+            VALUES ('2026/11/17/000090', 'TND01', 'DR01', '{$today}', '08:10:00', 10000, 40000, 50000, 'Tunai');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/jasa-medis');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Rekap Jasa Medis Dokter', $page['body']);
+
+        $api = $this->app->handle('GET', '/api/v1/jasa-medis/summary', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $api['status']);
+        $json = json_decode($api['body'], true);
+        $this->assertCount(1, $json['summary']);
+        $this->assertSame(40000, (int) $json['summary'][0]['total_jasa_dokter']);
+
+        $cetak = $this->app->handle('GET', '/jasa-medis/cetak', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('REKAPITULASI JASA MEDIS DOKTER', $cetak['body']);
+    }
 }
