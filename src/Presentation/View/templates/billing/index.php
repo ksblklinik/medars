@@ -68,6 +68,12 @@
                     <button type="button" id="btnPrintFaktur" class="btn btn-sm btn-outline-light" disabled title="Cetak Kuitansi / Faktur">
                         <i class="fa fa-print me-1"></i> Faktur
                     </button>
+                    <button type="button" id="btnPrintThermal" class="btn btn-sm btn-outline-light" disabled title="Cetak Struk Thermal">
+                        <i class="fa fa-receipt me-1"></i> Thermal
+                    </button>
+                    <button type="button" id="btnEmailFaktur" class="btn btn-sm btn-outline-light" disabled title="Kirim Faktur ke Email Pasien">
+                        <i class="fa fa-envelope me-1"></i> Email
+                    </button>
                     <button type="button" id="btnSettlePiutang" class="btn btn-sm btn-warning text-dark" disabled title="Lunasi Piutang ke Kas">
                         <i class="fa fa-hand-holding-dollar me-1"></i> Lunasi Piutang
                     </button>

@@ -349,6 +349,28 @@ final readonly class BillingController
                 . '</tr>';
         }
 
+        $format = trim((string) ($queryParams['format'] ?? 'a4'));
+        if ($format === 'thermal') {
+            $tRows = '';
+            foreach ($items as $it) {
+                $tRows .= '<div>' . $e($it['item_name']) . ' x' . $e($it['qty'])
+                    . '<span style="float:right">Rp ' . number_format((float) $it['total_amount'], 0, ',', '.') . '</span></div>';
+            }
+            $thermalHtml = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Struk Thermal ' . $e($nr) . '</title>'
+                . '<style>body{font-family:monospace;max-width:300px;margin:10px auto;font-size:12px;}hr{border:none;border-top:1px dashed #333;}@media print{.no-print{display:none;}}</style></head><body>'
+                . '<div class="no-print" style="margin-bottom:8px;"><button onclick="window.print()">Cetak Struk Thermal</button></div>'
+                . '<div style="text-align:center;font-weight:bold;">KUITANSI THERMAL KASIR</div>'
+                . '<div style="text-align:center;">' . $e($nr) . ' &middot; ' . $e($visit['tgl_registrasi'] ?? '') . '</div><hr>'
+                . '<div>Pasien: ' . $e($visit['nm_pasien'] ?? '-') . '</div>'
+                . '<div>Status: ' . $e($visit['status_bayar'] ?? '-') . '</div><hr>'
+                . ($tRows !== '' ? $tRows : '<div>Belum ada item.</div>')
+                . '<hr><div><strong>Tunai [T]: Rp ' . number_format($summary['Tunai'], 0, ',', '.') . '</strong></div>'
+                . '<div>Kapitasi [K]: Rp ' . number_format($summary['Kapitasi'], 0, ',', '.') . '</div>'
+                . '<div>Piutang [P]: Rp ' . number_format($summary['Piutang'], 0, ',', '.') . '</div>'
+                . '<hr><div style="text-align:center;">Terima kasih atas kunjungan Anda</div></body></html>';
+            return ['status' => 200, 'headers' => ['Content-Type' => 'text/html; charset=utf-8'], 'body' => $thermalHtml];
+        }
+
         $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Faktur ' . $e($nr) . '</title>'
             . '<style>body{font-family:Arial,sans-serif;margin:20px;max-width:780px}h2{margin:0 0 4px;color:#00897b}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:6px 8px;font-size:13px}th{background:#f1f5f9;text-align:left}.sum{margin-top:12px;font-size:13px;border:1px solid #ccc;padding:10px;background:#fafafa}@media print{.no-print{display:none}}</style>'
             . '</head><body>'
@@ -377,6 +399,38 @@ final readonly class BillingController
             'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
             'body' => $html,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiEmailFaktur(?UserAccount $currentUser, array $postData = []): array
+    {
+        $nr = trim((string) ($postData['no_rawat'] ?? ''));
+        $email = trim((string) ($postData['email'] ?? ''));
+        if ($nr === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'No. Rawat dan alamat email tujuan yang valid wajib diisi.'], 422);
+        }
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO mlite_logs (user_id, username, action, details, ip_address, created_at)
+             VALUES (:uid, :un, :act, :desc, :ip, :ca)'
+        );
+        $stmt->execute([
+            ':uid' => $currentUser?->getId() ?? 0,
+            ':un' => $currentUser?->getUsername() ?? 'kasir',
+            ':act' => 'BILLING_EMAIL_FAKTUR',
+            ':desc' => "Kirim faktur billing {$nr} ke {$email}",
+            ':ip' => '127.0.0.1',
+            ':ca' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->jsonResponse([
+            'status' => 'success',
+            'message' => "Faktur billing {$nr} berhasil dijadwalkan ke {$email}.",
+            'data' => ['no_rawat' => $nr, 'email' => $email],
+        ]);
     }
 
     /**

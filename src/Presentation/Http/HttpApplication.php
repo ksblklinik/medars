@@ -986,6 +986,11 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
             return $billingController->printFaktur($queryParams);
         });
+        $router->post('/api/v1/kasir/email-faktur', function () use ($billingController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $billingController->apiEmailFaktur($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
         $router->post('/api/v1/kasir/void', function () use ($billingController, $postData, $rawBody, $headers, $ipAddress): array {
             $user = $this->requireAnyServiceModuleAccess(['kasir', 'kasir_rawat_jalan', 'kasir_rawat_inap', 'kasir_igd']);
             $this->assertCsrfHeaderOrPost($postData, $headers);

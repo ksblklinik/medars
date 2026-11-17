@@ -2243,4 +2243,29 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, $rows);
         $this->assertSame(45.0, (float) $rows[0]['stok']);
     }
+
+    public function testKasirThermalAndEmailFakturEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tmp_lahir, tgl_lahir, alamat)
+            VALUES ('000066', 'Pasien Kasir', '3201010101900066', 'P', 'Bandung', '1993-03-03', 'Jl. Kasir')");
+        $noRawat = '2026/11/17/000066';
+        $this->pdo->exec("INSERT INTO reg_periksa (no_reg, no_rawat, no_rkm_medis, tgl_registrasi, jam_reg, kd_dokter, kd_poli, kd_pj, status_lanjut, stts)
+            VALUES ('066', '{$noRawat}', '000066', '2026-11-17', '08:00:00', 'DR01', 'UMU', 'UMUM', 'Ralan', 'Belum')");
+
+        $page = $this->app->handle('GET', '/kasir');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('btnPrintThermal', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $thermal = $this->app->handle('GET', '/kasir/faktur', queryParams: ['no_rawat' => $noRawat, 'format' => 'thermal']);
+        $this->assertSame(200, $thermal['status']);
+        $this->assertStringContainsString('KUITANSI THERMAL KASIR', $thermal['body']);
+
+        $email = $this->app->handle('POST', '/api/v1/kasir/email-faktur', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'email' => 'pasien@example.com',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $email['status']);
+    }
 }

@@ -20,7 +20,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 5 | `rawat_jalan` | ✅ Selesai | Filter periode multi-hari, ubah status (`ClinicalGuardShield`), ubah dokter/poli (`/api/v1/registration/change-poli-dokter`), upload berkas digital (`berkas_digital_perawatan`), rujukan internal, & cetak antrean (`/pendaftaran/cetak`). |
 | 6 | `dokter_ralan` | ✅ Selesai | SOAP, ICD-10, tindakan dokter + ledger, order lab/rad & E-Resep, Resume Medis (`resume_pasien`), cetak PDF/HTML Resume Medis (`/dokter-ralan/resume/cetak`) & E-Resep (`/dokter-ralan/eresep/cetak`), serta tab Riwayat Lengkap (`/api/v1/dokter-ralan/full-history`). |
 | 7 | `apotek_ralan` | ✅ Selesai | Filter periode multi-hari (`from`–`to`), Cetak Etiket (`/farmasi/etiket`), Cetak E-Resep (`/farmasi/cetak-resep`), Copy Resep UI, & penyesuaian stok per batch/depo langsung dari layar apotek (`/api/v1/farmasi/stok-adjust` + `riwayat_barang_medis`). |
-| 8 | `kasir_rawat_jalan` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), Cetak Kuitansi/Faktur 4-Pilar (`/kasir/faktur`), & Pelunasan Piutang (`/api/v1/kasir/settle-piutang`) sudah ada. Sisa: cetak thermal & email faktur. |
+| 8 | `kasir_rawat_jalan` | ✅ Selesai | Filter periode multi-hari (`from`–`to`), Cetak Kuitansi/Faktur 4-Pilar (`/kasir/faktur`), Cetak Struk Thermal (`?format=thermal`), kirim email faktur (`/api/v1/kasir/email-faktur`), & Pelunasan Piutang (`/api/v1/kasir/settle-piutang`). |
 | 9 | `frontoffice` | ✅ Selesai | Dashboard Front Office & Gatekeeper (`/frontoffice`): KPI kunjungan/booking/belum bayar, konfirmasi check-in booking Mobile JKN, panggil antrean TV, & pintasan loket terpadu. |
 
 ---

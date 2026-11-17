@@ -50,7 +50,11 @@
             });
 
             const btnPrint = document.getElementById('btnPrintFaktur');
-            if (btnPrint) btnPrint.addEventListener('click', () => this.printFaktur());
+            if (btnPrint) btnPrint.addEventListener('click', () => this.printFaktur('a4'));
+            const btnThermal = document.getElementById('btnPrintThermal');
+            if (btnThermal) btnThermal.addEventListener('click', () => this.printFaktur('thermal'));
+            const btnEmail = document.getElementById('btnEmailFaktur');
+            if (btnEmail) btnEmail.addEventListener('click', () => this.emailFaktur());
 
             const btnSettle = document.getElementById('btnSettlePiutang');
             if (btnSettle) btnSettle.addEventListener('click', () => this.settlePiutangActive());
@@ -90,8 +94,12 @@
             document.getElementById('btnVoidBilling').disabled = true;
             document.getElementById('btnReconcileOrder').disabled = true;
             const btnPrint = document.getElementById('btnPrintFaktur');
+            const btnThermal = document.getElementById('btnPrintThermal');
+            const btnEmail = document.getElementById('btnEmailFaktur');
             const btnSettle = document.getElementById('btnSettlePiutang');
             if (btnPrint) btnPrint.disabled = true;
+            if (btnThermal) btnThermal.disabled = true;
+            if (btnEmail) btnEmail.disabled = true;
             if (btnSettle) btnSettle.disabled = true;
         },
 
@@ -147,14 +155,33 @@
             document.getElementById('btnVoidBilling').disabled = false;
             document.getElementById('btnReconcileOrder').disabled = false;
             const btnPrint = document.getElementById('btnPrintFaktur');
+            const btnThermal = document.getElementById('btnPrintThermal');
+            const btnEmail = document.getElementById('btnEmailFaktur');
             if (btnPrint) btnPrint.disabled = false;
+            if (btnThermal) btnThermal.disabled = false;
+            if (btnEmail) btnEmail.disabled = false;
             this.loadDetail(row.no_rawat);
         },
 
-        printFaktur: function () {
+        printFaktur: function (format = 'a4') {
             const nr = document.getElementById('activeBillingNoRawat')?.value || '';
             if (!nr) return;
-            window.open('/kasir/faktur?no_rawat=' + encodeURIComponent(nr), '_blank');
+            window.open('/kasir/faktur?no_rawat=' + encodeURIComponent(nr) + '&format=' + encodeURIComponent(format), '_blank');
+        },
+
+        emailFaktur: function () {
+            const nr = document.getElementById('activeBillingNoRawat')?.value || '';
+            if (!nr) return;
+            const email = prompt('Masukkan alamat email penerima faktur:');
+            if (!email) return;
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/kasir/email-faktur', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ no_rawat: nr, email }),
+            })
+            .then(r => r.json())
+            .then(res => this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message || 'Selesai.')));
         },
 
         settlePiutangActive: function () {
