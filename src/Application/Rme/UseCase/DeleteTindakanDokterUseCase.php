@@ -35,6 +35,12 @@ final readonly class DeleteTindakanDokterUseCase
 
         $providerKey = SaveTindakanDokterUseCase::providerKey($noRawat->value(), $kdJenisPrw, $tglPerawatan, $jamRawat);
 
+        foreach ($this->ledgerRepo->findByNoRawat($noRawat) as $item) {
+            if ($item->providerId === $providerKey && in_array($item->status->value(), ['Paid', 'Approved', 'Bundled'], true)) {
+                throw new \DomainException('Tindakan sudah dilunasi/disetujui di Kasir dan tidak dapat dihapus.');
+            }
+        }
+
         $this->tx->transaction(function () use ($noRawat, $kdJenisPrw, $kdDokter, $tglPerawatan, $jamRawat, $providerKey): void {
             $this->tindakanRepo->deleteTindakan($noRawat, $kdJenisPrw, $kdDokter, $tglPerawatan, $jamRawat);
             $this->ledgerRepo->cancelPendingByProviderId($providerKey);

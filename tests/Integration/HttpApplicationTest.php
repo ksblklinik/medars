@@ -3056,5 +3056,20 @@ class HttpApplicationTest extends TestCase
             'items' => [['kd_jenis_prw' => 'RAD-RNP', 'nm_perawatan' => 'USG Abdomen', 'harga' => 200000, 'claim_type' => 'Tunai']],
         ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(201, $rad['status']);
+
+        // Pastikan tindakan yang sudah dibayar Kasir di mlite_billing_ledger tidak dapat dihapus
+        $tndRow = $this->pdo->query("SELECT tgl_perawatan, jam_rawat FROM rawat_jl_dr WHERE no_rawat = '{$noRawat}' AND kd_jenis_prw = 'TND-RNP-1' LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        $this->assertNotFalse($tndRow);
+        $pay = $this->app->handle('POST', '/api/v1/kasir/pay', postData: ['no_rawat' => $noRawat], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pay['status']);
+
+        $delBlocked = $this->app->handle('POST', '/api/v1/dokter-ralan/tindakan/delete', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'kd_jenis_prw' => 'TND-RNP-1',
+            'kd_dokter' => 'admin',
+            'tgl_perawatan' => $tndRow['tgl_perawatan'],
+            'jam_rawat' => $tndRow['jam_rawat'],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(422, $delBlocked['status']);
     }
 }
