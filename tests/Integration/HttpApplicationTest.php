@@ -2730,4 +2730,26 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $pay['status']);
         $this->assertSame('Lunas', json_decode($pay['body'], true)['data']['status_bayar']);
     }
+
+    public function testRiwayatSimgosEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/riwayat-simgos');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('riwayatSimgosPage', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $imp = $this->app->handle('POST', '/api/v1/riwayat-simgos/import', postData: [
+            'nopen' => '2301010001',
+            'no_rkm_medis' => 'RM-OLD-01',
+            'nm_pasien' => 'Ahmad SIMGOS',
+            'tgl_kunjungan' => '2023-01-01',
+            'diagnosa_icd10' => 'E11.9',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $imp['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/riwayat-simgos', queryParams: ['q' => 'Ahmad']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+    }
 }

@@ -1270,6 +1270,21 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_riwayat_simgos (
+                id {$bigAutoIncPk},
+                nopen VARCHAR(40) NOT NULL,
+                no_rkm_medis VARCHAR(25) NOT NULL DEFAULT '',
+                nik VARCHAR(25) NOT NULL DEFAULT '',
+                nm_pasien VARCHAR(120) NOT NULL DEFAULT '',
+                tgl_kunjungan VARCHAR(15) NOT NULL,
+                unit_layanan VARCHAR(100) NOT NULL DEFAULT '',
+                dokter VARCHAR(100) NOT NULL DEFAULT '',
+                diagnosa_icd10 VARCHAR(150) NOT NULL DEFAULT '',
+                catatan_klinis TEXT,
+                status_satusehat VARCHAR(30) NOT NULL DEFAULT 'Belum',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

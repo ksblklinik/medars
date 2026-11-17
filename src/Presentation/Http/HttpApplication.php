@@ -373,6 +373,11 @@ final class HttpApplication
         $anjunganController = new AnjunganController(new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo));
         $waCrmController = new WaCrmController(new \App\Infrastructure\Persistence\PdoWaCrmRepository($this->pdo));
         $homeCareExtrasController = new HomeCareExtrasController(new \App\Infrastructure\Persistence\PdoHomeCareCarePlanRepository($this->pdo));
+        $riwayatSimgosController = new RiwayatSimgosController(
+            new \App\Infrastructure\Persistence\PdoRiwayatSimgosRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1422,6 +1427,19 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['home_care', 'homecare', 'kasir', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $homeCareExtrasController->apiPayCarePlan($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/riwayat-simgos', function () use ($riwayatSimgosController): array {
+            $user = $this->requireAnyServiceModuleAccess(['riwayat_simgos', 'dokter_ralan', 'rawat_jalan', 'admin']);
+            return $riwayatSimgosController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/riwayat-simgos', function () use ($riwayatSimgosController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['riwayat_simgos', 'dokter_ralan', 'rawat_jalan', 'admin']);
+            return $riwayatSimgosController->apiList($queryParams);
+        });
+        $router->post('/api/v1/riwayat-simgos/import', function () use ($riwayatSimgosController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['riwayat_simgos', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $riwayatSimgosController->apiImport($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // Audit ACID, Integritas Relasi & Rotasi Log (PLN-36)

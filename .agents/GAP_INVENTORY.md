@@ -89,7 +89,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |
 | 47 | `presensi` | ✅ Selesai | Modul absensi / presensi shift pegawai (`/presensi`): clock-in, clock-out, anti-duplikasi harian, & riwayat presensi (`mlite_presensi`). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
-| 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |
+| 49 | `riwayat_simgos` | ✅ Selesai | Lengkap: viewer arsip & import riwayat migrasi SIMGOS lama (`/riwayat-simgos`, `/api/v1/riwayat-simgos*`, `mlite_riwayat_simgos`). |
 | 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |
 | 51 | `settings` | ✅ Selesai | Pengaturan Sistem lengkap (`/settings`): tab Profil Instansi (`kode_rs`, `logo_url`), Pendaftaran, Farmasi, Bridging BPJS & SatuSehat, WhatsApp Gateway, serta Tarif & Billing. |
 | 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
