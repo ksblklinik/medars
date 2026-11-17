@@ -717,6 +717,17 @@ final class SchemaMigrator
                 catatan TEXT
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_inventaris (
+                kode_aset VARCHAR(30) PRIMARY KEY,
+                nama_aset VARCHAR(150) NOT NULL,
+                kategori VARCHAR(50) NOT NULL DEFAULT 'Medis',
+                lokasi VARCHAR(100) NOT NULL DEFAULT '',
+                tgl_perolehan VARCHAR(15) NOT NULL DEFAULT '',
+                nilai_perolehan DECIMAL(15,2) NOT NULL DEFAULT 0,
+                kondisi VARCHAR(30) NOT NULL DEFAULT 'Baik',
+                status VARCHAR(20) NOT NULL DEFAULT 'Aktif'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

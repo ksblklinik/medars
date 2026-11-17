@@ -466,6 +466,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $inventarisController = new InventarisController(
+            new \App\Infrastructure\Persistence\PdoInventarisRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1359,6 +1365,27 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $presensiController->apiClockOut($user, $data);
+        });
+
+        $router->get('/inventaris', function () use ($inventarisController): array {
+            $user = $this->requireAnyServiceModuleAccess(['inventaris', 'admin']);
+            return $inventarisController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/inventaris/list', function () use ($inventarisController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['inventaris', 'admin']);
+            return $inventarisController->apiList($queryParams);
+        });
+        $router->post('/api/v1/inventaris/save', function () use ($inventarisController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['inventaris', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $inventarisController->apiSave($data);
+        });
+        $router->post('/api/v1/inventaris/delete', function () use ($inventarisController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['inventaris', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $inventarisController->apiDelete($data);
         });
 
         return $router->dispatch($method, $path);

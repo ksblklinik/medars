@@ -1593,4 +1593,33 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $list['status']);
         $this->assertCount(1, json_decode($list['body'], true)['data']);
     }
+
+    public function testInventarisEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/inventaris');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Manajemen Inventaris', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/inventaris/save',
+            rawBody: json_encode(['kode_aset' => 'AST-99', 'nama_aset' => 'EKG 12 Lead', 'kategori' => 'Alat Medis', 'nilai_perolehan' => 25000000]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/inventaris/list', queryParams: ['q' => 'EKG']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+
+        $del = $this->app->handle(
+            'POST',
+            '/api/v1/inventaris/delete',
+            rawBody: json_encode(['kode_aset' => 'AST-99']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $del['status']);
+    }
 }

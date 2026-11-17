@@ -223,6 +223,14 @@ final class NavigationBuilder
                 'modules' => ['*'],
             ],
             [
+                'title' => 'Inventaris & Aset',
+                'icon' => 'fa-boxes-packing',
+                'route' => '/inventaris',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'inventaris',
+                'modules' => ['inventaris', 'admin'],
+            ],
+            [
                 'title' => 'Profil Saya',
                 'icon' => 'fa-user-gear',
                 'route' => '/profil',
