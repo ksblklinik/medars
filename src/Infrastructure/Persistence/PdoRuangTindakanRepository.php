@@ -94,6 +94,26 @@ final class PdoRuangTindakanRepository implements RuangTindakanRepositoryInterfa
                 ':p1' => $p1, ':p2' => $p2, ':np' => $petugas, ':ta' => $tglApprove, ':st' => $status,
             ]);
             $id = (int) $this->pdo->lastInsertId();
+            if ($noRawat !== '' && $kdJenisPrw !== '') {
+                $tarifStmt = $this->pdo->prepare('SELECT nm_perawatan, total_byrdr FROM jns_perawatan WHERE kd_jenis_prw = :kp LIMIT 1');
+                $tarifStmt->execute([':kp' => $kdJenisPrw]);
+                $tarif = $tarifStmt->fetch(PDO::FETCH_ASSOC);
+                if ($tarif !== false && (float) ($tarif['total_byrdr'] ?? 0) > 0) {
+                    $biaya = (float) $tarif['total_byrdr'];
+                    $this->pdo->prepare(
+                        "INSERT INTO mlite_billing_ledger (no_rawat, item_code, item_name, category, qty, unit_price, total_amount, claim_type, status, provider_id, created_at)
+                         VALUES (:nr, :ic, :in, 'Tindakan', 1, :up, :tot, 'Tunai', 'Pending', :pid, :ca)"
+                    )->execute([
+                        ':nr' => $noRawat,
+                        ':ic' => $kdJenisPrw,
+                        ':in' => (string) $tarif['nm_perawatan'],
+                        ':up' => $biaya,
+                        ':tot' => $biaya,
+                        ':pid' => 'RTD|' . $id,
+                        ':ca' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
         }
 
         return [

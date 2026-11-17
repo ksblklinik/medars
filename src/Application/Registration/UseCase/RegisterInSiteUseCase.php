@@ -8,6 +8,10 @@ use App\Application\Registration\DTO\RegisterInSiteCommand;
 use App\Application\Registration\Exception\DuplicateRegistrationException;
 use App\Application\Registration\Exception\PenjaminDisallowedException;
 use App\Application\Registration\Exception\UnpaidArrearsException;
+use App\Domain\Billing\Entity\BillingLedgerItem;
+use App\Domain\Billing\Repository\BillingLedgerRepositoryInterface;
+use App\Domain\Billing\ValueObject\ClaimType;
+use App\Domain\Billing\ValueObject\LedgerStatus;
 use App\Domain\Registration\Entity\BookingRegistrasi;
 use App\Domain\Registration\Entity\RegPeriksa;
 use App\Domain\Registration\Repository\BookingRegistrasiRepositoryInterface;
@@ -22,7 +26,8 @@ final readonly class RegisterInSiteUseCase
         private PasienRepositoryInterface $pasienRepo,
         private PoliklinikRepositoryInterface $poliRepo,
         private RegPeriksaRepositoryInterface $regRepo,
-        private BookingRegistrasiRepositoryInterface $bookingRepo
+        private BookingRegistrasiRepositoryInterface $bookingRepo,
+        private ?BillingLedgerRepositoryInterface $ledgerRepo = null,
     ) {}
 
     public function execute(RegisterInSiteCommand $cmd): ?RegPeriksa
@@ -122,6 +127,25 @@ final readonly class RegisterInSiteUseCase
             shift: $cmd->shift
         );
 
-        return $this->regRepo->saveWithAtomicRetry($reg);
+        $saved = $this->regRepo->saveWithAtomicRetry($reg);
+        if ($this->ledgerRepo !== null && $biayaReg > 0) {
+            $claimType = strtoupper($cmd->kdPj) === 'BPJ' ? 'Kapitasi' : 'Tunai';
+            $this->ledgerRepo->addItem(new BillingLedgerItem(
+                id: null,
+                noRawat: $saved->noRawat,
+                itemCode: 'REG-' . $cmd->kdPoli,
+                itemName: 'Biaya Registrasi ' . $poliklinik->nmPoli,
+                category: 'Registrasi',
+                qty: 1.0,
+                unitPrice: $biayaReg,
+                totalAmount: $biayaReg,
+                claimType: ClaimType::fromString($claimType),
+                status: LedgerStatus::fromString('Pending'),
+                providerId: 'REG|' . $saved->noRawat->value(),
+                createdAt: $tglRegistrasi->format('Y-m-d') . ' ' . $saved->jamReg,
+            ));
+        }
+
+        return $saved;
     }
 }

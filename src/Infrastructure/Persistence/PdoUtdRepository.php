@@ -155,9 +155,35 @@ final class PdoUtdRepository implements UtdRepositoryInterface
              VALUES (:nr, :nk, :g, 'Menunggu', :p, :tgl, 'Menunggu')"
         );
         $stmt->execute([':nr' => $noRawat, ':nk' => $noKantong, ':g' => $gol, ':p' => $petugas, ':tgl' => $tgl]);
+        $id = (int) $this->pdo->lastInsertId();
+
+        if ($noRawat !== '' && $noKantong !== '') {
+            $kompStmt = $this->pdo->prepare(
+                'SELECT k.kode, k.nama, k.total FROM utd_stok_darah s
+                 INNER JOIN utd_komponen_darah k ON k.kode = s.kode_komponen
+                 WHERE s.no_kantong = :nk LIMIT 1'
+            );
+            $kompStmt->execute([':nk' => $noKantong]);
+            $komp = $kompStmt->fetch(PDO::FETCH_ASSOC);
+            if ($komp !== false && (float) ($komp['total'] ?? 0) > 0) {
+                $biaya = (float) $komp['total'];
+                $this->pdo->prepare(
+                    "INSERT INTO mlite_billing_ledger (no_rawat, item_code, item_name, category, qty, unit_price, total_amount, claim_type, status, provider_id, created_at)
+                     VALUES (:nr, :ic, :in, 'UTD', 1, :up, :tot, 'Tunai', 'Pending', :pid, :ca)"
+                )->execute([
+                    ':nr' => $noRawat,
+                    ':ic' => (string) $komp['kode'],
+                    ':in' => 'Darah ' . (string) $komp['nama'],
+                    ':up' => $biaya,
+                    ':tot' => $biaya,
+                    ':pid' => 'UTD|' . $id,
+                    ':ca' => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
 
         return [
-            'id' => (int) $this->pdo->lastInsertId(),
+            'id' => $id,
             'no_rawat' => $noRawat,
             'golongan_darah' => $gol,
             'status' => 'Menunggu',

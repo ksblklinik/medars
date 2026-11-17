@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Pharmacy\UseCase;
 
+use App\Domain\Billing\Entity\BillingLedgerItem;
+use App\Domain\Billing\Repository\BillingLedgerRepositoryInterface;
+use App\Domain\Billing\ValueObject\ClaimType;
+use App\Domain\Billing\ValueObject\LedgerStatus;
 use App\Domain\Pharmacy\Entity\DetailPemberianObat;
 use App\Domain\Pharmacy\Repository\DataBarangRepositoryInterface;
 use App\Domain\Pharmacy\Repository\GudangBarangRepositoryInterface;
@@ -20,6 +24,7 @@ final readonly class DispenseResepUseCase
         private DataBarangRepositoryInterface $barangRepo,
         private GudangBarangRepositoryInterface $gudangRepo,
         private TransactionManagerInterface $tx,
+        private ?BillingLedgerRepositoryInterface $ledgerRepo = null,
     ) {
     }
 
@@ -93,6 +98,22 @@ final readonly class DispenseResepUseCase
                         kdBangsal: $depo,
                         jenisKlaim: $jenisKlaim
                     ));
+                    if ($this->ledgerRepo !== null && ($unitPrice * $qty) > 0) {
+                        $this->ledgerRepo->addItem(new BillingLedgerItem(
+                            id: null,
+                            noRawat: $resep->noRawat,
+                            itemCode: $item->kodeBrng,
+                            itemName: $barang->namaBrng,
+                            category: 'Obat',
+                            qty: $qty,
+                            unitPrice: $unitPrice,
+                            totalAmount: $unitPrice * $qty,
+                            claimType: ClaimType::fromString($jenisKlaim->value()),
+                            status: LedgerStatus::fromString('Pending'),
+                            providerId: 'RSP|' . $noResep->value() . '|' . $item->kodeBrng,
+                            createdAt: $baseTgl . ' ' . $baseJam,
+                        ));
+                    }
                 }
             }
 
@@ -141,6 +162,22 @@ final readonly class DispenseResepUseCase
                             kdBangsal: $depo,
                             jenisKlaim: $jenisKlaim
                         ));
+                        if ($this->ledgerRepo !== null && ($unitPrice * $qty) > 0) {
+                            $this->ledgerRepo->addItem(new BillingLedgerItem(
+                                id: null,
+                                noRawat: $resep->noRawat,
+                                itemCode: $detail->kodeBrng,
+                                itemName: $barang->namaBrng . ' (Racikan)',
+                                category: 'Obat',
+                                qty: $qty,
+                                unitPrice: $unitPrice,
+                                totalAmount: $unitPrice * $qty,
+                                claimType: ClaimType::fromString($jenisKlaim->value()),
+                                status: LedgerStatus::fromString('Pending'),
+                                providerId: 'RSP|' . $noResep->value() . '|' . $detail->kodeBrng,
+                                createdAt: $compoundedTgl . ' ' . $compoundedJam,
+                            ));
+                        }
                     }
                 }
             }

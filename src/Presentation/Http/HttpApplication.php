@@ -221,8 +221,9 @@ final class HttpApplication
         $regRepo = new PdoRegPeriksaRepository($this->pdo);
         $bookingRepo = new PdoBookingRegistrasiRepository($this->pdo);
         $tx = new PdoTransactionManager($this->pdo);
+        $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
 
-        $registerInSiteUseCase = new RegisterInSiteUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo);
+        $registerInSiteUseCase = new RegisterInSiteUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $ledgerRepo);
         $checkInMobileJknUseCase = new CheckInMobileJknUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $tx);
         $clinicalGuardUseCase = new ClinicalGuardShieldUseCase($regRepo);
 
@@ -255,7 +256,6 @@ final class HttpApplication
         $odoRepo = new PdoOdontogramRepository($this->pdo);
         $suratRepo = new PdoSuratMedisRepository($this->pdo);
         $tindakanRepo = new PdoDokterTindakanRepository($this->pdo);
-        $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
 
         $dokterRalanController = new DokterRalanController(
             $this->pdo,
@@ -284,7 +284,7 @@ final class HttpApplication
             $barangRepo,
             $gudangRepo,
             new CreateResepUseCase($resepRepo, $tx),
-            new DispenseResepUseCase($resepRepo, $barangRepo, $gudangRepo, $tx),
+            new DispenseResepUseCase($resepRepo, $barangRepo, $gudangRepo, $tx, $ledgerRepo),
             new DeleteResepUseCase($resepRepo, $tx),
             new SaveCopyResepUseCase($resepRepo, $tx),
             $this->renderer,

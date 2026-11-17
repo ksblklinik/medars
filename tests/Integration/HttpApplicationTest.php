@@ -2838,4 +2838,51 @@ class HttpApplicationTest extends TestCase
         $pendingCount = (int) $this->pdo->query("SELECT COUNT(*) FROM bridging_sync_queue WHERE no_rawat = '2026/11/17/000999' AND resource_type = 'Observation'")->fetchColumn();
         $this->assertSame(1, $pendingCount);
     }
+
+    public function testBillingLedgerAutoSyncFromRegAndResepEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, tgl_lahir, jk) VALUES ('RM-BL-01', 'Siti Billing', '3500099112233', '1990-01-01', 'P')");
+        $this->pdo->exec("INSERT INTO databarang (kode_brng, nama_brng, kode_sat, dasar, h_beli, harga_tunai, harga_kapitasi, harga_nonkapitasi, jualbebas, status) VALUES ('OBT-BL-01', 'Amoxicillin 500mg', 'TAB', 900, 1000, 2500, 1500, 2000, 2800, '1')");
+        $this->pdo->exec("INSERT INTO gudangbarang (kode_brng, kd_bangsal, stok, no_batch, no_faktur) VALUES ('OBT-BL-01', 'FAR01', 50, 'B01', 'F01')");
+
+        $this->app->handle('GET', '/pendaftaran');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $reg = $this->app->handle('POST', '/api/v1/registration/insite', postData: [
+            'no_rkm_medis' => 'RM-BL-01',
+            'kd_poli' => 'UMU01',
+            'kd_dokter' => 'DR001',
+            'kd_pj' => 'UMU',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $reg['status']);
+        $noRawat = json_decode($reg['body'], true)['data']['no_rawat'];
+
+        $resep = $this->app->handle('POST', '/api/v1/farmasi/resep/create', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'kd_dokter' => 'DR001',
+            'non_racikan' => [['kode_brng' => 'OBT-BL-01', 'jml' => 4, 'aturan_pakai' => '3x1']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $resep['status']);
+        $noResep = json_decode($resep['body'], true)['data']['no_resep'];
+
+        $disp = $this->app->handle('POST', '/api/v1/farmasi/resep/dispense', postData: [
+            'no_resep' => $noResep,
+            'kd_bangsal' => 'FAR01',
+            'jenis_klaim' => 'Tunai',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $disp['status']);
+
+        $detail = $this->app->handle('GET', '/api/v1/kasir/detail', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame(200, $detail['status']);
+        $items = json_decode($detail['body'], true)['items'];
+        $categories = array_column($items, 'category');
+        $this->assertContains('Registrasi', $categories);
+        $this->assertContains('Obat', $categories);
+
+        $pay = $this->app->handle('POST', '/api/v1/kasir/pay', postData: ['no_rawat' => $noRawat], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pay['status']);
+        $payJson = json_decode($pay['body'], true);
+        $this->assertSame(35000.0, (float) $payJson['data']['tunai_paid']); // 25000 Reg + 4*2500 Obat
+    }
 }
