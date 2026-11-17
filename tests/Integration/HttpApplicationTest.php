@@ -1227,4 +1227,42 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $kartu['status']);
         $this->assertCount(3, json_decode($kartu['body'], true)['data']);
     }
+
+    public function testKeuanganEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/keuangan');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Keuangan, Jurnal Umum', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $coa = $this->app->handle(
+            'POST',
+            '/api/v1/keuangan/rekening',
+            rawBody: json_encode(['kd_rek' => '5101.01', 'nm_rek' => 'Beban Listrik', 'tipe' => 'Beban', 'balance' => 'D']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $coa['status']);
+
+        $jurnal = $this->app->handle(
+            'POST',
+            '/api/v1/keuangan/jurnal',
+            rawBody: json_encode([
+                'no_bukti' => 'BKK-99',
+                'kd_debet' => '5101.01',
+                'kd_kredit' => '1101.01',
+                'nominal' => 250000,
+                'keterangan' => 'Bayar Tagihan Listrik',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $jurnal['status']);
+
+        $today = date('Y-m-d');
+        $ov = $this->app->handle('GET', '/api/v1/keuangan/overview', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $ov['status']);
+        $json = json_decode($ov['body'], true);
+        $this->assertSame(250000, $json['laba_rugi']['total_beban']);
+        $this->assertCount(2, $json['jurnal']);
+    }
 }

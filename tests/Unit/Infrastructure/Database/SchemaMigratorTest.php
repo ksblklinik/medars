@@ -64,6 +64,7 @@ class SchemaMigratorTest extends TestCase
             'gudangbarang',
             'riwayat_barang_medis',
             'mlite_billing_ledger',
+            'mlite_rekening',
             'mlite_jurnal',
             'mlite_jurnal_detail',
             'bangsal',

@@ -484,6 +484,13 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_rekening (
+                kd_rek VARCHAR(20) PRIMARY KEY,
+                nm_rek VARCHAR(100) NOT NULL,
+                tipe VARCHAR(30) NOT NULL DEFAULT 'Aset',
+                balance VARCHAR(10) NOT NULL DEFAULT 'D'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_jurnal (
                 no_jurnal VARCHAR(30) PRIMARY KEY,
                 tgl_jurnal VARCHAR(15) NOT NULL,

@@ -49,7 +49,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 20 | `farmasi` | ✅ Selesai | Manajemen Gudang Obat (`/farmasi-gudang`): CRUD Master `databarang`, Penerimaan Stok/PO, Mutasi antar Depo (`InsufficientStockException` guard), & Kartu Stok (`riwayat_barang_medis`). |
 | 21 | `apotek_umum` | 🟡 Parsial | Backend POS `PO-APT-` sudah ada; UI kasir POS retail mandiri, cetak struk, & riwayat penjualan bebas belum lengkap. |
 | 22 | `penjualan` | ❌ Belum Ada | Modul penjualan non-resep / alkes / laporan omzet penjualan barang. |
-| 23 | `keuangan` | ❌ Belum Ada | UI Jurnal Umum, Buku Besar, Neraca, Laba Rugi, Pengeluaran Kas, & Master Akun Rekening (`mlite_jurnal`). |
+| 23 | `keuangan` | ✅ Selesai | Modul Akuntansi & Keuangan (`/keuangan`): Jurnal Umum, Pengeluaran Kas, Buku Besar, Laba Rugi, & Master Akun Rekening (`mlite_rekening` + `mlite_jurnal`). |
 | 24 | `jasa_medis` | ❌ Belum Ada | Perhitungan & rekap pembagian Jasa Medis Dokter / Paramedis per periode & pilar klaim. |
 | 25 | `inventaris` | ❌ Belum Ada | Manajemen inventaris barang non-medis & aset klinik/RS. |
 

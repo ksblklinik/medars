@@ -111,6 +111,14 @@ final class NavigationBuilder
                 'modules' => ['kasir', 'kasir_rawat_jalan'],
             ],
             [
+                'title' => 'Keuangan & Jurnal',
+                'icon' => 'fa-book-open',
+                'route' => '/keuangan',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'keuangan',
+                'modules' => ['keuangan', 'kasir', 'admin'],
+            ],
+            [
                 'title' => 'Laboratorium',
                 'icon' => 'fa-flask',
                 'route' => '/laboratorium',

@@ -428,6 +428,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $keuanganController = new KeuanganController(
+            new \App\Infrastructure\Persistence\PdoKeuanganRepository($this->pdo, $ledgerRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1196,6 +1202,27 @@ final class HttpApplication
         $router->get('/api/v1/gudang/kartu-stok', function () use ($gudangFarmasiController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'apotek_umum']);
             return $gudangFarmasiController->apiKartuStok($queryParams);
+        });
+
+        $router->get('/keuangan', function () use ($keuanganController): array {
+            $user = $this->requireAnyServiceModuleAccess(['keuangan', 'kasir', 'admin']);
+            return $keuanganController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/keuangan/overview', function () use ($keuanganController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['keuangan', 'kasir', 'admin']);
+            return $keuanganController->apiOverview($queryParams);
+        });
+        $router->post('/api/v1/keuangan/jurnal', function () use ($keuanganController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['keuangan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $keuanganController->apiPostJurnal($data);
+        });
+        $router->post('/api/v1/keuangan/rekening', function () use ($keuanganController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['keuangan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $keuanganController->apiSaveRekening($data);
         });
 
         return $router->dispatch($method, $path);
