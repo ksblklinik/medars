@@ -231,6 +231,14 @@ final class NavigationBuilder
                 'modules' => ['chat', 'wagateway', 'admin'],
             ],
             [
+                'title' => 'SmartAgent AI',
+                'icon' => 'fa-robot',
+                'route' => '/smartagent',
+                'category' => 'Bridging & CRM',
+                'module_key' => 'smartagent',
+                'modules' => ['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin'],
+            ],
+            [
                 'title' => 'Home Care',
                 'icon' => 'fa-house-medical',
                 'route' => '/homecare',

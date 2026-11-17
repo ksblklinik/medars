@@ -957,6 +957,26 @@ final class SchemaMigrator
                 created_at VARCHAR(25) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_smartagent_knowledge (
+                id {$bigAutoIncPk},
+                title VARCHAR(150) NOT NULL,
+                category VARCHAR(30) NOT NULL DEFAULT 'PDT',
+                icd10_code VARCHAR(15) NOT NULL DEFAULT '',
+                keywords VARCHAR(255) NOT NULL DEFAULT '',
+                content TEXT NOT NULL,
+                created_by VARCHAR(50) NOT NULL DEFAULT 'system',
+                updated_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_smartagent_profiles (
+                id {$bigAutoIncPk},
+                name VARCHAR(100) NOT NULL,
+                provider VARCHAR(30) NOT NULL DEFAULT 'vllm-local',
+                endpoint_url VARCHAR(255) NOT NULL DEFAULT 'http://127.0.0.1:8000/v1',
+                model_name VARCHAR(120) NOT NULL DEFAULT 'Qwen/Qwen2.5-7B-Instruct',
+                is_active INT NOT NULL DEFAULT 1
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

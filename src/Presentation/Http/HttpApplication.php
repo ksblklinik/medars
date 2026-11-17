@@ -531,6 +531,14 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $smartAgentRepo = new \App\Infrastructure\Persistence\PdoSmartAgentRepository($this->pdo);
+        $smartAgentController = new SmartAgentController(
+            $smartAgentRepo,
+            new \App\Application\Rme\UseCase\RecommendClinicalPdtUseCase($smartAgentRepo, $icdRepo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1810,6 +1818,39 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['orthanc', 'radiologi', 'dokter_ralan', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $orthancController->apiDeleteStudy($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+
+        $router->get('/smartagent', function () use ($smartAgentController): array {
+            $user = $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            return $smartAgentController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/smartagent/knowledge', function () use ($smartAgentController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            return $smartAgentController->apiKnowledgeList($queryParams);
+        });
+        $router->post('/api/v1/smartagent/knowledge-save', function () use ($smartAgentController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $smartAgentController->apiKnowledgeSave($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/smartagent/knowledge-delete', function () use ($smartAgentController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $smartAgentController->apiKnowledgeDelete($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/smartagent/profiles', function () use ($smartAgentController): array {
+            $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            return $smartAgentController->apiProfiles();
+        });
+        $router->post('/api/v1/smartagent/profiles-save', function () use ($smartAgentController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $smartAgentController->apiProfileSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/smartagent/recommend', function () use ($smartAgentController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $smartAgentController->apiRecommend($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         return $router->dispatch($method, $path);

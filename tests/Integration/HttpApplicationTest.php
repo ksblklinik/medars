@@ -2034,4 +2034,22 @@ class HttpApplicationTest extends TestCase
         $list = $this->app->handle('GET', '/api/v1/orthanc/studies', queryParams: ['q' => 'Thorax']);
         $this->assertSame('Tidak tampak infiltrat.', json_decode($list['body'], true)['data'][0]['hasil_baca']);
     }
+
+    public function testSmartAgentEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/smartagent');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('SmartAgent AI', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/api/v1/smartagent/knowledge-save', rawBody: json_encode(['title' => 'PDT ISPA Akut', 'category' => 'PDT', 'icd10_code' => 'J06.9', 'keywords' => 'batuk pilek ispa', 'content' => 'Terapi simtomatik & edukasi hidrasi.']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $save['status']);
+
+        $rec = $this->app->handle('POST', '/api/v1/smartagent/recommend', rawBody: json_encode(['query' => 'pasien batuk pilek']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $rec['status']);
+        $recData = json_decode($rec['body'], true)['data'];
+        $this->assertCount(1, $recData['knowledge_matches']);
+        $this->assertStringContainsString('J06.9', $recData['summary']);
+    }
 }

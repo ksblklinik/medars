@@ -74,7 +74,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 38 | `vedika` | ✅ Selesai | Verifikasi `Layak`/`Perlu Perbaikan`, UI daftar pengajuan klaim BPJS (`/api/v1/bridging/vedika/claims`), & cetak bundel berkas Vedika (`/vedika/bundel`). |
 | 39 | `veronisa` | ✅ Selesai | Modul Veronisa (`/veronisa`, `/veronisa/pdf`): verifikasi internal klaim non-kapitasi/PRB (`mlite_veronisa`), mapping obat DPHO (`mlite_veronisa_obat_mapping`), & cetak berkas verifikasi. |
 | 40 | `sep_internal` | ✅ Selesai | Pembuatan & monitoring Rujukan / SEP Internal antar poli (`/api/v1/rujukan-internal` & tab di `/surat`). |
-| 41 | `smartagent` | ❌ Belum Ada | Asisten AI Klinis, RAG Knowledge Vault (`knowledge-vault/`), & rekomendasi ICD-10 berbasis PDT. |
+| 41 | `smartagent` | ✅ Selesai | Asisten AI Klinis & Knowledge Vault (`/smartagent`): manajemen pedoman PDT (`mlite_smartagent_knowledge`), profil model AI vLLM/Cloud (`mlite_smartagent_profiles`), & rekomendasi klinis + grounding ICD-10 (`RecommendClinicalPdtUseCase`). |
 | 42 | `chat` | ✅ Selesai | Live Chat internal staf (`/chat`): kanal percakapan (`mlite_chat_conversations`), pengiriman pesan (`mlite_chat_messages`), & template balasan cepat (`mlite_chat_quick_responses`). |
 
 ---
