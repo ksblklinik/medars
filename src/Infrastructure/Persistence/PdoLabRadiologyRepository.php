@@ -376,4 +376,45 @@ final readonly class PdoLabRadiologyRepository implements LabRadiologyRepository
             'biaya_item' => $biaya,
         ];
     }
+
+    public function listRadiologiImages(string $noRawat = ''): array
+    {
+        $sql = 'SELECT * FROM gambar_radiologi';
+        $params = [];
+        $nr = trim($noRawat);
+        if ($nr !== '') {
+            $sql .= ' WHERE no_rawat = :nr';
+            $params[':nr'] = $nr;
+        }
+        $sql .= ' ORDER BY id DESC LIMIT 100';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function saveRadiologiImage(array $data): array
+    {
+        $nr = trim((string) ($data['no_rawat'] ?? ''));
+        $tgl = trim((string) ($data['tgl_periksa'] ?? date('Y-m-d'))) ?: date('Y-m-d');
+        $jam = trim((string) ($data['jam'] ?? date('H:i:s'))) ?: date('H:i:s');
+        $lokasi = trim((string) ($data['lokasi_gambar'] ?? ''));
+        $ket = trim((string) ($data['keterangan'] ?? ''));
+        $now = date('Y-m-d H:i:s');
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO gambar_radiologi (no_rawat, tgl_periksa, jam, lokasi_gambar, keterangan, uploaded_at)
+             VALUES (:nr, :tgl, :jam, :lg, :ket, :ua)'
+        );
+        $stmt->execute([':nr' => $nr, ':tgl' => $tgl, ':jam' => $jam, ':lg' => $lokasi, ':ket' => $ket, ':ua' => $now]);
+
+        return [
+            'id' => (int) $this->pdo->lastInsertId(),
+            'no_rawat' => $nr,
+            'tgl_periksa' => $tgl,
+            'jam' => $jam,
+            'lokasi_gambar' => $lokasi,
+            'keterangan' => $ket,
+            'uploaded_at' => $now,
+        ];
+    }
 }

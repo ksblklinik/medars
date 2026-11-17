@@ -76,6 +76,7 @@ class SchemaMigratorTest extends TestCase
             'surat_cuti_hamil',
             'berkas_digital_perawatan',
             'template_laboratorium',
+            'gambar_radiologi',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

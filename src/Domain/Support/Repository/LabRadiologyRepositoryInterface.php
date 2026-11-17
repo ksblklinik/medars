@@ -69,4 +69,10 @@ interface LabRadiologyRepositoryInterface
 
     /** @param array<string, mixed> $data */
     public function saveLabTemplate(array $data): array;
+
+    /** @return list<array<string, mixed>> */
+    public function listRadiologiImages(string $noRawat = ''): array;
+
+    /** @param array<string, mixed> $data */
+    public function saveRadiologiImage(array $data): array;
 }

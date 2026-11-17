@@ -2325,4 +2325,24 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $listTpl['status']);
         $this->assertCount(1, json_decode($listTpl['body'], true)['data']);
     }
+
+    public function testRadiologyImageAttachmentEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/radiologi');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Lampiran &amp; Viewer Gambar Radiologi', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/api/v1/penunjang/radiologi/images-save', rawBody: json_encode([
+            'no_rawat' => '2026/11/17/000040',
+            'lokasi_gambar' => '/storage/rad/thorax_01.png',
+            'keterangan' => 'Thorax PA',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $save['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/penunjang/radiologi/images', queryParams: ['no_rawat' => '2026/11/17/000040']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+    }
 }

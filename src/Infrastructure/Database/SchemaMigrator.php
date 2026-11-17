@@ -623,6 +623,16 @@ final class SchemaMigrator
                 biaya_item DECIMAL(15,2) NOT NULL DEFAULT 0
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS gambar_radiologi (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                tgl_periksa VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                lokasi_gambar VARCHAR(255) NOT NULL DEFAULT '',
+                keterangan VARCHAR(150) NOT NULL DEFAULT '',
+                uploaded_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS permintaan_radiologi (
                 noorder VARCHAR(20) PRIMARY KEY,
                 no_rawat VARCHAR(20) NOT NULL,

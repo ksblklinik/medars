@@ -1094,6 +1094,15 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
             return $supportController->printRadiologyResult($queryParams);
         });
+        $router->get('/api/v1/penunjang/radiologi/images', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            return $supportController->apiListRadImages($queryParams);
+        });
+        $router->post('/api/v1/penunjang/radiologi/images-save', function () use ($supportController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $supportController->apiSaveRadImage($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
 
         $router->get('/api/v1/laporan/operasional', function () use ($supportController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);

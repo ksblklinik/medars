@@ -217,6 +217,29 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                                <span class="fw-bold small text-medical-teal">Lampiran &amp; Viewer Gambar Radiologi</span>
+                                <div class="d-flex gap-2">
+                                    <a href="/orthanc" class="btn btn-xs btn-outline-primary">Buka Orthanc PACS</a>
+                                    <button type="button" id="btnLoadRadImages" class="btn btn-xs btn-outline-teal">Muat Lampiran</button>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <form id="formRadImageSave" class="row g-2 mb-2 small">
+                                    <div class="col-md-3"><input type="text" id="radImgRawat" class="form-control form-control-sm" placeholder="No. Rawat *" required></div>
+                                    <div class="col-md-4"><input type="text" id="radImgUrl" class="form-control form-control-sm" placeholder="URL / Path Gambar Citra *" required></div>
+                                    <div class="col-md-3"><input type="text" id="radImgKet" class="form-control form-control-sm" placeholder="Keterangan (Thorax PA)"></div>
+                                    <div class="col-md-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Simpan Gambar</button></div>
+                                </form>
+                                <div id="radImagesGallery" class="row g-2 small">
+                                    <div class="col-12 text-muted">Klik "Muat Lampiran" untuk melihat gambar radiologi.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -323,6 +346,33 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('formDirectLabOrder').reset();
             document.getElementById('btnRefreshLab')?.click();
         }
+    });
+
+    const loadRadImages = async () => {
+        const nr = encodeURIComponent(document.getElementById('radImgRawat')?.value.trim() || '');
+        const res = await fetcher('/api/v1/penunjang/radiologi/images?no_rawat=' + nr);
+        const json = await res.json();
+        document.getElementById('radImagesGallery').innerHTML = (json.data || []).map(img => `
+            <div class="col-md-4"><div class="border rounded p-2 bg-light">
+                <div class="fw-semibold">${esc(img.keterangan || 'Citra Radiologi')}</div>
+                <div class="text-muted">${esc(img.no_rawat)} &middot; ${esc(img.tgl_periksa)}</div>
+                <a href="${esc(img.lokasi_gambar)}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary mt-1">Lihat Gambar</a>
+            </div></div>
+        `).join('') || '<div class="col-12 text-muted">Belum ada lampiran gambar radiologi.</div>';
+    };
+    document.getElementById('btnLoadRadImages')?.addEventListener('click', loadRadImages);
+    document.getElementById('formRadImageSave')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await fetcher('/api/v1/penunjang/radiologi/images-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                no_rawat: document.getElementById('radImgRawat').value.trim(),
+                lokasi_gambar: document.getElementById('radImgUrl').value.trim(),
+                keterangan: document.getElementById('radImgKet').value.trim(),
+            }),
+        });
+        loadRadImages();
     });
 });
 </script>

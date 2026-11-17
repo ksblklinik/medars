@@ -60,7 +60,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
 | 26 | `laboratorium` | ✅ Selesai | Filter periode multi-hari (`from`–`to`), cetak hasil lab (`/penunjang/lab/cetak`), input order lab langsung di modul lab, & master parameter nilai rujukan (`template_laboratorium`, `/api/v1/penunjang/lab/templates*`). |
-| 27 | `radiologi` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), hapus order radiologi (`DeleteRadiologyOrderUseCase`), & cetak expertise radiologi (`/penunjang/radiologi/cetak`) sudah ada. Sisa: viewer lampiran gambar. |
+| 27 | `radiologi` | ✅ Selesai | Filter periode multi-hari (`from`–`to`), hapus order radiologi (`DeleteRadiologyOrderUseCase`), cetak expertise (`/penunjang/radiologi/cetak`), serta upload & viewer lampiran gambar radiologi (`gambar_radiologi`, `/api/v1/penunjang/radiologi/images*`) + tautan Orthanc PACS. |
 | 28 | `orthanc` | ✅ Selesai | Integrasi PACS & DICOM Viewer Orthanc (`/orthanc`): tautan Study UID (`bridging_orthanc`), URL OHIF Viewer, filter modality, & simpan interpretasi radiologi. |
 | 29 | `laporan` | ✅ Selesai | Ringkasan kunjungan, top 10 ICD-10, pendapatan klaim, laporan rekonsiliasi order (`Pending`/`Cancelled`/`Void`), & export CSV/Excel (`/api/v1/laporan/export-csv`). |
 | 30 | `manajemen` | ✅ Selesai | Dashboard Eksekutif Manajemen & LEAN Analytics Board (`/manajemen`): KPI kunjungan/pendapatan/lead time SOAP/overtime, metrik Net Signed Avg per poli (`HfisLeanCalculator`), & tren harian. |

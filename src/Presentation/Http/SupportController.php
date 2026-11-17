@@ -414,6 +414,30 @@ final readonly class SupportController
     }
 
     /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListRadImages(array $query = []): array
+    {
+        $nr = trim((string) ($query['no_rawat'] ?? ''));
+        return $this->json(['status' => 'success', 'data' => $this->labRepo->listRadiologiImages($nr)]);
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSaveRadImage(array $postData = []): array
+    {
+        $nr = trim((string) ($postData['no_rawat'] ?? ''));
+        $lokasi = trim((string) ($postData['lokasi_gambar'] ?? ''));
+        if ($nr === '' || $lokasi === '') {
+            return $this->json(['status' => 'error', 'message' => 'No. Rawat dan URL/file gambar radiologi wajib diisi.'], 422);
+        }
+        return $this->json(['status' => 'success', 'data' => $this->labRepo->saveRadiologiImage($postData)], 201);
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return array{status: int, headers: array<string, string>, body: string}
      */
