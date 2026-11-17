@@ -17,10 +17,11 @@
             <input type="date" id="billingFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
             <span class="input-group-text bg-white text-muted">s/d</span>
             <input type="date" id="billingFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
-            <select id="billingFilterLanjut" class="form-select" style="max-width: 130px;">
-                <option value="">Ralan + Ranap</option>
+            <select id="billingFilterLanjut" class="form-select" style="max-width: 140px;">
+                <option value="">Semua Unit</option>
                 <option value="Ralan">Rawat Jalan</option>
                 <option value="Ranap">Rawat Inap</option>
+                <option value="IGDK">Khusus IGD</option>
             </select>
             <button type="button" id="btnFilterBilling" class="btn btn-outline-teal">Filter</button>
         </div>

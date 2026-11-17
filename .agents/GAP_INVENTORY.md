@@ -30,8 +30,8 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
 | 10 | `igd` | ✅ Selesai | Modul Pendaftaran & Triase IGD (`/igd`): antrean prioritas zona ATS/ESI (`Merah` &rarr; `Kuning` &rarr; `Hijau` &rarr; `Hitam`), form triase TTV/GCS/SpO2, & disposisi (`Pulang`/`Rawat Inap`/`Rujuk`). |
-| 11 | `dokter_igd` | ❌ Belum Ada | Layar SOAP, Triase IGD, tindakan emergensi, e-resep IGD, & order penunjang IGD. |
-| 12 | `kasir_igd` | ❌ Belum Ada | Layar billing & pelunasan khusus pasien IGD (termasuk pasien masuk ranap). |
+| 11 | `dokter_igd` | ✅ Selesai | Triase IGD ATS/ESI (`/igd`) terintegrasi dengan layar SOAP, tindakan, e-resep, & order penunjang dokter (`/dokter-ralan`). |
+| 12 | `kasir_igd` | ✅ Selesai | Billing & pelunasan khusus pasien IGD terintegrasi di `/kasir` dengan filter unit `kd_poli=IGDK` (termasuk pasien lanjut Ranap). |
 | 13 | `rawat_inap` | ✅ Selesai | Manajemen Kamar Inap (`/rawat-inap`): master bangsal & kamar, check-in kamar (`ISI` + `status_lanjut=Ranap`), & checkout pulang otomatis hitung lama inap + posting billing kamar ke `mlite_billing_ledger`. |
 | 14 | `dokter_ranap` | 🟡 Parsial | Layar CPPT Dokter Ranap (`/dokter-ranap`, `pemeriksaan_ranap` UI & riwayat visite) sudah ada. Sisa: tab E-Resep Ranap & Resume Pulang langsung di layar Dokter Ranap. |
 | 15 | `apotek_ranap` | ✅ Selesai | Pelayanan E-Resep Rawat Inap terintegrasi di `/apotek-ralan` dengan filter `status_layanan=ranap` (`resep_obat.status='ranap'`). |

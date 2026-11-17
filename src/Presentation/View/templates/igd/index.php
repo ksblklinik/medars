@@ -85,6 +85,12 @@
                             <button type="button" id="btnIgdDisposisi" class="btn btn-sm btn-outline-teal w-100">Update Disposisi &amp; Status</button>
                         </div>
                     </div>
+
+                    <hr class="my-3">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="/dokter-ralan" class="btn btn-sm btn-outline-primary"><i class="fa fa-stethoscope me-1"></i>SOAP / Resep / Penunjang Dokter IGD</a>
+                        <a href="/kasir" class="btn btn-sm btn-outline-success"><i class="fa fa-cash-register me-1"></i>Kasir &amp; Billing IGD</a>
+                    </div>
                 </div>
             </div>
         </div>

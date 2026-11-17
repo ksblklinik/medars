@@ -1549,4 +1549,19 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $kasirRanap['status']);
         $this->assertCount(1, json_decode($kasirRanap['body'], true));
     }
+
+    public function testKasirIgdFilterEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000160', 'Agus IGD', '1988-08-08', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_lanjut, status_bayar)
+            VALUES ('001', '2026/11/17/000160', '{$today}', '08:00:00', 'DR01', '000160', 'IGDK', 'A09', 'Belum', 'Ralan', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $kasirIgd = $this->app->handle('GET', '/api/v1/kasir/queue', queryParams: ['from' => $today, 'to' => $today, 'kd_poli' => 'IGDK']);
+        $this->assertSame(200, $kasirIgd['status']);
+        $this->assertCount(1, json_decode($kasirIgd['body'], true));
+    }
 }

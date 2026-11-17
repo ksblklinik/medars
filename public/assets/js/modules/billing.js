@@ -105,7 +105,11 @@
             const params = new URLSearchParams();
             if (from) params.set('from', from);
             if (to) params.set('to', to);
-            if (sl) params.set('status_lanjut', sl);
+            if (sl === 'IGDK') {
+                params.set('kd_poli', 'IGDK');
+            } else if (sl) {
+                params.set('status_lanjut', sl);
+            }
             const qs = params.toString();
 
             this.apiFetch('/api/v1/kasir/queue' + (qs ? '?' + qs : ''))
