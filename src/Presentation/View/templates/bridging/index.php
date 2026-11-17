@@ -330,3 +330,87 @@ document.addEventListener('DOMContentLoaded', function () {
     loadKontrol();
 });
 </script>
+<div class="row" style="margin-top:14px;" id="hfisAntrolPanel">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading" style="background:#00897b;color:#fff;font-weight:bold;">
+                HFIS Jadwal Dokter &amp; Antrean Online BPJS (Antrol Task ID 1–7)
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Sinkron Jadwal Dokter HFIS</h5>
+                        <form id="formHfisSync" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <input type="text" id="hfisKdPoli" class="form-control input-sm" placeholder="Kd Poli (INT)" required>
+                            <input type="text" id="hfisNmPoli" class="form-control input-sm" placeholder="Nama Poli">
+                            <input type="text" id="hfisKdDokter" class="form-control input-sm" placeholder="Kd Dokter BPJS" required>
+                            <input type="text" id="hfisNmDokter" class="form-control input-sm" placeholder="Nama Dokter">
+                            <input type="text" id="hfisNamaHari" class="form-control input-sm" value="SENIN" placeholder="Hari">
+                            <input type="text" id="hfisJadwal" class="form-control input-sm" value="08:00-12:00" placeholder="Jam">
+                            <button type="submit" class="btn btn-success btn-sm">Sinkron HFIS</button>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-condensed" style="font-size:12px;">
+                                <thead><tr><th>Poli</th><th>Dokter</th><th>Hari</th><th>Jadwal</th><th>Kuota</th></tr></thead>
+                                <tbody id="hfisJadwalBody"><tr><td colspan="5" class="text-center text-muted">Belum ada jadwal HFIS.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Antrean Online BPJS (Antrol Task ID 1–7)</h5>
+                        <form id="formAntrolPush" class="form-inline" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <input type="text" id="antrolKodeBooking" class="form-control input-sm" placeholder="Kode Booking" required>
+                            <input type="text" id="antrolNoRawat" class="form-control input-sm" placeholder="No. Rawat">
+                            <select id="antrolTaskId" class="form-control input-sm">
+                                <option value="1">Task 1 - Mulai Tunggu Admisi</option>
+                                <option value="2">Task 2 - Selesai Admisi</option>
+                                <option value="3">Task 3 - Mulai Tunggu Poli</option>
+                                <option value="4">Task 4 - Dilayani Poli</option>
+                                <option value="5">Task 5 - Selesai Poli</option>
+                                <option value="6">Task 6 - Mulai Tunggu Farmasi</option>
+                                <option value="7">Task 7 - Selesai Obat</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Kirim Task Antrol</button>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-condensed" style="font-size:12px;">
+                                <thead><tr><th>Kode Booking</th><th>No. Rawat</th><th>Task ID</th><th>Status</th><th>Respon</th></tr></thead>
+                                <tbody id="antrolTaskBody"><tr><td colspan="5" class="text-center text-muted">Belum ada log antrol.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
+    if (!api) return;
+
+    async function loadHfis() {
+        const res = await api('/api/v1/bridging/hfis/jadwal');
+        const rows = res.data || [];
+        document.getElementById('hfisJadwalBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.nm_poli_bpjs || r.kd_poli_bpjs) + '</td><td>' + esc(r.nm_dokter_bpjs || r.kd_dokter_bpjs) + '</td><td>' + esc(r.nama_hari) + '</td><td>' + esc(r.jadwal) + '</td><td>' + esc(r.kapasitas_pasien) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada jadwal HFIS.</td></tr>';
+    }
+    async function loadAntrol() {
+        const res = await api('/api/v1/bridging/antrol/tasks');
+        const rows = res.data || [];
+        document.getElementById('antrolTaskBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.kodebooking) + '</td><td>' + esc(r.no_rawat) + '</td><td>Task ' + esc(r.task_id) + '</td><td>' + esc(r.status_sync) + '</td><td>' + esc(r.response_code) + ' ' + esc(r.response_msg) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-center text-muted">Belum ada log antrol.</td></tr>';
+    }
+    document.getElementById('formHfisSync')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/hfis/jadwal-sync', { method: 'POST', body: JSON.stringify({ kd_poli_bpjs: hfisKdPoli.value, nm_poli_bpjs: hfisNmPoli.value, kd_dokter_bpjs: hfisKdDokter.value, nm_dokter_bpjs: hfisNmDokter.value, nama_hari: hfisNamaHari.value, jadwal: hfisJadwal.value }) });
+        if (res.status === 'success') loadHfis();
+    });
+    document.getElementById('formAntrolPush')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/bridging/antrol/task-push', { method: 'POST', body: JSON.stringify({ kodebooking: antrolKodeBooking.value, no_rawat: antrolNoRawat.value, task_id: antrolTaskId.value }) });
+        if (res.status === 'success') loadAntrol();
+    });
+    loadHfis();
+    loadAntrol();
+});
+</script>

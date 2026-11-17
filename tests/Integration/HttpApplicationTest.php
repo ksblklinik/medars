@@ -2455,4 +2455,33 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/tindakan')['body'], true)['data']);
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/pcare/rujukan')['body'], true)['data']);
     }
+
+    public function testHfisJadwalAndAntrolEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/bridging');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('hfisAntrolPanel', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $sync = $this->app->handle('POST', '/api/v1/bridging/hfis/jadwal-sync', postData: [
+            'kd_poli_bpjs' => 'INT',
+            'nm_poli_bpjs' => 'Penyakit Dalam',
+            'kd_dokter_bpjs' => '12345',
+            'nm_dokter_bpjs' => 'dr. Andi Sp.PD',
+            'nama_hari' => 'SENIN',
+            'jadwal' => '08:00-12:00',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $sync['status']);
+
+        $push = $this->app->handle('POST', '/api/v1/bridging/antrol/task-push', postData: [
+            'kodebooking' => '20261117INT001',
+            'no_rawat' => '2026/11/17/000120',
+            'task_id' => 3,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $push['status']);
+
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/hfis/jadwal')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/antrol/tasks')['body'], true)['data']);
+    }
 }

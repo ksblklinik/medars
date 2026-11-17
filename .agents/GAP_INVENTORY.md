@@ -67,7 +67,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 31 | `vclaim` | ✅ Selesai | Lengkap: tabel `bridging_sep`, `bridging_rujukan_bpjs`, `bridging_surat_kontrol_bpjs`, `VclaimController`, panel UI VClaim di `/bridging` (Cari Peserta BPJS, Buat & Cetak SEP, Rujukan, Surat Kontrol). |
 | 32 | `pcare` | ✅ Selesai | Lengkap: modul Bridging FKTP PCare BPJS (`/pcare`, `/pcare/rujukan/cetak`, `/api/v1/pcare/*`) untuk Pendaftaran, Kunjungan, Obat DPHO, Lab/Tindakan, & Rujukan FKTP. |
 | 33 | `icare` | ✅ Selesai | Integrasi tombol `i-Care JKN` di layar dokter (`/dokter-ralan`), viewer riwayat i-Care (`/icare/riwayat`), & endpoint `/api/v1/icare/riwayat` (`FetchIcareHistoryUseCase`). |
-| 34 | `bridging_hfis` | 🟡 Parsial | Baru ada kalkulator `HfisLeanCalculator`; belum ada sinkron jadwal dokter HFIS & antrean online BPJS (`antrol`). |
+| 34 | `bridging_hfis` | ✅ Selesai | Lengkap: `HfisLeanCalculator` + sinkron jadwal dokter HFIS (`mlite_hfis_jadwal`, `/api/v1/bridging/hfis/jadwal*`) & Antrean Online BPJS `antrol` Task ID 1–7 (`mlite_antrol_log`, `/api/v1/bridging/antrol/*`) di `/bridging`. |
 | 35 | `jkn_mobile` | 🟡 Parsial | Baru ada check-in dasar; belum ada endpoint penuh API Antrean Online Mobile JKN FKRTL. |
 | 36 | `jkn_mobile_fktp` | ❌ Belum Ada | Endpoint API Mobile JKN khusus FKTP. |
 | 37 | `satu_sehat` | 🟡 Parsial | Baru ada OAuth2 + async queue `Encounter` & `Condition`; belum ada UI mapping IHS ID, `Observation`, `MedicationRequest`, & `ServiceRequest`. |

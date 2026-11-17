@@ -1156,6 +1156,32 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_hfis_jadwal (
+                id {$bigAutoIncPk},
+                kd_poli_bpjs VARCHAR(15) NOT NULL,
+                nm_poli_bpjs VARCHAR(100) NOT NULL DEFAULT '',
+                kd_dokter_bpjs VARCHAR(25) NOT NULL,
+                nm_dokter_bpjs VARCHAR(120) NOT NULL DEFAULT '',
+                hari INTEGER NOT NULL DEFAULT 1,
+                nama_hari VARCHAR(15) NOT NULL DEFAULT 'SENIN',
+                jadwal VARCHAR(25) NOT NULL DEFAULT '08:00-12:00',
+                kapasitas_pasien INTEGER NOT NULL DEFAULT 20,
+                libur INTEGER NOT NULL DEFAULT 0,
+                synced_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_antrol_log (
+                id {$bigAutoIncPk},
+                kodebooking VARCHAR(40) NOT NULL,
+                no_rawat VARCHAR(25) NOT NULL DEFAULT '',
+                task_id INTEGER NOT NULL,
+                waktu_ms BIGINT NOT NULL DEFAULT 0,
+                status_sync VARCHAR(20) NOT NULL DEFAULT 'sent',
+                response_code VARCHAR(10) NOT NULL DEFAULT '200',
+                response_msg VARCHAR(200) NOT NULL DEFAULT 'Ok',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

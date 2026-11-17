@@ -360,6 +360,7 @@ final class HttpApplication
             $this->renderer,
             $this->navBuilder
         );
+        $hfisAntrolController = new HfisAntrolController(new \App\Infrastructure\Persistence\PdoHfisAntrolRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1244,6 +1245,24 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'pcare', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $pcareController->apiTindakanSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/bridging/hfis/jadwal', function () use ($hfisAntrolController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'bridging_hfis', 'admin']);
+            return $hfisAntrolController->apiJadwalList($queryParams);
+        });
+        $router->post('/api/v1/bridging/hfis/jadwal-sync', function () use ($hfisAntrolController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'bridging_hfis', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $hfisAntrolController->apiJadwalSync($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/bridging/antrol/tasks', function () use ($hfisAntrolController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'bridging_hfis', 'admin']);
+            return $hfisAntrolController->apiAntrolList($queryParams);
+        });
+        $router->post('/api/v1/bridging/antrol/task-push', function () use ($hfisAntrolController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'bridging_hfis', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $hfisAntrolController->apiAntrolPush($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)
