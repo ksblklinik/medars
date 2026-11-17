@@ -2345,4 +2345,56 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $list['status']);
         $this->assertCount(1, json_decode($list['body'], true)['data']);
     }
+
+    public function testVclaimSepRujukanKontrolEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, no_peserta, tgl_lahir, jk) VALUES ('RM-VC-01', 'Budi BPJS', '3500011223344', '0001234567890', '1990-01-01', 'L')");
+
+        $page = $this->app->handle('GET', '/bridging');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('vclaimPanel', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $peserta = $this->app->handle('GET', '/api/v1/bridging/vclaim/peserta', queryParams: ['no_kartu' => '0001234567890']);
+        $this->assertSame(200, $peserta['status']);
+        $this->assertSame('Budi BPJS', json_decode($peserta['body'], true)['data']['nm_pasien']);
+
+        $sepRes = $this->app->handle('POST', '/api/v1/bridging/vclaim/sep-save', postData: [
+            'no_rawat' => '2026/11/17/000050',
+            'no_kartu' => '0001234567890',
+            'nama_pasien' => 'Budi BPJS',
+            'kdpolitujuan' => 'INT',
+            'nmpolitujuan' => 'Penyakit Dalam',
+            'diagawal' => 'J00',
+            'nmdiagnosaawal' => 'Nasofaringitis akut',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $sepRes['status']);
+        $noSep = json_decode($sepRes['body'], true)['data']['no_sep'];
+        $this->assertNotEmpty($noSep);
+
+        $print = $this->app->handle('GET', '/bridging/vclaim/sep/cetak', queryParams: ['no_sep' => $noSep]);
+        $this->assertSame(200, $print['status']);
+        $this->assertStringContainsString($noSep, $print['body']);
+
+        $rujRes = $this->app->handle('POST', '/api/v1/bridging/vclaim/rujukan-save', postData: [
+            'no_sep' => $noSep,
+            'ppk_dirujuk' => '0112R002',
+            'nm_ppk_dirujuk' => 'RSUD Rujukan',
+            'diag_rujukan' => 'I10',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $rujRes['status']);
+
+        $skRes = $this->app->handle('POST', '/api/v1/bridging/vclaim/surat-kontrol-save', postData: [
+            'no_sep' => $noSep,
+            'tgl_rencana' => '2026-11-24',
+            'nm_dokter_bpjs' => 'dr. Andi Sp.PD',
+            'nm_poli_bpjs' => 'Penyakit Dalam',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $skRes['status']);
+
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/vclaim/sep')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/vclaim/rujukan')['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/vclaim/surat-kontrol')['body'], true)['data']);
+    }
 }

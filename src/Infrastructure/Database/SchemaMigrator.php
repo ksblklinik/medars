@@ -1042,6 +1042,45 @@ final class SchemaMigrator
                 uploaded_at VARCHAR(25) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS bridging_sep (
+                no_sep VARCHAR(40) PRIMARY KEY,
+                no_rawat VARCHAR(20) NOT NULL,
+                tglsep VARCHAR(15) NOT NULL,
+                no_kartu VARCHAR(30) NOT NULL,
+                nama_pasien VARCHAR(120) NOT NULL DEFAULT '',
+                kdpolitujuan VARCHAR(15) NOT NULL DEFAULT '',
+                nmpolitujuan VARCHAR(100) NOT NULL DEFAULT '',
+                diagawal VARCHAR(15) NOT NULL DEFAULT '',
+                nmdiagnosaawal VARCHAR(150) NOT NULL DEFAULT '',
+                jnspelayanan VARCHAR(5) NOT NULL DEFAULT '2',
+                klsrawat VARCHAR(5) NOT NULL DEFAULT '3',
+                catatan VARCHAR(200) NOT NULL DEFAULT '',
+                user_input VARCHAR(50) NOT NULL DEFAULT 'system'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS bridging_rujukan_bpjs (
+                no_rujukan VARCHAR(40) PRIMARY KEY,
+                no_sep VARCHAR(40) NOT NULL,
+                tgl_rujukan VARCHAR(15) NOT NULL,
+                ppk_dirujuk VARCHAR(25) NOT NULL DEFAULT '',
+                nm_ppk_dirujuk VARCHAR(150) NOT NULL DEFAULT '',
+                jns_pelayanan VARCHAR(5) NOT NULL DEFAULT '2',
+                diag_rujukan VARCHAR(15) NOT NULL DEFAULT '',
+                tipe_rujukan VARCHAR(5) NOT NULL DEFAULT '0',
+                catatan VARCHAR(200) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS bridging_surat_kontrol_bpjs (
+                no_surat VARCHAR(40) PRIMARY KEY,
+                no_sep VARCHAR(40) NOT NULL,
+                tgl_surat VARCHAR(15) NOT NULL,
+                tgl_rencana VARCHAR(15) NOT NULL,
+                kd_dokter_bpjs VARCHAR(20) NOT NULL DEFAULT '',
+                nm_dokter_bpjs VARCHAR(120) NOT NULL DEFAULT '',
+                kd_poli_bpjs VARCHAR(15) NOT NULL DEFAULT '',
+                nm_poli_bpjs VARCHAR(100) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

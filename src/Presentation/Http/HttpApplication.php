@@ -354,6 +354,7 @@ final class HttpApplication
             $this->navBuilder,
             $vedikaRepo
         );
+        $vclaimController = new VclaimController(new \App\Infrastructure\Persistence\PdoVclaimRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1150,6 +1151,41 @@ final class HttpApplication
         $router->get('/vedika/bundel', function () use ($bridgingController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vedika', 'kasir']);
             return $bridgingController->printVedikaBundle($queryParams);
+        });
+        $router->get('/api/v1/bridging/vclaim/peserta', function () use ($vclaimController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            return $vclaimController->apiCariPeserta($queryParams);
+        });
+        $router->get('/api/v1/bridging/vclaim/sep', function () use ($vclaimController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            return $vclaimController->apiSepList($queryParams);
+        });
+        $router->post('/api/v1/bridging/vclaim/sep-save', function () use ($vclaimController, $postData, $rawBody, $headers): array {
+            $actor = $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $vclaimController->apiSepSave($actor, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/bridging/vclaim/sep/cetak', function () use ($vclaimController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            return $vclaimController->printSep($queryParams);
+        });
+        $router->get('/api/v1/bridging/vclaim/rujukan', function () use ($vclaimController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            return $vclaimController->apiRujukanList($queryParams);
+        });
+        $router->post('/api/v1/bridging/vclaim/rujukan-save', function () use ($vclaimController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $vclaimController->apiRujukanSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/bridging/vclaim/surat-kontrol', function () use ($vclaimController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            return $vclaimController->apiSuratKontrolList($queryParams);
+        });
+        $router->post('/api/v1/bridging/vclaim/surat-kontrol-save', function () use ($vclaimController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['bridging_bpjs', 'vclaim', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $vclaimController->apiSuratKontrolSave($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)

@@ -64,7 +64,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 28 | `orthanc` | ✅ Selesai | Integrasi PACS & DICOM Viewer Orthanc (`/orthanc`): tautan Study UID (`bridging_orthanc`), URL OHIF Viewer, filter modality, & simpan interpretasi radiologi. |
 | 29 | `laporan` | ✅ Selesai | Ringkasan kunjungan, top 10 ICD-10, pendapatan klaim, laporan rekonsiliasi order (`Pending`/`Cancelled`/`Void`), & export CSV/Excel (`/api/v1/laporan/export-csv`). |
 | 30 | `manajemen` | ✅ Selesai | Dashboard Eksekutif Manajemen & LEAN Analytics Board (`/manajemen`): KPI kunjungan/pendapatan/lead time SOAP/overtime, metrik Net Signed Avg per poli (`HfisLeanCalculator`), & tren harian. |
-| 31 | `vclaim` | 🟡 Parsial | Baru ada circuit breaker & dekripsi; belum ada UI buat/cetak SEP, Rujukan, Surat Kontrol, & Cari Peserta BPJS. |
+| 31 | `vclaim` | ✅ Selesai | Lengkap: tabel `bridging_sep`, `bridging_rujukan_bpjs`, `bridging_surat_kontrol_bpjs`, `VclaimController`, panel UI VClaim di `/bridging` (Cari Peserta BPJS, Buat & Cetak SEP, Rujukan, Surat Kontrol). |
 | 32 | `pcare` | ❌ Belum Ada | Bridging khusus FKTP PCare BPJS (Pendaftaran, Kunjungan, Obat, Lab, Rujukan FKTP). |
 | 33 | `icare` | ✅ Selesai | Integrasi tombol `i-Care JKN` di layar dokter (`/dokter-ralan`), viewer riwayat i-Care (`/icare/riwayat`), & endpoint `/api/v1/icare/riwayat` (`FetchIcareHistoryUseCase`). |
 | 34 | `bridging_hfis` | 🟡 Parsial | Baru ada kalkulator `HfisLeanCalculator`; belum ada sinkron jadwal dokter HFIS & antrean online BPJS (`antrol`). |
