@@ -87,4 +87,27 @@
             out.innerHTML = `<div class="alert alert-success py-1 px-2 small mb-0">Berhasil memangkas ${escapeHtml(data.pruned_count)} baris log (> ${escapeHtml(data.retention_days)} hari).</div>`;
         }
     });
+
+    async function loadAuditLogs() {
+        const tbody = document.getElementById('auditLogsBody');
+        if (!tbody) return;
+        const q = document.getElementById('auditLogSearchInput')?.value.trim() || '';
+        const data = await apiFetch('/api/v1/audit/logs?q=' + encodeURIComponent(q));
+        if (!data.ok || !Array.isArray(data.logs) || data.logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada entri audit log.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.logs.map((l) => `
+            <tr>
+                <td class="text-nowrap">${escapeHtml(l.created_at)}</td>
+                <td class="fw-semibold">${escapeHtml(l.username)}</td>
+                <td><span class="badge bg-secondary">${escapeHtml(l.action)}</span></td>
+                <td>${escapeHtml(l.details)}</td>
+                <td class="font-monospace">${escapeHtml(l.ip_address)}</td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('btnLoadAuditLogs')?.addEventListener('click', loadAuditLogs);
+    loadAuditLogs();
 })();

@@ -90,9 +90,9 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 47 | `presensi` | ❌ Belum Ada | Modul absensi / presensi pegawai (lokasi/foto/jadwal shift). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ❌ Belum Ada | Viewer riwayat migrasi dari SIMGOS lama. |
-| 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar; belum ada filter/cari & reset password massal. |
+| 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |
 | 51 | `settings` | 🟡 Parsial | Sudah ada pengaturan dasar; belum ada tab khusus Bridging/WA/Tarif/Logo instansi lengkap. |
-| 52 | `mlite_logs` | 🟡 Parsial | Sudah ada `/audit` & rotasi log operasional; belum ada UI viewer `mlite_logs` berfilter di browser. |
+| 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
 | 53 | `mlite_api_key` | ❌ Belum Ada | Manajemen API Key eksternal & rate-limit token. |
 | 54 | `modules` | ❌ Belum Ada | UI Module Manager (aktifkan/nonaktifkan/install plugin dari antarmuka admin). |
 | 55 | `dashboard` | 🟡 Parsial | Sudah ada 4 KPI + grid menu; belum ada grafik kunjungan/pendapatan & pengumuman internal. |

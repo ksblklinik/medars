@@ -7,6 +7,7 @@ namespace App\Presentation\Http;
 use App\Domain\Audit\Service\DataIntegrityAuditService;
 use App\Domain\Audit\Service\LogRotationService;
 use App\Domain\Security\Entity\UserAccount;
+use App\Domain\Security\Repository\AuditLogRepositoryInterface;
 use App\Presentation\View\ViewRenderer;
 
 final readonly class AuditController
@@ -16,6 +17,7 @@ final readonly class AuditController
         private LogRotationService $rotationService,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
+        private ?AuditLogRepositoryInterface $auditLogRepo = null,
     ) {}
 
     /**
@@ -103,6 +105,30 @@ final readonly class AuditController
         } catch (\InvalidArgumentException $e) {
             return $this->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListLogs(array $query = []): array
+    {
+        if ($this->auditLogRepo === null) {
+            return $this->json(['ok' => true, 'logs' => []]);
+        }
+
+        $action = trim((string) ($query['action'] ?? ''));
+        $q = strtolower(trim((string) ($query['q'] ?? '')));
+        $logs = $this->auditLogRepo->getRecentLogs(100, $action !== '' ? $action : null);
+
+        if ($q !== '') {
+            $logs = array_values(array_filter($logs, static function (array $row) use ($q): bool {
+                $hay = strtolower(($row['username'] ?? '') . ' ' . ($row['action'] ?? '') . ' ' . ($row['details'] ?? '') . ' ' . ($row['ip_address'] ?? ''));
+                return str_contains($hay, $q);
+            }));
+        }
+
+        return $this->json(['ok' => true, 'logs' => $logs]);
     }
 
     /**

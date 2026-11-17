@@ -99,5 +99,23 @@
             </div>
         </div>
     </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-list-ul me-1"></i> Audit Trail Viewer (mlite_logs)</h6>
+                <div class="d-flex gap-2">
+                    <input type="search" id="auditLogSearchInput" class="form-control form-control-sm" placeholder="Filter user / aksi / detail...">
+                    <button type="button" id="btnLoadAuditLogs" class="btn btn-sm btn-outline-teal">Muat Log</button>
+                </div>
+            </div>
+            <div class="card-body p-0 table-responsive" style="max-height: 320px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0 small">
+                    <thead class="table-light"><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Detail</th><th>IP</th></tr></thead>
+                    <tbody id="auditLogsBody"><tr><td colspan="5" class="text-center text-muted py-3">Memuat log audit...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-<script src="/assets/js/modules/audit.js" defer></script>
+<script src="/assets/js/modules/audit.js?v=20261117b" defer></script>

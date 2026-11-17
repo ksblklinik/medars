@@ -4,9 +4,12 @@
             <h6 class="card-title m-0 text-medical-teal fw-bold">
                 <i class="fa fa-users-gear me-2"></i>Daftar Pengguna &amp; Hak Akses
             </h6>
-            <button type="button" id="btnAddUser" class="btn btn-sm btn-medical-teal" data-bs-toggle="modal" data-bs-target="#modalUser">
-                <i class="fa fa-user-plus me-1"></i> Tambah Pengguna
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <input type="search" class="form-control form-control-sm" placeholder="Cari pengguna..." data-ksmlite-search="usersTableBody" style="max-width: 220px;">
+                <button type="button" id="btnAddUser" class="btn btn-sm btn-medical-teal" data-bs-toggle="modal" data-bs-target="#modalUser">
+                    <i class="fa fa-user-plus me-1"></i> Tambah Pengguna
+                </button>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -23,7 +26,7 @@
                             <th class="text-center" style="width: 100px;">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="usersTableBody">
                         <?php foreach ($users as $u): ?>
                             <tr>
                                 <td class="ps-3"><?= $this->e((string) $u->getId()) ?></td>

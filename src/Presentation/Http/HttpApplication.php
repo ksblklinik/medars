@@ -457,7 +457,8 @@ final class HttpApplication
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            $this->auditRepo
         );
 
         // --- RUTE PUBLIK / KIOSK HARDWARE ---
@@ -1007,6 +1008,10 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $auditController->apiRotateLogs($data);
+        });
+        $router->get('/api/v1/audit/logs', function () use ($auditController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['audit', 'admin']);
+            return $auditController->apiListLogs($queryParams);
         });
 
         // Master Pasien (GAP No. 1)

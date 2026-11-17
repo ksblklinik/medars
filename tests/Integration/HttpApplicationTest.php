@@ -1371,4 +1371,23 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $pwd['status']);
         $this->assertSame('success', json_decode($pwd['body'], true)['status']);
     }
+
+    public function testAuditLogsViewerAndUsersSearchEndToEnd(): void
+    {
+        $this->pdo->exec("
+            INSERT INTO mlite_logs (user_id, username, action, details, ip_address, created_at)
+            VALUES (1, 'admin', 'LOGIN_SUCCESS', 'Login berhasil dari test', '127.0.0.1', '2026-11-17 09:00:00');
+        ");
+
+        $this->session['user_id'] = 1;
+        $logsRes = $this->app->handle('GET', '/api/v1/audit/logs', queryParams: ['q' => 'LOGIN']);
+        $this->assertSame(200, $logsRes['status']);
+        $logsJson = json_decode($logsRes['body'], true);
+        $this->assertTrue($logsJson['ok']);
+        $this->assertCount(1, $logsJson['logs']);
+
+        $usersPage = $this->app->handle('GET', '/users');
+        $this->assertSame(200, $usersPage['status']);
+        $this->assertStringContainsString('usersTableBody', $usersPage['body']);
+    }
 }
