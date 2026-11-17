@@ -29,7 +29,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
-| 10 | `igd` | ❌ Belum Ada | Modul Pendaftaran & Pelayanan IGD (Triase ATS/ESI, status masuk, rujuk/rawat inap). |
+| 10 | `igd` | ✅ Selesai | Modul Pendaftaran & Triase IGD (`/igd`): antrean prioritas zona ATS/ESI (`Merah` &rarr; `Kuning` &rarr; `Hijau` &rarr; `Hitam`), form triase TTV/GCS/SpO2, & disposisi (`Pulang`/`Rawat Inap`/`Rujuk`). |
 | 11 | `dokter_igd` | ❌ Belum Ada | Layar SOAP, Triase IGD, tindakan emergensi, e-resep IGD, & order penunjang IGD. |
 | 12 | `kasir_igd` | ❌ Belum Ada | Layar billing & pelunasan khusus pasien IGD (termasuk pasien masuk ranap). |
 | 13 | `rawat_inap` | ❌ Belum Ada | Manajemen Kamar Inap (`kamar_inap`), check-in/pindah kamar, mutasi pasien ranap, pulang/status keluar. |

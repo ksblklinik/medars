@@ -402,6 +402,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $igdController = new IgdController(
+            new \App\Infrastructure\Persistence\PdoIgdRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1068,6 +1074,27 @@ final class HttpApplication
         $router->get('/api/v1/frontoffice/overview', function () use ($frontOfficeController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['frontoffice', 'pendaftaran', 'rawat_jalan']);
             return $frontOfficeController->apiOverview($queryParams);
+        });
+
+        $router->get('/igd', function () use ($igdController): array {
+            $user = $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd', 'pendaftaran']);
+            return $igdController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/igd/list', function () use ($igdController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd', 'pendaftaran']);
+            return $igdController->apiList($queryParams);
+        });
+        $router->post('/api/v1/igd/triase', function () use ($igdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $igdController->apiSaveTriase($data);
+        });
+        $router->post('/api/v1/igd/disposisi', function () use ($igdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $igdController->apiUpdateDisposisi($data);
         });
 
         return $router->dispatch($method, $path);

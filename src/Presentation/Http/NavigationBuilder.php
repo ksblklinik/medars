@@ -55,6 +55,14 @@ final class NavigationBuilder
                 'modules' => ['dokter_ralan', 'rawat_jalan'],
             ],
             [
+                'title' => 'IGD & Triase',
+                'icon' => 'fa-truck-medical',
+                'route' => '/igd',
+                'category' => 'Layanan',
+                'module_key' => 'igd',
+                'modules' => ['igd', 'dokter_igd', 'pendaftaran'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',

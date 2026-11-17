@@ -1055,4 +1055,55 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(1, $json['stats']['total_kunjungan']);
         $this->assertCount(1, $json['visits']);
     }
+
+    public function testIgdEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000060', 'Pasien IGD', '1980-02-02', 'L');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('IGDK', 'IGD', '1');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Jaga', '1');
+            INSERT INTO penjab (kd_pj, png_jawab, status) VALUES ('A09', 'UMUM', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_lanjut, status_bayar)
+            VALUES ('001', '2026/11/17/000060', '{$today}', '08:00:00', 'DR01', '000060', 'IGDK', 'A09', 'Belum', 'Ralan', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/igd');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Instalasi Gawat Darurat', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $triase = $this->app->handle(
+            'POST',
+            '/api/v1/igd/triase',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000060',
+                'zona_triase' => 'Merah',
+                'keluhan_utama' => 'Sesak berat',
+                'spo2' => '85',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $triase['status']);
+
+        $disp = $this->app->handle(
+            'POST',
+            '/api/v1/igd/disposisi',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000060',
+                'disposisi' => 'Rawat Inap',
+                'status_lanjut' => 'Ranap',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $disp['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/igd/list', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $list['status']);
+        $rows = json_decode($list['body'], true)['data'];
+        $this->assertCount(1, $rows);
+        $this->assertSame('Merah', $rows[0]['zona_triase']);
+        $this->assertSame('Ranap', $rows[0]['status_lanjut']);
+    }
 }

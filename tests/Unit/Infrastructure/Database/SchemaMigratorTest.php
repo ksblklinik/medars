@@ -45,6 +45,7 @@ class SchemaMigratorTest extends TestCase
             'sse_events',
             'pemeriksaan_ralan',
             'pemeriksaan_ranap',
+            'data_triase_igd',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

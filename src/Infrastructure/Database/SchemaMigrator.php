@@ -678,6 +678,23 @@ final class SchemaMigrator
                 obat_pulang TEXT
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS data_triase_igd (
+                no_rawat VARCHAR(20) PRIMARY KEY,
+                tgl_kunjungan VARCHAR(15) NOT NULL,
+                jam_kunjungan VARCHAR(15) NOT NULL,
+                cara_masuk VARCHAR(30) NOT NULL DEFAULT 'Jalan',
+                zona_triase VARCHAR(20) NOT NULL DEFAULT 'Hijau',
+                keluhan_utama TEXT NOT NULL,
+                tensi VARCHAR(20) NOT NULL DEFAULT '',
+                nadi VARCHAR(10) NOT NULL DEFAULT '',
+                suhu VARCHAR(10) NOT NULL DEFAULT '',
+                respirasi VARCHAR(10) NOT NULL DEFAULT '',
+                spo2 VARCHAR(10) NOT NULL DEFAULT '',
+                gcs VARCHAR(15) NOT NULL DEFAULT '15',
+                disposisi VARCHAR(30) NOT NULL DEFAULT 'Observasi',
+                catatan TEXT
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_homecare_kunjungan (
                 id {$bigAutoIncPk},
                 no_rawat VARCHAR(20) NOT NULL,
