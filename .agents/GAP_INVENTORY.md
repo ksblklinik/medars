@@ -63,7 +63,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 27 | `radiologi` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), hapus order radiologi (`DeleteRadiologyOrderUseCase`), & cetak expertise radiologi (`/penunjang/radiologi/cetak`) sudah ada. Sisa: viewer lampiran gambar. |
 | 28 | `orthanc` | ❌ Belum Ada | Integrasi PACS / DICOM viewer Orthanc & interpretasi citra. |
 | 29 | `laporan` | 🟡 Parsial | Baru ada ringkasan kunjungan, top 10 ICD, & pendapatan klaim; belum ada export Excel/PDF & laporan rekonsiliasi order. |
-| 30 | `manajemen` | ❌ Belum Ada | Dashboard Eksekutif Manajemen & LEAN Analytics Board penuh (grafik tren, overtime dokter, net signed avg per poli). |
+| 30 | `manajemen` | ✅ Selesai | Dashboard Eksekutif Manajemen & LEAN Analytics Board (`/manajemen`): KPI kunjungan/pendapatan/lead time SOAP/overtime, metrik Net Signed Avg per poli (`HfisLeanCalculator`), & tren harian. |
 | 31 | `vclaim` | 🟡 Parsial | Baru ada circuit breaker & dekripsi; belum ada UI buat/cetak SEP, Rujukan, Surat Kontrol, & Cari Peserta BPJS. |
 | 32 | `pcare` | ❌ Belum Ada | Bridging khusus FKTP PCare BPJS (Pendaftaran, Kunjungan, Obat, Lab, Rujukan FKTP). |
 | 33 | `icare` | ❌ Belum Ada | Integrasi tombol & viewer riwayat pelayanan i-Care JKN BPJS di layar dokter. |

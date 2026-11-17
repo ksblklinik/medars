@@ -151,6 +151,14 @@ final class NavigationBuilder
                 'modules' => ['laporan'],
             ],
             [
+                'title' => 'Manajemen & LEAN',
+                'icon' => 'fa-chart-line',
+                'route' => '/manajemen',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'manajemen',
+                'modules' => ['manajemen', 'laporan', 'admin'],
+            ],
+            [
                 'title' => 'Bridging BPJS',
                 'icon' => 'fa-network-wired',
                 'route' => '/bridging',

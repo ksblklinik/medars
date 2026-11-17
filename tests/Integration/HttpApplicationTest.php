@@ -1295,4 +1295,26 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $cetak['status']);
         $this->assertStringContainsString('REKAPITULASI JASA MEDIS DOKTER', $cetak['body']);
     }
+
+    public function testManajemenEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U01', 'Poli Umum', '1');
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000100', 'Tono', '1989-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_bayar)
+            VALUES ('001', '2026/11/17/000100', '{$today}', '08:15:00', 'DR01', '000100', 'U01', 'A09', 'Sudah', 'Sudah Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/manajemen');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Dashboard Eksekutif &amp; LEAN Analytics Board', $page['body']);
+
+        $api = $this->app->handle('GET', '/api/v1/manajemen/dashboard', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $api['status']);
+        $json = json_decode($api['body'], true);
+        $this->assertSame(1, $json['kpi']['total_kunjungan']);
+        $this->assertCount(1, $json['lean_poli']);
+    }
 }

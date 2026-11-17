@@ -440,6 +440,13 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $manajemenController = new ManajemenController(
+            new \App\Infrastructure\Persistence\PdoManajemenAnalyticsRepository($this->pdo, new HfisLeanCalculator()),
+            $reportRepo,
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1242,6 +1249,15 @@ final class HttpApplication
         $router->get('/api/v1/jasa-medis/summary', function () use ($jasaMedisController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['jasa_medis', 'keuangan', 'admin']);
             return $jasaMedisController->apiSummary($queryParams);
+        });
+
+        $router->get('/manajemen', function () use ($manajemenController): array {
+            $user = $this->requireAnyServiceModuleAccess(['manajemen', 'laporan', 'admin']);
+            return $manajemenController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/manajemen/dashboard', function () use ($manajemenController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['manajemen', 'laporan', 'admin']);
+            return $manajemenController->apiDashboard($queryParams);
         });
 
         return $router->dispatch($method, $path);
