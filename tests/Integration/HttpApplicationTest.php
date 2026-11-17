@@ -2268,4 +2268,40 @@ class HttpApplicationTest extends TestCase
         ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(200, $email['status']);
     }
+
+    public function testDokterRanapEresepAndResumePulangEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tmp_lahir, tgl_lahir, alamat)
+            VALUES ('000055', 'Pasien Ranap', '3201010101900055', 'L', 'Bandung', '1991-01-01', 'Jl. Ranap')");
+        $noRawat = '2026/11/17/000055';
+        $this->pdo->exec("INSERT INTO reg_periksa (no_reg, no_rawat, no_rkm_medis, tgl_registrasi, jam_reg, kd_dokter, kd_poli, kd_pj, status_lanjut, stts)
+            VALUES ('055', '{$noRawat}', '000055', '2026-11-17', '08:00:00', 'DR01', 'UMU', 'UMUM', 'Ranap', 'Belum')");
+        $this->pdo->exec("INSERT INTO databarang (kode_brng, nama_brng, h_beli, status) VALUES ('OBR01', 'Cefixime 200mg', 5000, '1')");
+
+        $page = $this->app->handle('GET', '/dokter-ranap');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('E-Resep Ranap', $page['body']);
+        $this->assertStringContainsString('Resume Pulang', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $resep = $this->app->handle('POST', '/api/v1/dokter-ranap/eresep/create', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'non_racikan' => [['kode_brng' => 'OBR01', 'jml' => 6, 'aturan_pakai' => '2x1']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $resep['status']);
+
+        $resumeSave = $this->app->handle('POST', '/api/v1/dokter-ranap/resume/save', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'keluhan_utama' => 'Demam tifoid',
+            'kd_diagnosa_utama' => 'A01.0',
+            'diagnosa_utama' => 'Typhoid fever',
+            'kondisi_pulang' => 'Hidup',
+            'obat_pulang' => 'Cefixime 2x1',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $resumeSave['status']);
+
+        $resumeGet = $this->app->handle('GET', '/api/v1/dokter-ranap/resume', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame('A01.0', json_decode($resumeGet['body'], true)['data']['kd_diagnosa_utama']);
+    }
 }

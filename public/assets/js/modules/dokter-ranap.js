@@ -31,11 +31,80 @@
         },
 
         bindEvents: function () {
+            this._resepItems = [];
             document.getElementById('btnRanapDocRefresh')?.addEventListener('click', () => this.loadPatients());
             document.getElementById('formCpptRanap')?.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveCppt();
             });
+            document.getElementById('btnRanapSearchObat')?.addEventListener('click', () => this.searchObat());
+            document.getElementById('btnRanapKirimResep')?.addEventListener('click', () => this.kirimResepRanap());
+            document.getElementById('formRanapResume')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveResumePulang();
+            });
+            document.getElementById('btnRanapPrintResume')?.addEventListener('click', () => {
+                const nr = document.getElementById('cpptNoRawat')?.value.trim();
+                if (!nr) return this.showAlert('warning', 'Pilih pasien ranap terlebih dahulu.');
+                window.open('/dokter-ranap/resume/cetak?no_rawat=' + encodeURIComponent(nr), '_blank');
+            });
+        },
+
+        searchObat: function () {
+            const q = document.getElementById('ranapObatSearch')?.value.trim() || '';
+            this.apiFetch('/api/v1/dokter-ranap/obat/search?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(res => {
+                    const box = document.getElementById('ranapObatResults');
+                    const rows = res.data || [];
+                    if (!box) return;
+                    box.classList.remove('d-none');
+                    box.innerHTML = rows.map(o => `<button type="button" class="list-group-item list-group-item-action js-add-ranap-obat" data-kode="${this.escapeHtml(o.kode_brng)}" data-nama="${this.escapeHtml(o.nama_brng)}">${this.escapeHtml(o.nama_brng)} (${this.escapeHtml(o.kode_brng)})</button>`).join('') || '<div class="p-2 text-muted">Obat tidak ditemukan.</div>';
+                    box.querySelectorAll('.js-add-ranap-obat').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            this._resepItems.push({ kode_brng: btn.dataset.kode, nama_brng: btn.dataset.nama, jml: 10, aturan_pakai: '3x1 sesudah makan' });
+                            document.getElementById('ranapResepDraft').innerHTML = this._resepItems.map(i => `<div>&bull; ${this.escapeHtml(i.nama_brng)} (${Number(i.jml)}) - ${this.escapeHtml(i.aturan_pakai)}</div>`).join('');
+                        });
+                    });
+                });
+        },
+
+        kirimResepRanap: function () {
+            const nr = document.getElementById('cpptNoRawat')?.value.trim();
+            if (!nr || !this._resepItems.length) return this.showAlert('warning', 'Pilih pasien dan item obat terlebih dahulu.');
+            this.apiFetch('/api/v1/dokter-ranap/eresep/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ no_rawat: nr, non_racikan: this._resepItems }),
+            })
+            .then(r => r.json())
+            .then(res => {
+                this.showAlert(res.status === 'success' ? 'success' : 'danger', res.message || 'E-Resep Ranap terkirim.');
+                if (res.status === 'success') {
+                    this._resepItems = [];
+                    document.getElementById('ranapResepDraft').innerHTML = 'Belum ada item obat dipilih.';
+                }
+            });
+        },
+
+        saveResumePulang: function () {
+            const nr = document.getElementById('cpptNoRawat')?.value.trim();
+            if (!nr) return this.showAlert('warning', 'Pilih pasien ranap terlebih dahulu.');
+            this.apiFetch('/api/v1/dokter-ranap/resume/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    no_rawat: nr,
+                    keluhan_utama: document.getElementById('ranapResKeluhan').value,
+                    jalannya_penyakit: document.getElementById('ranapResJalan').value,
+                    kd_diagnosa_utama: document.getElementById('ranapResKdDiag').value,
+                    diagnosa_utama: document.getElementById('ranapResDiag').value,
+                    kondisi_pulang: document.getElementById('ranapResKondisi').value,
+                    obat_pulang: document.getElementById('ranapResObat').value,
+                }),
+            })
+            .then(r => r.json())
+            .then(res => this.showAlert(res.status === 'success' ? 'success' : 'danger', res.message || 'Resume pulang tersimpan.'));
         },
 
         loadPatients: function () {

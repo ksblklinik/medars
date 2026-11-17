@@ -1421,6 +1421,35 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $dokterRanapController->apiSaveCppt($user, $data);
         });
+        $router->get('/api/v1/dokter-ranap/obat/search', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            return $pharmacyController->apiSearchObat($queryParams);
+        });
+        $router->post('/api/v1/dokter-ranap/eresep/create', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            $data['status'] = 'ranap';
+            return $pharmacyController->apiCreateResep($user, $data);
+        });
+        $router->get('/api/v1/dokter-ranap/resume', function () use ($tindakanRepo, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $nr = trim((string) ($queryParams['no_rawat'] ?? ''));
+            $data = $nr !== '' ? $tindakanRepo->findResume(new \App\Domain\Registration\ValueObject\NoRawat($nr)) : null;
+            return ['status' => 200, 'headers' => ['Content-Type' => 'application/json; charset=utf-8'], 'body' => json_encode(['status' => 'success', 'data' => $data], JSON_THROW_ON_ERROR)];
+        });
+        $router->post('/api/v1/dokter-ranap/resume/save', function () use ($tindakanRepo, $tx, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            $data['kd_dokter'] = $user->getUsername();
+            (new SaveResumeMedisUseCase($tindakanRepo, $tx))->execute($data);
+            return ['status' => 200, 'headers' => ['Content-Type' => 'application/json; charset=utf-8'], 'body' => json_encode(['status' => 'success', 'message' => 'Resume pulang ranap tersimpan.'], JSON_THROW_ON_ERROR)];
+        });
+        $router->get('/dokter-ranap/resume/cetak', function () use ($dokterRalanController, $queryParams): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            return $dokterRalanController->printResumeMedis($user, $queryParams);
+        });
 
         $router->get('/farmasi-gudang', function () use ($gudangFarmasiController): array {
             $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'apotek_umum']);

@@ -33,7 +33,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 11 | `dokter_igd` | ✅ Selesai | Triase IGD ATS/ESI (`/igd`) terintegrasi dengan layar SOAP, tindakan, e-resep, & order penunjang dokter (`/dokter-ralan`). |
 | 12 | `kasir_igd` | ✅ Selesai | Billing & pelunasan khusus pasien IGD terintegrasi di `/kasir` dengan filter unit `kd_poli=IGDK` (termasuk pasien lanjut Ranap). |
 | 13 | `rawat_inap` | ✅ Selesai | Manajemen Kamar Inap (`/rawat-inap`): master bangsal & kamar, check-in kamar (`ISI` + `status_lanjut=Ranap`), & checkout pulang otomatis hitung lama inap + posting billing kamar ke `mlite_billing_ledger`. |
-| 14 | `dokter_ranap` | 🟡 Parsial | Layar CPPT Dokter Ranap (`/dokter-ranap`, `pemeriksaan_ranap` UI & riwayat visite) sudah ada. Sisa: tab E-Resep Ranap & Resume Pulang langsung di layar Dokter Ranap. |
+| 14 | `dokter_ranap` | ✅ Selesai | Layar Dokter Ranap (`/dokter-ranap`): CPPT `pemeriksaan_ranap` & riwayat visite, tab E-Resep Ranap (`/api/v1/dokter-ranap/eresep/create`), serta tab Resume Pulang & cetak (`/api/v1/dokter-ranap/resume/save`, `/dokter-ranap/resume/cetak`). |
 | 15 | `apotek_ranap` | ✅ Selesai | Pelayanan E-Resep Rawat Inap terintegrasi di `/apotek-ralan` dengan filter `status_layanan=ranap` (`resep_obat.status='ranap'`). |
 | 16 | `kasir_rawat_inap` | ✅ Selesai | Billing akumulatif kamar (`ManageKamarInapUseCase`), tindakan, obat, & pelunasan pulang Ranap terintegrasi di `/kasir` dengan filter `status_lanjut=Ranap`. |
 | 17 | `operasi` | ✅ Selesai | Modul Kamar Operasi (`/operasi`): jadwal booking OK (`booking_operasi`), laporan operasi & tim bedah (`laporan_operasi`), master paket tindakan (`paket_operasi`), & auto-posting ke `mlite_billing_ledger`. |
