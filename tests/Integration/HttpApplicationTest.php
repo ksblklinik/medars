@@ -3126,4 +3126,29 @@ class HttpApplicationTest extends TestCase
         $this->assertNotEmpty($kioskData['noantrian']);
         $this->assertNotEmpty($kioskData['print_url']);
     }
+
+    public function testCoaSeedAndHomecarePaymentJournalEndToEnd(): void
+    {
+        $coaCount = (int) $this->pdo->query("SELECT COUNT(*) FROM mlite_rekening")->fetchColumn();
+        $this->assertGreaterThanOrEqual(5, $coaCount);
+
+        $this->session['user_id'] = 1;
+        $this->app->handle('GET', '/homecare');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $cp = $this->app->handle('POST', '/api/v1/homecare/careplans-save', postData: [
+            'no_rawat' => '2026/11/17/000909',
+            'care_plan' => 'Homecare Rawat Luka',
+            'nominal_tagihan' => 175000,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $cpId = (int) json_decode($cp['body'], true)['data']['id'];
+
+        $pay = $this->app->handle('POST', '/api/v1/homecare/careplans-pay', postData: [
+            'id' => $cpId, 'payment_gateway' => 'Kasera',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pay['status']);
+
+        $jCount = (int) $this->pdo->query("SELECT COUNT(*) FROM mlite_jurnal WHERE no_bukti = 'HC-{$cpId}'")->fetchColumn();
+        $this->assertSame(1, $jCount);
+    }
 }

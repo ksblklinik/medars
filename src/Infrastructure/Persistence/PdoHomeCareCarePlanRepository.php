@@ -77,6 +77,28 @@ final class PdoHomeCareCarePlanRepository implements HomeCareCarePlanRepositoryI
         );
         $updKunj->execute([':gw' => $gw, ':nr' => (string) $row['no_rawat']]);
 
+        $nominal = (float) ($row['nominal_tagihan'] ?? 0);
+        if ($nominal > 0) {
+            $noBukti = 'HC-' . $id;
+            $chkJ = $this->pdo->prepare('SELECT COUNT(*) FROM mlite_jurnal WHERE no_bukti = :nb');
+            $chkJ->execute([':nb' => $noBukti]);
+            if ((int) $chkJ->fetchColumn() === 0) {
+                $noJurnal = 'JRN-' . date('YmdHis') . '-' . $id;
+                $this->pdo->prepare(
+                    'INSERT INTO mlite_jurnal (no_jurnal, tgl_jurnal, jam_jurnal, no_bukti, keterangan) VALUES (:nj, :tg, :jm, :nb, :ket)'
+                )->execute([
+                    ':nj' => $noJurnal,
+                    ':tg' => date('Y-m-d'),
+                    ':jm' => date('H:i:s'),
+                    ':nb' => $noBukti,
+                    ':ket' => "Pembayaran Homecare {$row['no_rawat']} ({$gw})",
+                ]);
+                $detStmt = $this->pdo->prepare('INSERT INTO mlite_jurnal_detail (no_jurnal, kd_rek, debet, kredit) VALUES (:nj, :kr, :db, :kd)');
+                $detStmt->execute([':nj' => $noJurnal, ':kr' => '1101.01', ':db' => $nominal, ':kd' => 0]);
+                $detStmt->execute([':nj' => $noJurnal, ':kr' => '4101.01', ':db' => 0, ':kd' => $nominal]);
+            }
+        }
+
         return $this->findById($id);
     }
 

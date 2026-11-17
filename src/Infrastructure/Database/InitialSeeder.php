@@ -19,6 +19,7 @@ final class InitialSeeder
         $this->seedPoliklinik();
         $this->seedPenjab();
         $this->seedDokter();
+        $this->seedRekening();
     }
 
     private function seedSuperadmin(?string $adminPassword): void
@@ -87,6 +88,23 @@ final class InitialSeeder
         $this->pdo->exec("
             INSERT INTO dokter (kd_dokter, nm_dokter, jk, no_ijn_praktek, status, almt_tgl, no_telp)
             VALUES ('DR001', 'dr. Jaga Umum', 'L', 'SIP/2026/001', '1', '', '')
+        ");
+    }
+
+    private function seedRekening(): void
+    {
+        $count = (int) $this->pdo->query("SELECT COUNT(*) FROM mlite_rekening")->fetchColumn();
+        if ($count > 0) {
+            return;
+        }
+
+        $this->pdo->exec("
+            INSERT INTO mlite_rekening (kd_rek, nm_rek, tipe, balance) VALUES
+            ('1101.01', 'Kas Fisik & Tunai', 'Aset', 'D'),
+            ('1103.01', 'Piutang Klaim BPJS Kesehatan', 'Aset', 'D'),
+            ('1103.02', 'Piutang Rekanan & Perusahaan', 'Aset', 'D'),
+            ('4101.01', 'Pendapatan Layanan Medis & Tindakan', 'Pendapatan', 'K'),
+            ('4101.02', 'Pendapatan Penjualan Obat & Farmasi', 'Pendapatan', 'K')
         ");
     }
 }

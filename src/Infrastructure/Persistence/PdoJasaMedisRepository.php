@@ -25,7 +25,9 @@ final readonly class PdoJasaMedisRepository implements JasaMedisRepositoryInterf
                    SUM(CASE WHEN t.jenis_klaim = 'Piutang' THEN t.tarif_tindakandr ELSE 0 END) AS jasa_piutang
             FROM rawat_jl_dr t
             LEFT JOIN dokter d ON t.kd_dokter = d.kd_dokter
+            LEFT JOIN reg_periksa r ON t.no_rawat = r.no_rawat
             WHERE t.tgl_perawatan BETWEEN :from AND :to
+              AND COALESCE(r.stts, '') != 'Batal'
         ";
         $params = [':from' => $from, ':to' => $to];
         if (trim($kdDokter) !== '') {
@@ -52,6 +54,7 @@ final readonly class PdoJasaMedisRepository implements JasaMedisRepositoryInterf
             LEFT JOIN reg_periksa r ON t.no_rawat = r.no_rawat
             LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
             WHERE t.tgl_perawatan BETWEEN :from AND :to
+              AND COALESCE(r.stts, '') != 'Batal'
         ";
         $params = [':from' => $from, ':to' => $to];
         if (trim($kdDokter) !== '') {
