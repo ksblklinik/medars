@@ -2052,4 +2052,26 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, $recData['knowledge_matches']);
         $this->assertStringContainsString('J06.9', $recData['summary']);
     }
+
+    public function testIcareViewerEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tmp_lahir, tgl_lahir, alamat, no_peserta)
+            VALUES ('000099', 'Pasien iCare', '3201010101900099', 'L', 'Bandung', '1990-01-01', 'Jl. Test', '0001122334455')");
+        $noRawat = '2026/11/17/000099';
+        $this->pdo->exec("INSERT INTO reg_periksa (no_reg, no_rawat, no_rkm_medis, tgl_registrasi, jam_reg, kd_dokter, kd_poli, kd_pj, status_lanjut, stts)
+            VALUES ('099', '{$noRawat}', '000099', '2026-11-17', '08:00:00', 'DR01', 'UMU', 'BPJ', 'Ralan', 'Belum')");
+
+        $dokterPage = $this->app->handle('GET', '/dokter-ralan');
+        $this->assertSame(200, $dokterPage['status']);
+        $this->assertStringContainsString('btnIcareHistory', $dokterPage['body']);
+
+        $viewer = $this->app->handle('GET', '/icare/riwayat', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame(200, $viewer['status']);
+        $this->assertStringContainsString('0001122334455', $viewer['body']);
+
+        $api = $this->app->handle('GET', '/api/v1/icare/riwayat', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame(200, $api['status']);
+        $this->assertTrue(json_decode($api['body'], true)['ok']);
+    }
 }

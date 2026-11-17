@@ -64,6 +64,9 @@
                     <small id="activePatientBanner" class="text-white-50">Belum ada pasien dipilih</small>
                 </div>
                 <div class="d-flex gap-2">
+                    <button type="button" id="btnIcareHistory" class="btn btn-sm btn-outline-light fw-semibold" disabled>
+                        <i class="fa fa-heart-pulse me-1"></i> i-Care JKN
+                    </button>
                     <button type="button" id="btnCallPatient" class="btn btn-sm btn-warning text-dark fw-semibold" disabled>
                         <i class="fa fa-bullhorn me-1"></i> Panggil TV
                     </button>

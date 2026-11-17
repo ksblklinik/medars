@@ -539,6 +539,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $icareController = new IcareController(
+            new \App\Application\Bridging\UseCase\FetchIcareHistoryUseCase(
+                new \App\Infrastructure\Persistence\PdoIcareRepository($this->pdo)
+            )
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1851,6 +1857,15 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['smartagent', 'dokter_ralan', 'dokter_ranap', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $smartAgentController->apiRecommend($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+
+        $router->get('/icare/riwayat', function () use ($icareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['icare', 'dokter_ralan', 'dokter_ranap', 'dokter_igd', 'admin']);
+            return $icareController->viewer($queryParams);
+        });
+        $router->get('/api/v1/icare/riwayat', function () use ($icareController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['icare', 'dokter_ralan', 'dokter_ranap', 'dokter_igd', 'admin']);
+            return $icareController->apiRiwayat($queryParams);
         });
 
         return $router->dispatch($method, $path);

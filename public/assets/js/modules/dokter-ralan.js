@@ -67,6 +67,13 @@
             if (btnCall) {
                 btnCall.addEventListener('click', () => this.callActivePatient());
             }
+            const btnIcare = document.getElementById('btnIcareHistory');
+            if (btnIcare) {
+                btnIcare.addEventListener('click', () => {
+                    if (!this.activeNoRawat) return;
+                    window.open('/icare/riwayat?no_rawat=' + encodeURIComponent(this.activeNoRawat), '_blank');
+                });
+            }
 
             const icdInput = document.getElementById('icdSearchInput');
             if (icdInput) {
@@ -236,6 +243,8 @@
 
             document.getElementById('btnSaveSoapMain').disabled = false;
             document.getElementById('btnCallPatient').disabled = false;
+            const btnIcare = document.getElementById('btnIcareHistory');
+            if (btnIcare) btnIcare.disabled = false;
 
             this.loadSmartPeekHistory(row.no_rkm_medis);
             this.loadOdontogram(row.no_rkm_medis);
