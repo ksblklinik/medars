@@ -21,7 +21,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 6 | `dokter_ralan` | 🟡 Parsial | Input tindakan dokter (`rawat_jl_dr` + ledger), order lab/rad & E-Resep langsung dari layar dokter, serta Resume Medis (`resume_pasien`) sudah ada. Sisa: cetak PDF e-resep/resume medis & riwayat lengkap per tab. |
 | 7 | `apotek_ralan` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), Cetak Etiket (`/farmasi/etiket`), Cetak E-Resep (`/farmasi/cetak-resep`), & tombol Copy Resep UI sudah ada. Sisa: penyesuaian stok per batch/depo langsung dari layar apotek. |
 | 8 | `kasir_rawat_jalan` | 🟡 Parsial | Filter periode multi-hari (`from`–`to`), Cetak Kuitansi/Faktur 4-Pilar (`/kasir/faktur`), & Pelunasan Piutang (`/api/v1/kasir/settle-piutang`) sudah ada. Sisa: cetak thermal & email faktur. |
-| 9 | `frontoffice` | ❌ Belum Ada | Dashboard khusus Front Office / Gatekeeper konfirmasi antrean & pendaftaran loket terpadu. |
+| 9 | `frontoffice` | ✅ Selesai | Dashboard Front Office & Gatekeeper (`/frontoffice`): KPI kunjungan/booking/belum bayar, konfirmasi check-in booking Mobile JKN, panggil antrean TV, & pintasan loket terpadu. |
 
 ---
 

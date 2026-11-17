@@ -1031,4 +1031,28 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $del['status']);
     }
+
+    public function testFrontOfficeEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000050', 'Eko Prasetyo', '1987-01-10', 'L');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U01', 'Poli Umum', '1');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Andi', '1');
+            INSERT INTO penjab (kd_pj, png_jawab, status) VALUES ('A09', 'UMUM', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_bayar)
+            VALUES ('001', '2026/11/17/000050', '{$today}', '08:00:00', 'DR01', '000050', 'U01', 'A09', 'Belum', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/frontoffice');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Front Office &amp; Gatekeeper', $page['body']);
+
+        $overview = $this->app->handle('GET', '/api/v1/frontoffice/overview', queryParams: ['date' => $today]);
+        $this->assertSame(200, $overview['status']);
+        $json = json_decode($overview['body'], true);
+        $this->assertSame(1, $json['stats']['total_kunjungan']);
+        $this->assertCount(1, $json['visits']);
+    }
 }

@@ -23,6 +23,14 @@ final class NavigationBuilder
                 'modules' => [],
             ],
             [
+                'title' => 'Front Office',
+                'icon' => 'fa-headset',
+                'route' => '/frontoffice',
+                'category' => 'Layanan',
+                'module_key' => 'frontoffice',
+                'modules' => ['frontoffice', 'pendaftaran', 'rawat_jalan'],
+            ],
+            [
                 'title' => 'Pasien',
                 'icon' => 'fa-address-card',
                 'route' => '/pasien',

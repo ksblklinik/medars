@@ -396,6 +396,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $frontOfficeController = new FrontOfficeController(
+            new \App\Infrastructure\Persistence\PdoFrontOfficeRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1054,6 +1060,15 @@ final class HttpApplication
                 return $kepegawaianController->apiDelete($sdmEntity, $data);
             });
         }
+
+        $router->get('/frontoffice', function () use ($frontOfficeController): array {
+            $user = $this->requireAnyServiceModuleAccess(['frontoffice', 'pendaftaran', 'rawat_jalan']);
+            return $frontOfficeController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/frontoffice/overview', function () use ($frontOfficeController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['frontoffice', 'pendaftaran', 'rawat_jalan']);
+            return $frontOfficeController->apiOverview($queryParams);
+        });
 
         return $router->dispatch($method, $path);
     }
