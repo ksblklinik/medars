@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http;
 
+use App\Application\Rme\UseCase\SaveTindakanDokterUseCase;
+use App\Application\Support\UseCase\CreateLabOrderUseCase;
+use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
 use App\Domain\Igd\Repository\IgdRepositoryInterface;
+use App\Domain\Registration\ValueObject\NoRawat;
 use App\Domain\Security\Entity\UserAccount;
 use App\Presentation\View\ViewRenderer;
 
@@ -14,6 +18,9 @@ final readonly class IgdController
         private IgdRepositoryInterface $repo,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
+        private ?SaveTindakanDokterUseCase $tindakanUseCase = null,
+        private ?CreateLabOrderUseCase $labOrderUseCase = null,
+        private ?CreateRadiologyOrderUseCase $radOrderUseCase = null,
     ) {
     }
 
@@ -83,6 +90,82 @@ final readonly class IgdController
             $sl = trim((string) ($payload['status_lanjut'] ?? ($disp === 'Rawat Inap' ? 'Ranap' : 'Ralan')));
             $this->repo->updateDisposisi($nr, $disp, $sl);
             return $this->jsonResponse(['status' => 'success', 'message' => "Disposisi IGD diperbarui ke {$disp}."]);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSaveTindakan(?UserAccount $actor, array $payload): array
+    {
+        if ($this->tindakanUseCase === null) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Layanan tindakan IGD belum dikonfigurasi.'], 503);
+        }
+        try {
+            $res = $this->tindakanUseCase->execute(
+                noRawat: new NoRawat((string) ($payload['no_rawat'] ?? '')),
+                kdJenisPrw: trim((string) ($payload['kd_jenis_prw'] ?? '')),
+                kdDokter: trim((string) ($payload['kd_dokter'] ?? ($actor?->getUsername() ?? 'DR001'))),
+                claimType: trim((string) ($payload['claim_type'] ?? 'Tunai')) ?: 'Tunai'
+            );
+            return $this->jsonResponse(['status' => 'success', 'data' => $res], 201);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiOrderLab(?UserAccount $actor, array $payload): array
+    {
+        if ($this->labOrderUseCase === null) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Layanan order lab IGD belum dikonfigurasi.'], 503);
+        }
+        try {
+            $items = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+            $res = $this->labOrderUseCase->execute(
+                noRawat: new NoRawat((string) ($payload['no_rawat'] ?? '')),
+                dokterPerujuk: trim((string) ($payload['dokter_perujuk'] ?? ($actor?->getUsername() ?? 'DR001'))),
+                items: $items,
+                status: 'ralan'
+            );
+            return $this->jsonResponse(['status' => 'success', 'orders' => array_map(static fn($o): array => [
+                'no_order' => $o->noOrder,
+                'no_rawat' => $o->noRawat->value(),
+                'jenis_klaim' => $o->jenisKlaim->value(),
+            ], $res)], 201);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiOrderRadiologi(?UserAccount $actor, array $payload): array
+    {
+        if ($this->radOrderUseCase === null) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Layanan order radiologi IGD belum dikonfigurasi.'], 503);
+        }
+        try {
+            $items = is_array($payload['items'] ?? null) ? $payload['items'] : [];
+            $res = $this->radOrderUseCase->execute(
+                noRawat: new NoRawat((string) ($payload['no_rawat'] ?? '')),
+                dokterPerujuk: trim((string) ($payload['dokter_perujuk'] ?? ($actor?->getUsername() ?? 'DR001'))),
+                items: $items,
+                status: 'ralan'
+            );
+            return $this->jsonResponse(['status' => 'success', 'orders' => array_map(static fn($o): array => [
+                'no_order' => $o->noOrder,
+                'no_rawat' => $o->noRawat->value(),
+                'jenis_klaim' => $o->jenisKlaim->value(),
+            ], $res)], 201);
         } catch (\InvalidArgumentException|\DomainException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }

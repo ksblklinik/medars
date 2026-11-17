@@ -288,7 +288,12 @@ final class HttpApplication
             new DeleteResepUseCase($resepRepo, $tx),
             new SaveCopyResepUseCase($resepRepo, $tx),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            new \App\Application\Pharmacy\UseCase\ReturnResepObatUseCase(
+                new \App\Infrastructure\Persistence\PdoPharmacyReturRepository($this->pdo),
+                $this->auditRepo,
+                $tx
+            )
         );
 
         $posRepo = new PdoPosApotekUmumRepository($this->pdo);
@@ -437,7 +442,10 @@ final class HttpApplication
         $igdController = new IgdController(
             new \App\Infrastructure\Persistence\PdoIgdRepository($this->pdo),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            new SaveTindakanDokterUseCase($tindakanRepo, $ledgerRepo, $tx),
+            new CreateLabOrderUseCase($labRepo, $ledgerRepo, $tx),
+            new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx)
         );
 
         $ranapRepo = new \App\Infrastructure\Persistence\PdoRawatInapRepository($this->pdo);
@@ -972,6 +980,11 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $pharmacyController->apiDeleteResep($data);
+        });
+        $router->post('/api/v1/farmasi/resep/retur', function () use ($pharmacyController, $postData, $rawBody, $headers, $ipAddress): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pharmacyController->apiReturObat($user, $this->parseJsonOrPost($rawBody, $postData, $headers), $ipAddress);
         });
         $router->post('/api/v1/farmasi/resep/copy', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
             $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'dokter_ralan', 'rawat_jalan']);
@@ -1650,6 +1663,21 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $igdController->apiUpdateDisposisi($data);
+        });
+        $router->post('/api/v1/igd/tindakan', function () use ($igdController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $igdController->apiSaveTindakan($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/igd/lab-order', function () use ($igdController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $igdController->apiOrderLab($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/igd/radiologi-order', function () use ($igdController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['igd', 'dokter_igd']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $igdController->apiOrderRadiologi($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         $router->get('/rawat-inap', function () use ($ranapController): array {

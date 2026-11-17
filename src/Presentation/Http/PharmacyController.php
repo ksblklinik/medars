@@ -7,6 +7,7 @@ namespace App\Presentation\Http;
 use App\Application\Pharmacy\UseCase\CreateResepUseCase;
 use App\Application\Pharmacy\UseCase\DeleteResepUseCase;
 use App\Application\Pharmacy\UseCase\DispenseResepUseCase;
+use App\Application\Pharmacy\UseCase\ReturnResepObatUseCase;
 use App\Application\Pharmacy\UseCase\SaveCopyResepUseCase;
 use App\Domain\Pharmacy\Exception\InsufficientStockException;
 use App\Domain\Pharmacy\Repository\DataBarangRepositoryInterface;
@@ -30,6 +31,7 @@ final readonly class PharmacyController
         private SaveCopyResepUseCase $copyResepUseCase,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
+        private ?ReturnResepObatUseCase $returUseCase = null,
     ) {}
 
     /**
@@ -256,6 +258,32 @@ final readonly class PharmacyController
                 'status' => 'success',
                 'message' => "Resep {$noResep->value()} berhasil dihapus.",
             ]);
+        } catch (\DomainException | \InvalidArgumentException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiReturObat(?UserAccount $currentUser, array $postData = [], string $ipAddress = ''): array
+    {
+        if ($this->returUseCase === null) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Layanan retur obat belum dikonfigurasi.'], 503);
+        }
+        try {
+            $res = $this->returUseCase->execute(
+                noResep: trim((string) ($postData['no_resep'] ?? '')),
+                kodeBrng: trim((string) ($postData['kode_brng'] ?? '')),
+                qtyRetur: (float) ($postData['qty'] ?? 0),
+                kdBangsal: trim((string) ($postData['kd_bangsal'] ?? 'FAR01')),
+                userId: (int) ($currentUser?->getId() ?? 0),
+                username: $currentUser?->getUsername() ?? 'APOTEK',
+                alasan: trim((string) ($postData['alasan'] ?? '')),
+                ipAddress: $ipAddress
+            );
+            return $this->jsonResponse(['status' => 'success', 'message' => 'Retur obat berhasil diproses.', 'data' => $res]);
         } catch (\DomainException | \InvalidArgumentException $e) {
             return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }

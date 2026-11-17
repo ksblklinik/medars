@@ -2964,4 +2964,61 @@ class HttpApplicationTest extends TestCase
         ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(200, $ok['status']);
     }
+
+    public function testPharmacyReturObatAndIgdActionsEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('RM-RT-01', 'Budi Retur', '1990-01-01', 'L')");
+        $this->pdo->exec("INSERT INTO databarang (kode_brng, nama_brng, kode_sat, dasar, h_beli, harga_tunai, harga_kapitasi, harga_nonkapitasi, jualbebas, status) VALUES ('OBT-RT-01', 'Paracetamol', 'TAB', 400, 500, 1000, 700, 800, 1200, '1')");
+        $this->pdo->exec("INSERT INTO gudangbarang (kode_brng, kd_bangsal, stok, no_batch, no_faktur) VALUES ('OBT-RT-01', 'FAR01', 20, 'B01', 'F01')");
+        $this->pdo->exec("INSERT INTO jns_perawatan (kd_jenis_prw, nm_perawatan, kd_kategori, material, tarif_tindakandr, total_byrdr, status) VALUES ('TND-IGD-1', 'Jahit Luka IGD', 'IGD', 25000, 75000, 100000, '1')");
+
+        $this->app->handle('GET', '/igd');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $reg = $this->app->handle('POST', '/api/v1/registration/insite', postData: [
+            'no_rkm_medis' => 'RM-RT-01', 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001', 'kd_pj' => 'UMU',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $noRawat = json_decode($reg['body'], true)['data']['no_rawat'];
+
+        // 1. IGD quick actions: Tindakan, Lab Order, Radiologi Order
+        $tnd = $this->app->handle('POST', '/api/v1/igd/tindakan', rawBody: json_encode([
+            'no_rawat' => $noRawat, 'kd_jenis_prw' => 'TND-IGD-1', 'claim_type' => 'Tunai',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $tnd['status']);
+
+        $lab = $this->app->handle('POST', '/api/v1/igd/lab-order', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'items' => [['kd_jenis_prw' => 'LAB-IGD', 'nm_perawatan' => 'Gula Darah Cito', 'harga' => 40000, 'claim_type' => 'Tunai']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $lab['status']);
+
+        $rad = $this->app->handle('POST', '/api/v1/igd/radiologi-order', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'items' => [['kd_jenis_prw' => 'RAD-IGD', 'nm_perawatan' => 'Foto Pedis', 'harga' => 110000, 'claim_type' => 'Tunai']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $rad['status']);
+
+        // 2. Resep Create -> Dispense (20 -> 14) -> Retur 2 (14 -> 16) + Billing Ledger updated
+        $resep = $this->app->handle('POST', '/api/v1/farmasi/resep/create', rawBody: json_encode([
+            'no_rawat' => $noRawat, 'kd_dokter' => 'DR001',
+            'non_racikan' => [['kode_brng' => 'OBT-RT-01', 'jml' => 6, 'aturan_pakai' => '3x1']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $noResep = json_decode($resep['body'], true)['data']['no_resep'];
+
+        $this->app->handle('POST', '/api/v1/farmasi/resep/dispense', postData: [
+            'no_resep' => $noResep, 'kd_bangsal' => 'FAR01', 'jenis_klaim' => 'Tunai',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+
+        $retur = $this->app->handle('POST', '/api/v1/farmasi/resep/retur', postData: [
+            'no_resep' => $noResep, 'kode_brng' => 'OBT-RT-01', 'qty' => 2, 'kd_bangsal' => 'FAR01', 'alasan' => 'Pasien batal sebagian',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $retur['status']);
+
+        $stokAfter = (float) $this->pdo->query("SELECT stok FROM gudangbarang WHERE kode_brng = 'OBT-RT-01' AND kd_bangsal = 'FAR01'")->fetchColumn();
+        $this->assertSame(16.0, $stokAfter);
+
+        $obatTotal = (float) $this->pdo->query("SELECT total_amount FROM mlite_billing_ledger WHERE provider_id = 'RSP|{$noResep}|OBT-RT-01'")->fetchColumn();
+        $this->assertSame(4000.0, $obatTotal);
+    }
 }
