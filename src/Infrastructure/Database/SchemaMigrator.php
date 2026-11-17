@@ -917,6 +917,31 @@ final class SchemaMigrator
                 status VARCHAR(20) NOT NULL DEFAULT 'Aktif'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_chat_conversations (
+                id {$bigAutoIncPk},
+                title VARCHAR(150) NOT NULL,
+                type VARCHAR(20) NOT NULL DEFAULT 'direct',
+                created_by VARCHAR(50) NOT NULL DEFAULT 'system',
+                created_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_chat_messages (
+                id {$bigAutoIncPk},
+                conversation_id INT NOT NULL,
+                sender_username VARCHAR(50) NOT NULL,
+                sender_name VARCHAR(100) NOT NULL DEFAULT '',
+                message TEXT NOT NULL,
+                is_read INT NOT NULL DEFAULT 0,
+                created_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_chat_quick_responses (
+                id {$bigAutoIncPk},
+                shortcut VARCHAR(40) NOT NULL,
+                content TEXT NOT NULL,
+                created_by VARCHAR(50) NOT NULL DEFAULT 'system'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

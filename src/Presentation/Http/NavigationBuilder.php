@@ -215,6 +215,14 @@ final class NavigationBuilder
                 'modules' => ['wagateway', 'crm'],
             ],
             [
+                'title' => 'Live Chat Staf',
+                'icon' => 'fa-comments',
+                'route' => '/chat',
+                'category' => 'Bridging & CRM',
+                'module_key' => 'chat',
+                'modules' => ['chat', 'wagateway', 'admin'],
+            ],
+            [
                 'title' => 'Home Care',
                 'icon' => 'fa-house-medical',
                 'route' => '/homecare',

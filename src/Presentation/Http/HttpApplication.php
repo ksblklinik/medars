@@ -519,6 +519,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $chatController = new ChatController(
+            new \App\Infrastructure\Persistence\PdoChatRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1737,6 +1743,43 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $veronisaController->apiMappingSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+
+        $router->get('/chat', function () use ($chatController): array {
+            $user = $this->requireAuthenticatedUser();
+            return $chatController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/chat/conversations', function () use ($chatController): array {
+            $this->requireAuthenticatedUser();
+            return $chatController->apiConversations();
+        });
+        $router->post('/api/v1/chat/conversations-create', function () use ($chatController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $chatController->apiConversationCreate($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/chat/messages', function () use ($chatController, $queryParams): array {
+            $this->requireAuthenticatedUser();
+            return $chatController->apiMessages($queryParams);
+        });
+        $router->post('/api/v1/chat/send', function () use ($chatController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $chatController->apiSend($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/chat/quick-responses', function () use ($chatController): array {
+            $this->requireAuthenticatedUser();
+            return $chatController->apiQuickResponses();
+        });
+        $router->post('/api/v1/chat/quick-responses-save', function () use ($chatController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $chatController->apiQuickResponseSave($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/chat/quick-responses-delete', function () use ($chatController, $postData, $rawBody, $headers): array {
+            $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $chatController->apiQuickResponseDelete($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         return $router->dispatch($method, $path);

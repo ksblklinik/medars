@@ -1995,4 +1995,24 @@ class HttpApplicationTest extends TestCase
         $map = $this->app->handle('POST', '/api/v1/veronisa/mapping-save', rawBody: json_encode(['kode_brng' => 'OB01', 'kode_dpho' => 'DPHO-01', 'nama_dpho' => 'Paracetamol', 'harga_dpho' => 250]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(200, $map['status']);
     }
+
+    public function testChatInternalEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/chat');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Live Chat Internal', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $conv = $this->app->handle('POST', '/api/v1/chat/conversations-create', rawBody: json_encode(['title' => 'Kanal IGD']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $conv['status']);
+        $cid = (int) json_decode($conv['body'], true)['data']['id'];
+
+        $send = $this->app->handle('POST', '/api/v1/chat/send', rawBody: json_encode(['conversation_id' => $cid, 'message' => 'Pasien zona merah masuk.']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $send['status']);
+
+        $msgs = $this->app->handle('GET', '/api/v1/chat/messages', queryParams: ['conversation_id' => $cid]);
+        $this->assertSame(200, $msgs['status']);
+        $this->assertCount(1, json_decode($msgs['body'], true)['data']);
+    }
 }
