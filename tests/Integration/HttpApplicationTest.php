@@ -1190,4 +1190,41 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $cppt['status']);
         $this->assertCount(1, json_decode($cppt['body'], true)['data']);
     }
+
+    public function testGudangFarmasiEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/farmasi-gudang');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Gudang Farmasi', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/gudang/barang/save',
+            rawBody: json_encode(['kode_brng' => 'OBT777', 'nama_brng' => 'Cefixime 100mg', 'harga_tunai' => 3500]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+
+        $recv = $this->app->handle(
+            'POST',
+            '/api/v1/gudang/receive',
+            rawBody: json_encode(['kode_brng' => 'OBT777', 'kd_bangsal' => 'FAR01', 'qty' => 50, 'no_batch' => 'B1']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $recv['status']);
+
+        $mut = $this->app->handle(
+            'POST',
+            '/api/v1/gudang/mutate',
+            rawBody: json_encode(['kode_brng' => 'OBT777', 'from_bangsal' => 'FAR01', 'to_bangsal' => 'APT', 'qty' => 15]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $mut['status']);
+
+        $kartu = $this->app->handle('GET', '/api/v1/gudang/kartu-stok', queryParams: ['kode_brng' => 'OBT777']);
+        $this->assertSame(200, $kartu['status']);
+        $this->assertCount(3, json_decode($kartu['body'], true)['data']);
+    }
 }

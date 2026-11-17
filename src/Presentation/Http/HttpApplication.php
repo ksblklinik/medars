@@ -422,6 +422,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $gudangFarmasiController = new GudangFarmasiController(
+            new \App\Infrastructure\Persistence\PdoGudangFarmasiRepository($this->pdo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1159,6 +1165,37 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $dokterRanapController->apiSaveCppt($user, $data);
+        });
+
+        $router->get('/farmasi-gudang', function () use ($gudangFarmasiController): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'apotek_umum']);
+            return $gudangFarmasiController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/gudang/barang', function () use ($gudangFarmasiController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'apotek_umum']);
+            return $gudangFarmasiController->apiListBarang($queryParams);
+        });
+        $router->post('/api/v1/gudang/barang/save', function () use ($gudangFarmasiController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $gudangFarmasiController->apiSaveBarang($data);
+        });
+        $router->post('/api/v1/gudang/receive', function () use ($gudangFarmasiController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $gudangFarmasiController->apiReceiveStock($user, $data);
+        });
+        $router->post('/api/v1/gudang/mutate', function () use ($gudangFarmasiController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $gudangFarmasiController->apiMutateStock($user, $data);
+        });
+        $router->get('/api/v1/gudang/kartu-stok', function () use ($gudangFarmasiController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan', 'apotek_umum']);
+            return $gudangFarmasiController->apiKartuStok($queryParams);
         });
 
         return $router->dispatch($method, $path);

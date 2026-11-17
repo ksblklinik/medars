@@ -95,6 +95,14 @@ final class NavigationBuilder
                 'modules' => ['farmasi', 'apotek_ralan'],
             ],
             [
+                'title' => 'Gudang Farmasi',
+                'icon' => 'fa-boxes-stacked',
+                'route' => '/farmasi-gudang',
+                'category' => 'Farmasi',
+                'module_key' => 'farmasi_gudang',
+                'modules' => ['farmasi', 'apotek_ralan', 'apotek_umum'],
+            ],
+            [
                 'title' => 'Kasir',
                 'icon' => 'fa-cash-register',
                 'route' => '/kasir',

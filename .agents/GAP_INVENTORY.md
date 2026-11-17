@@ -46,7 +46,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
-| 20 | `farmasi` | ❌ Belum Ada | Manajemen Gudang Obat: CRUD Master `databarang`, Penerimaan/PO Supplier, Mutasi antar Depo, Stok Opname, Kartu Stok. |
+| 20 | `farmasi` | ✅ Selesai | Manajemen Gudang Obat (`/farmasi-gudang`): CRUD Master `databarang`, Penerimaan Stok/PO, Mutasi antar Depo (`InsufficientStockException` guard), & Kartu Stok (`riwayat_barang_medis`). |
 | 21 | `apotek_umum` | 🟡 Parsial | Backend POS `PO-APT-` sudah ada; UI kasir POS retail mandiri, cetak struk, & riwayat penjualan bebas belum lengkap. |
 | 22 | `penjualan` | ❌ Belum Ada | Modul penjualan non-resep / alkes / laporan omzet penjualan barang. |
 | 23 | `keuangan` | ❌ Belum Ada | UI Jurnal Umum, Buku Besar, Neraca, Laba Rugi, Pengeluaran Kas, & Master Akun Rekening (`mlite_jurnal`). |
