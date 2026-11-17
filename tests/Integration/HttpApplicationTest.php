@@ -961,4 +961,45 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $del['status']);
     }
+
+    public function testSuratMedisEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk, alamat)
+            VALUES ('000040', 'Dian Permata', '1993-08-12', 'P', 'Jl. Anggrek 5');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Andi', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/17/000040', '{$today}', '09:00:00', 'DR01', '000040', 'U01', 'A09', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/surat');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Surat Keterangan Medis', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/surat/create',
+            rawBody: json_encode([
+                'type' => 'sakit',
+                'no_rawat' => '2026/11/17/000040',
+                'tanggal_awal' => $today,
+                'tanggal_akhir' => $today,
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $create['status']);
+        $noSurat = json_decode($create['body'], true)['data']['no_surat'];
+
+        $list = $this->app->handle('GET', '/api/v1/surat/list', queryParams: ['type' => 'sakit', 'q' => 'Dian']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+
+        $cetak = $this->app->handle('GET', '/surat/cetak', queryParams: ['type' => 'sakit', 'no_surat' => $noSurat]);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('SURAT KETERANGAN SAKIT', $cetak['body']);
+        $this->assertStringContainsString('Dian Permata', $cetak['body']);
+    }
 }

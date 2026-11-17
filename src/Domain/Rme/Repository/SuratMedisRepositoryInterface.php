@@ -20,4 +20,14 @@ interface SuratMedisRepositoryInterface
     public function saveSuratBebasNarkoba(SuratBebasNarkoba $surat): void;
 
     public function saveRujukanInternal(RujukanInternal $rujukan): void;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listSurat(string $type, string $q = ''): array;
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findSuratForPrint(string $type, string $noSurat): ?array;
 }

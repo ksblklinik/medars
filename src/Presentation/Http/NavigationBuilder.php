@@ -47,6 +47,14 @@ final class NavigationBuilder
                 'modules' => ['dokter_ralan', 'rawat_jalan'],
             ],
             [
+                'title' => 'Surat Medis',
+                'icon' => 'fa-file-medical',
+                'route' => '/surat',
+                'category' => 'Layanan',
+                'module_key' => 'surat',
+                'modules' => ['surat', 'dokter_ralan', 'rawat_jalan'],
+            ],
+            [
                 'title' => 'Farmasi',
                 'icon' => 'fa-pills',
                 'route' => '/farmasi',

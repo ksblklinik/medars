@@ -122,4 +122,79 @@ final class PdoSuratMedisRepository implements SuratMedisRepositoryInterface
             ':cat' => $rujukan->catatan,
         ]);
     }
+
+    public function listSurat(string $type, string $q = ''): array
+    {
+        $like = '%' . trim($q) . '%';
+        $sql = match ($type) {
+            'sakit' => "
+                SELECT s.no_surat, s.no_rawat, s.tanggalawal, s.tanggalakhir, s.lamasakit,
+                       p.no_rkm_medis, p.nm_pasien
+                FROM surat_sakit s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
+                ORDER BY s.tanggalawal DESC, s.no_surat DESC LIMIT 100
+            ",
+            'hamil' => "
+                SELECT s.no_surat, s.no_rawat, s.tanggalperiksa, s.hasilperiksa,
+                       p.no_rkm_medis, p.nm_pasien
+                FROM surat_hamil s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
+                ORDER BY s.tanggalperiksa DESC, s.no_surat DESC LIMIT 100
+            ",
+            'narkoba' => "
+                SELECT s.no_surat, s.no_rawat, s.tanggal, s.kategori, s.kd_dokter, s.keperluan,
+                       p.no_rkm_medis, p.nm_pasien
+                FROM surat_bebas_narkoba s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                WHERE s.no_surat LIKE :q OR s.no_rawat LIKE :q OR COALESCE(p.nm_pasien, '') LIKE :q
+                ORDER BY s.tanggal DESC, s.no_surat DESC LIMIT 100
+            ",
+            default => throw new \InvalidArgumentException("Jenis surat tidak dikenal: '{$type}'."),
+        };
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':q' => $like]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function findSuratForPrint(string $type, string $noSurat): ?array
+    {
+        $sql = match ($type) {
+            'sakit' => "
+                SELECT s.*, p.no_rkm_medis, p.nm_pasien, p.tgl_lahir, p.jk, p.alamat, d.nm_dokter
+                FROM surat_sakit s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
+                WHERE s.no_surat = :ns LIMIT 1
+            ",
+            'hamil' => "
+                SELECT s.*, p.no_rkm_medis, p.nm_pasien, p.tgl_lahir, p.jk, p.alamat, d.nm_dokter
+                FROM surat_hamil s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
+                WHERE s.no_surat = :ns LIMIT 1
+            ",
+            'narkoba' => "
+                SELECT s.*, p.no_rkm_medis, p.nm_pasien, p.tgl_lahir, p.jk, p.alamat, d.nm_dokter
+                FROM surat_bebas_narkoba s
+                LEFT JOIN reg_periksa r ON s.no_rawat = r.no_rawat
+                LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+                LEFT JOIN dokter d ON s.kd_dokter = d.kd_dokter
+                WHERE s.no_surat = :ns LIMIT 1
+            ",
+            default => throw new \InvalidArgumentException("Jenis surat tidak dikenal: '{$type}'."),
+        };
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':ns' => trim($noSurat)]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row === false ? null : $row;
+    }
 }

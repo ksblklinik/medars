@@ -383,6 +383,13 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $suratController = new SuratController(
+            $suratRepo,
+            new CreateSuratMedisUseCase($suratRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -995,6 +1002,25 @@ final class HttpApplication
                 return $masterController->apiDelete($entity, $data);
             });
         }
+
+        $router->get('/surat', function () use ($suratController): array {
+            $user = $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan']);
+            return $suratController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/surat/cetak', function () use ($suratController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan']);
+            return $suratController->printSurat($queryParams);
+        });
+        $router->get('/api/v1/surat/list', function () use ($suratController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan']);
+            return $suratController->apiList($queryParams);
+        });
+        $router->post('/api/v1/surat/create', function () use ($suratController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['surat', 'dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $suratController->apiCreate($user, $data);
+        });
 
         return $router->dispatch($method, $path);
     }
