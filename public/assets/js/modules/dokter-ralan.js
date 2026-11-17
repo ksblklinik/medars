@@ -281,11 +281,19 @@
                     const diag = (d.diagnosa || []).map(x => `<li><code>${this.escapeHtml(x.kd_penyakit)}</code> ${this.escapeHtml(x.nm_penyakit)}</li>`).join('') || '<li>-</li>';
                     const resep = (d.resep || []).map(r => `<li><strong>${this.escapeHtml(r.tgl_peresepan)}</strong>: ${this.escapeHtml(r.nama_obat)} (${this.escapeHtml(r.jml)}) - ${this.escapeHtml(r.aturan_pakai)}</li>`).join('') || '<li>-</li>';
                     const tind = (d.tindakan || []).map(t => `<li><strong>${this.escapeHtml(t.tgl_perawatan)}</strong>: ${this.escapeHtml(t.nm_perawatan)}</li>`).join('') || '<li>-</li>';
+                    const lab = (d.lab || []).map(l => `<li><strong>${this.escapeHtml(l.tgl_periksa)}</strong>: ${this.escapeHtml(l.pemeriksaan)} = <strong>${this.escapeHtml(l.nilai)}</strong> (${this.escapeHtml(l.nilai_rujukan)})</li>`).join('') || '<li>-</li>';
+                    const rad = (d.radiologi || []).map(r => `<li><strong>${this.escapeHtml(r.tgl_periksa)}</strong>: ${this.escapeHtml(r.hasil)}</li>`).join('') || '<li>-</li>';
+                    const cppt = (d.cppt_ranap || []).map(c => `<li><strong>${this.escapeHtml(c.tgl_perawatan)}</strong>: S: ${this.escapeHtml(c.keluhan)} | A: ${this.escapeHtml(c.penilaian)}</li>`).join('') || '<li>-</li>';
+                    const triase = (d.triase_igd || []).map(t => `<li><strong>${this.escapeHtml(t.tgl_kunjungan)}</strong> [${this.escapeHtml(t.zona_triase)}]: ${this.escapeHtml(t.keluhan_utama)} (TD ${this.escapeHtml(t.tensi)}, SpO2 ${this.escapeHtml(t.spo2)})</li>`).join('') || '<li>-</li>';
                     box.innerHTML = `<div class="row g-2">
-                        <div class="col-md-6"><strong>Riwayat SOAP:</strong><ul class="mb-2">${soap}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat SOAP Ralan:</strong><ul class="mb-2">${soap}</ul></div>
                         <div class="col-md-6"><strong>Riwayat Diagnosa ICD-10:</strong><ul class="mb-2">${diag}</ul></div>
-                        <div class="col-md-6"><strong>Riwayat E-Resep:</strong><ul class="mb-0">${resep}</ul></div>
-                        <div class="col-md-6"><strong>Riwayat Tindakan:</strong><ul class="mb-0">${tind}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat E-Resep (Jadi &amp; Racikan):</strong><ul class="mb-2">${resep}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat Tindakan:</strong><ul class="mb-2">${tind}</ul></div>
+                        <div class="col-md-6"><strong>Hasil Laboratorium:</strong><ul class="mb-2">${lab}</ul></div>
+                        <div class="col-md-6"><strong>Hasil Radiologi:</strong><ul class="mb-2">${rad}</ul></div>
+                        <div class="col-md-6"><strong>CPPT Rawat Inap:</strong><ul class="mb-0">${cppt}</ul></div>
+                        <div class="col-md-6"><strong>Triase IGD:</strong><ul class="mb-0">${triase}</ul></div>
                     </div>`;
                 });
         },

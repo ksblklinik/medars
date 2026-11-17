@@ -1092,11 +1092,11 @@ final class HttpApplication
         });
 
         $router->get('/api/v1/penunjang/lab/orders', function () use ($supportController, $queryParams): array {
-            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan', 'dokter_ranap', 'rawat_inap', 'igd', 'dokter_igd']);
             return $supportController->listLabOrders($queryParams);
         });
         $router->post('/api/v1/penunjang/lab/orders', function () use ($supportController, $postData, $rawBody, $headers): array {
-            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan']);
+            $this->requireAnyServiceModuleAccess(['laboratorium', 'dokter_ralan', 'rawat_jalan', 'dokter_ranap', 'rawat_inap', 'igd', 'dokter_igd']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $supportController->createLabOrder($data);
@@ -1115,11 +1115,11 @@ final class HttpApplication
         });
 
         $router->get('/api/v1/penunjang/radiologi/orders', function () use ($supportController, $queryParams): array {
-            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan', 'dokter_ranap', 'rawat_inap', 'igd', 'dokter_igd']);
             return $supportController->listRadiologyOrders($queryParams);
         });
         $router->post('/api/v1/penunjang/radiologi/orders', function () use ($supportController, $postData, $rawBody, $headers): array {
-            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan']);
+            $this->requireAnyServiceModuleAccess(['radiologi', 'dokter_ralan', 'rawat_jalan', 'dokter_ranap', 'rawat_inap', 'igd', 'dokter_igd']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $supportController->createRadiologyOrder($data);

@@ -3151,4 +3151,40 @@ class HttpApplicationTest extends TestCase
         $jCount = (int) $this->pdo->query("SELECT COUNT(*) FROM mlite_jurnal WHERE no_bukti = 'HC-{$cpId}'")->fetchColumn();
         $this->assertSame(1, $jCount);
     }
+
+    public function testRmeFullHistoryIncludesLabRadRanapIgdAndTriaseSyncEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $today = date('Y-m-d');
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('RM-RME-ALL', 'Pasien RME Lengkap', '1990-01-01', 'L')");
+        $this->app->handle('GET', '/igd');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $reg = $this->app->handle('POST', '/api/v1/registration/insite', postData: [
+            'no_rkm_medis' => 'RM-RME-ALL', 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001', 'kd_pj' => 'BPJ',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $noRawat = json_decode($reg['body'], true)['data']['no_rawat'];
+
+        // 1. Triase IGD perawat otomatis sinkron ke pemeriksaan_ralan
+        $tri = $this->app->handle('POST', '/api/v1/igd/triase', rawBody: json_encode([
+            'no_rawat' => $noRawat, 'zona_triase' => 'Kuning', 'keluhan_utama' => 'Nyeri dada', 'tensi' => '130/85', 'spo2' => '98',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $tri['status']);
+        $this->assertSame(1, (int) $this->pdo->query("SELECT COUNT(*) FROM pemeriksaan_ralan WHERE no_rawat = '{$noRawat}' AND nip = 'TRIASE-IGD'")->fetchColumn());
+
+        // 2. CPPT Ranap + Hasil Lab + Hasil Radiologi + Resep Racikan muncul di /api/v1/dokter-ralan/full-history
+        $this->pdo->exec("INSERT INTO pemeriksaan_ranap (no_rawat, tgl_perawatan, jam_rawat, keluhan, pemeriksaan, penilaian, rtl, instruksi, evaluasi, nip) VALUES ('{$noRawat}', '{$today}', '10:00:00', 'Visit pagi', 'TD 120/80', 'Stabil', 'Lanjut terapi', '-', '-', 'DR001')");
+        $this->pdo->exec("INSERT INTO detail_periksa_lab (no_rawat, kd_jenis_prw, tgl_periksa, jam, pemeriksaan, nilai, nilai_rujukan) VALUES ('{$noRawat}', 'LAB01', '{$today}', '10:05:00', 'Hemoglobin', '14.2 g/dL', '13-17')");
+        $this->pdo->exec("INSERT INTO hasil_radiologi (no_rawat, tgl_periksa, jam, hasil) VALUES ('{$noRawat}', '{$today}', '10:10:00', 'Cor/pulmo normal')");
+
+        $hist = $this->app->handle('GET', '/api/v1/dokter-ralan/full-history', queryParams: ['no_rkm_medis' => 'RM-RME-ALL']);
+        $this->assertSame(200, $hist['status']);
+        $data = json_decode($hist['body'], true)['data'];
+
+        $this->assertCount(1, $data['soap']);
+        $this->assertCount(1, $data['triase_igd']);
+        $this->assertCount(1, $data['cppt_ranap']);
+        $this->assertCount(1, $data['lab']);
+        $this->assertCount(1, $data['radiologi']);
+    }
 }

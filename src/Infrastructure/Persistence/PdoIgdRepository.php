@@ -84,6 +84,34 @@ final readonly class PdoIgdRepository implements IgdRepositoryInterface
             : 'INSERT INTO data_triase_igd (no_rawat, tgl_kunjungan, jam_kunjungan, cara_masuk, zona_triase, keluhan_utama, tensi, nadi, suhu, respirasi, spo2, gcs, disposisi, catatan) VALUES (:nr, :tgl, :jam, :cm, :zona, :kel, :td, :nd, :suhu, :rr, :spo2, :gcs, :disp, :cat)';
 
         $this->pdo->prepare($sql)->execute($params);
+
+        // Sinkronkan asesmen awal TTV perawat triase IGD ke pemeriksaan_ralan (jika belum ada baris TRIASE-IGD)
+        $regChk = $this->pdo->prepare('SELECT 1 FROM reg_periksa WHERE no_rawat = :nr LIMIT 1');
+        $regChk->execute([':nr' => $nr]);
+        if ($regChk->fetchColumn() !== false) {
+            $soapChk = $this->pdo->prepare("SELECT 1 FROM pemeriksaan_ralan WHERE no_rawat = :nr AND nip = 'TRIASE-IGD' LIMIT 1");
+            $soapChk->execute([':nr' => $nr]);
+            if ($soapChk->fetchColumn() === false) {
+                $this->pdo->prepare(
+                    "INSERT INTO pemeriksaan_ralan (no_rawat, tgl_perawatan, jam_rawat, suhu_tubuh, tensi, nadi, respirasi, spo2, gcs, kesadaran, keluhan, pemeriksaan, alergi, rtl, penilaian, instruksi, evaluasi, nip)
+                     VALUES (:nr, :tgl, :jam, :suhu, :td, :nd, :rr, :spo2, :gcs, 'Compos Mentis', :kel, :pem, '-', :disp, :zona, '-', '-', 'TRIASE-IGD')"
+                )->execute([
+                    ':nr' => $nr,
+                    ':tgl' => $params[':tgl'],
+                    ':jam' => $params[':jam'],
+                    ':suhu' => $params[':suhu'] ?: '-',
+                    ':td' => $params[':td'] ?: '-',
+                    ':nd' => $params[':nd'] ?: '-',
+                    ':rr' => $params[':rr'] ?: '-',
+                    ':spo2' => $params[':spo2'] ?: '-',
+                    ':gcs' => $params[':gcs'] ?: '15',
+                    ':kel' => $keluhan,
+                    ':pem' => 'Triase IGD Zona ' . $zona . ($params[':cat'] !== '' ? ' - ' . $params[':cat'] : ''),
+                    ':disp' => 'Disposisi Awal: ' . $params[':disp'],
+                    ':zona' => 'Triase Zona ' . $zona,
+                ]);
+            }
+        }
     }
 
     public function updateDisposisi(string $noRawat, string $disposisi, string $statusLanjut = 'Ralan'): void

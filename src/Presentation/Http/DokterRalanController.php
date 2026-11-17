@@ -634,13 +634,63 @@ final readonly class DokterRalanController
         );
         $tindStmt->execute([':rm' => $noRm]);
 
+        $racikanStmt = $this->pdo->prepare(
+            "SELECT ro.no_resep, ro.no_rawat, ro.tgl_peresepan, rr.nama_racik AS nama_obat, rr.jml_dr AS jml, rr.aturan_pakai
+             FROM resep_obat ro
+             INNER JOIN reg_periksa r ON r.no_rawat = ro.no_rawat
+             INNER JOIN resep_dokter_racikan rr ON rr.no_resep = ro.no_resep
+             WHERE r.no_rkm_medis = :rm ORDER BY ro.tgl_peresepan DESC LIMIT 20"
+        );
+        $racikanStmt->execute([':rm' => $noRm]);
+
+        $labStmt = $this->pdo->prepare(
+            'SELECT dpl.no_rawat, dpl.tgl_periksa, dpl.jam, dpl.pemeriksaan, dpl.nilai, dpl.nilai_rujukan
+             FROM detail_periksa_lab dpl
+             INNER JOIN reg_periksa r ON r.no_rawat = dpl.no_rawat
+             WHERE r.no_rkm_medis = :rm ORDER BY dpl.tgl_periksa DESC, dpl.jam DESC LIMIT 30'
+        );
+        $labStmt->execute([':rm' => $noRm]);
+
+        $radStmt = $this->pdo->prepare(
+            'SELECT hr.no_rawat, hr.tgl_periksa, hr.jam, hr.hasil
+             FROM hasil_radiologi hr
+             INNER JOIN reg_periksa r ON r.no_rawat = hr.no_rawat
+             WHERE r.no_rkm_medis = :rm ORDER BY hr.tgl_periksa DESC, hr.jam DESC LIMIT 20'
+        );
+        $radStmt->execute([':rm' => $noRm]);
+
+        $cpptStmt = $this->pdo->prepare(
+            'SELECT pr.no_rawat, pr.tgl_perawatan, pr.jam_rawat, pr.keluhan, pr.pemeriksaan, pr.penilaian, pr.rtl, pr.nip
+             FROM pemeriksaan_ranap pr
+             INNER JOIN reg_periksa r ON r.no_rawat = pr.no_rawat
+             WHERE r.no_rkm_medis = :rm ORDER BY pr.tgl_perawatan DESC, pr.jam_rawat DESC LIMIT 20'
+        );
+        $cpptStmt->execute([':rm' => $noRm]);
+
+        $triaseStmt = $this->pdo->prepare(
+            'SELECT t.no_rawat, t.tgl_kunjungan, t.jam_kunjungan, t.zona_triase, t.keluhan_utama, t.tensi, t.nadi, t.suhu, t.spo2, t.gcs, t.disposisi
+             FROM data_triase_igd t
+             INNER JOIN reg_periksa r ON r.no_rawat = t.no_rawat
+             WHERE r.no_rkm_medis = :rm ORDER BY t.tgl_kunjungan DESC, t.jam_kunjungan DESC LIMIT 10'
+        );
+        $triaseStmt->execute([':rm' => $noRm]);
+
+        $resepList = array_merge(
+            $resepStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+            $racikanStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []
+        );
+
         return $this->jsonResponse([
             'status' => 'success',
             'data' => [
                 'soap' => $soapStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
                 'diagnosa' => $diagStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
-                'resep' => $resepStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+                'resep' => $resepList,
                 'tindakan' => $tindStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+                'lab' => $labStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+                'radiologi' => $radStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+                'cppt_ranap' => $cpptStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
+                'triase_igd' => $triaseStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [],
             ],
         ]);
     }
