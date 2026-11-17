@@ -387,6 +387,109 @@ final readonly class PharmacyController
     }
 
     /**
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListStokBatch(array $queryParams = []): array
+    {
+        $q = trim((string) ($queryParams['q'] ?? ''));
+        $depo = trim((string) ($queryParams['kd_bangsal'] ?? ''));
+        $sql = 'SELECT g.kode_brng, COALESCE(d.nama_brng, g.kode_brng) AS nama_brng, g.kd_bangsal, g.no_batch, g.no_faktur, g.stok
+                FROM gudangbarang g
+                LEFT JOIN databarang d ON d.kode_brng = g.kode_brng
+                WHERE 1=1';
+        $params = [];
+        if ($depo !== '') {
+            $sql .= ' AND g.kd_bangsal = :depo';
+            $params[':depo'] = $depo;
+        }
+        if ($q !== '') {
+            $sql .= ' AND (g.kode_brng LIKE :q OR COALESCE(d.nama_brng, \'\') LIKE :q OR g.no_batch LIKE :q)';
+            $params[':q'] = '%' . $q . '%';
+        }
+        $sql .= ' ORDER BY d.nama_brng ASC, g.kd_bangsal ASC LIMIT 100';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $this->jsonResponse(['status' => 'success', 'data' => $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []]);
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiAdjustStokBatch(?UserAccount $currentUser, array $postData = []): array
+    {
+        $kodeBrng = trim((string) ($postData['kode_brng'] ?? ''));
+        $kdBangsal = trim((string) ($postData['kd_bangsal'] ?? ''));
+        $noBatch = trim((string) ($postData['no_batch'] ?? ''));
+        $noFaktur = trim((string) ($postData['no_faktur'] ?? ''));
+        $stokBaru = (float) ($postData['stok_baru'] ?? -1);
+        $keterangan = trim((string) ($postData['keterangan'] ?? 'Penyesuaian stok opname apotek'));
+
+        if ($kodeBrng === '' || $kdBangsal === '' || $stokBaru < 0) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Kode barang, depo/bangsal, dan stok baru (>= 0) wajib diisi.'], 422);
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $sel = $this->pdo->prepare(
+                'SELECT stok FROM gudangbarang WHERE kode_brng = :kb AND kd_bangsal = :bg AND no_batch = :nb AND no_faktur = :nf LIMIT 1'
+            );
+            $sel->execute([':kb' => $kodeBrng, ':bg' => $kdBangsal, ':nb' => $noBatch, ':nf' => $noFaktur]);
+            $stokAwal = $sel->fetchColumn();
+
+            if ($stokAwal === false) {
+                $stokAwalNum = 0.0;
+                $ins = $this->pdo->prepare(
+                    'INSERT INTO gudangbarang (kode_brng, kd_bangsal, no_batch, no_faktur, stok) VALUES (:kb, :bg, :nb, :nf, :st)'
+                );
+                $ins->execute([':kb' => $kodeBrng, ':bg' => $kdBangsal, ':nb' => $noBatch, ':nf' => $noFaktur, ':st' => $stokBaru]);
+            } else {
+                $stokAwalNum = (float) $stokAwal;
+                $upd = $this->pdo->prepare(
+                    'UPDATE gudangbarang SET stok = :st WHERE kode_brng = :kb AND kd_bangsal = :bg AND no_batch = :nb AND no_faktur = :nf'
+                );
+                $upd->execute([':st' => $stokBaru, ':kb' => $kodeBrng, ':bg' => $kdBangsal, ':nb' => $noBatch, ':nf' => $noFaktur]);
+            }
+
+            $diff = $stokBaru - $stokAwalNum;
+            $masuk = $diff > 0 ? $diff : 0.0;
+            $keluar = $diff < 0 ? abs($diff) : 0.0;
+
+            $log = $this->pdo->prepare(
+                "INSERT INTO riwayat_barang_medis (kode_brng, stok_awal, masuk, keluar, stok_akhir, posisi, tanggal, jam, petugas, kd_bangsal, status, no_batch, no_faktur, keterangan)
+                 VALUES (:kb, :sa, :m, :k, :sk, 'Penyesuaian Apotek', :tgl, :jam, :pt, :bg, 'Simpan', :nb, :nf, :ket)"
+            );
+            $log->execute([
+                ':kb' => $kodeBrng,
+                ':sa' => $stokAwalNum,
+                ':m' => $masuk,
+                ':k' => $keluar,
+                ':sk' => $stokBaru,
+                ':tgl' => date('Y-m-d'),
+                ':jam' => date('H:i:s'),
+                ':pt' => $currentUser?->getFullname() ?: ($currentUser?->getUsername() ?? 'Apoteker'),
+                ':bg' => $kdBangsal,
+                ':nb' => $noBatch,
+                ':nf' => $noFaktur,
+                ':ket' => $keterangan,
+            ]);
+
+            $this->pdo->commit();
+            return $this->jsonResponse([
+                'status' => 'success',
+                'message' => 'Stok batch/depo berhasil disesuaikan.',
+                'data' => ['kode_brng' => $kodeBrng, 'kd_bangsal' => $kdBangsal, 'stok_awal' => $stokAwalNum, 'stok_akhir' => $stokBaru],
+            ]);
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function findResepHeader(string $noResep): ?array

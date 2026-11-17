@@ -142,6 +142,65 @@
             </div>
         </div>
     </div>
+
+    <div class="card shadow-sm border-0 mt-3" id="apotekStokBatchPanel">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+            <span class="fw-semibold text-medical-teal small"><i class="fa fa-boxes-stacked me-1"></i> Penyesuaian Stok per Batch &amp; Depo</span>
+            <div class="d-flex gap-2">
+                <input type="text" id="apotekBatchSearch" class="form-control form-control-sm" placeholder="Cari obat / batch...">
+                <button type="button" id="btnApotekBatchLoad" class="btn btn-sm btn-outline-teal">Muat Stok Batch</button>
+            </div>
+        </div>
+        <div class="card-body p-2">
+            <form id="formApotekStokAdjust" class="row g-2 mb-2 small">
+                <div class="col-md-2"><input type="text" id="adjKodeBrng" class="form-control form-control-sm" placeholder="Kode Obat *" required></div>
+                <div class="col-md-2"><input type="text" id="adjKdBangsal" class="form-control form-control-sm" placeholder="Depo (APTK) *" required></div>
+                <div class="col-md-2"><input type="text" id="adjNoBatch" class="form-control form-control-sm" placeholder="No. Batch"></div>
+                <div class="col-md-2"><input type="number" id="adjStokBaru" class="form-control form-control-sm" placeholder="Stok Baru *" min="0" required></div>
+                <div class="col-md-2"><input type="text" id="adjKet" class="form-control form-control-sm" placeholder="Keterangan" value="Stock Opname Apotek"></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Sesuaikan Stok</button></div>
+            </form>
+            <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                <table class="table table-sm table-hover mb-0 small">
+                    <thead class="table-light"><tr><th>Kode</th><th>Nama Obat</th><th>Depo</th><th>Batch</th><th class="text-end">Stok</th></tr></thead>
+                    <tbody id="tbodyApotekStokBatch"><tr><td colspan="5" class="text-center text-muted">Klik "Muat Stok Batch" untuk melihat stok per batch/depo.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fetcher = (url, opts) => (window.MedarsApp && window.MedarsApp.apiFetch) ? window.MedarsApp.apiFetch(url, opts) : fetch(url, opts);
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const loadBatch = async () => {
+        const q = encodeURIComponent(document.getElementById('apotekBatchSearch')?.value.trim() || '');
+        const res = await fetcher('/api/v1/farmasi/stok-batch?q=' + q);
+        const json = await res.json();
+        const rows = json.data || [];
+        document.getElementById('tbodyApotekStokBatch').innerHTML = rows.map(r => `<tr>
+            <td><code>${esc(r.kode_brng)}</code></td><td>${esc(r.nama_brng)}</td><td>${esc(r.kd_bangsal)}</td><td>${esc(r.no_batch || '-')}</td><td class="text-end fw-semibold">${Number(r.stok)}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="text-center text-muted">Tidak ada data stok batch.</td></tr>';
+    };
+    document.getElementById('btnApotekBatchLoad')?.addEventListener('click', loadBatch);
+    document.getElementById('formApotekStokAdjust')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await fetcher('/api/v1/farmasi/stok-adjust', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                kode_brng: document.getElementById('adjKodeBrng').value.trim(),
+                kd_bangsal: document.getElementById('adjKdBangsal').value.trim(),
+                no_batch: document.getElementById('adjNoBatch').value.trim(),
+                stok_baru: Number(document.getElementById('adjStokBaru').value || 0),
+                keterangan: document.getElementById('adjKet').value.trim(),
+            }),
+        });
+        const json = await res.json();
+        if (json.status === 'success') loadBatch();
+        else alert(json.message || 'Gagal menyesuaikan stok.');
+    });
+});
+</script>
 <script src="/assets/js/modules/pharmacy.js?v=20261117b"></script>

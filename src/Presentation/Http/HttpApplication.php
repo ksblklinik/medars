@@ -938,6 +938,15 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $pharmacyController->apiCopyResep($user, $data);
         });
+        $router->get('/api/v1/farmasi/stok-batch', function () use ($pharmacyController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            return $pharmacyController->apiListStokBatch($queryParams);
+        });
+        $router->post('/api/v1/farmasi/stok-adjust', function () use ($pharmacyController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['farmasi', 'apotek_ralan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $pharmacyController->apiAdjustStokBatch($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
 
         // Kasir, Split Billing 4-Pilar & POS Apotek Umum (PLN-22)
         $renderBilling = function () use ($billingController): array {

@@ -2219,4 +2219,28 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $hist['status']);
         $this->assertArrayHasKey('soap', json_decode($hist['body'], true)['data']);
     }
+
+    public function testApotekBatchStockAdjustmentEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/farmasi');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Penyesuaian Stok per Batch', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $adj = $this->app->handle('POST', '/api/v1/farmasi/stok-adjust', rawBody: json_encode([
+            'kode_brng' => 'OB001',
+            'kd_bangsal' => 'APTK',
+            'no_batch' => 'BATCH-2026',
+            'stok_baru' => 45,
+            'keterangan' => 'Opname Apotek',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $adj['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/farmasi/stok-batch', queryParams: ['q' => 'BATCH-2026']);
+        $this->assertSame(200, $list['status']);
+        $rows = json_decode($list['body'], true)['data'];
+        $this->assertCount(1, $rows);
+        $this->assertSame(45.0, (float) $rows[0]['stok']);
+    }
 }
