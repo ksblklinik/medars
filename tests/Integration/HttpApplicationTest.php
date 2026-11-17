@@ -1148,4 +1148,46 @@ class HttpApplicationTest extends TestCase
         $outJson = json_decode($checkOut['body'], true);
         $this->assertSame(500000, $outJson['data']['ttl_biaya']);
     }
+
+    public function testDokterRanapEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000080', 'Hendra Wijaya', '1978-05-05', 'L');
+            INSERT INTO bangsal (kd_bangsal, nm_bangsal, status) VALUES ('B01', 'Mawar', '1');
+            INSERT INTO kamar (kd_kamar, kd_bangsal, trf_kamar, status, kelas, statusdata) VALUES ('MWR-01', 'B01', 200000, 'ISI', 'Kelas 2', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_lanjut, status_bayar)
+            VALUES ('001', '2026/11/17/000080', '{$today}', '08:00:00', 'DR01', '000080', 'IGDK', 'A09', 'Dirawat', 'Ranap', 'Belum Bayar');
+            INSERT INTO kamar_inap (no_rawat, kd_kamar, tgl_masuk, jam_masuk, trf_kamar, ttl_biaya, stts_pulang)
+            VALUES ('2026/11/17/000080', 'MWR-01', '{$today}', '08:30:00', 200000, 200000, '-');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/dokter-ranap');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Dokter Rawat Inap', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $patients = $this->app->handle('GET', '/api/v1/dokter-ranap/patients', queryParams: ['q' => 'Hendra']);
+        $this->assertSame(200, $patients['status']);
+        $this->assertCount(1, json_decode($patients['body'], true)['data']);
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/dokter-ranap/cppt/save',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000080',
+                'keluhan' => 'Kondisi stabil',
+                'pemeriksaan' => 'TD 120/80',
+                'penilaian' => 'Membaik',
+                'rtl' => 'Observasi lanjut',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+
+        $cppt = $this->app->handle('GET', '/api/v1/dokter-ranap/cppt', queryParams: ['no_rawat' => '2026/11/17/000080']);
+        $this->assertSame(200, $cppt['status']);
+        $this->assertCount(1, json_decode($cppt['body'], true)['data']);
+    }
 }

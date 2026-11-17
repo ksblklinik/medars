@@ -416,6 +416,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $dokterRanapController = new DokterRanapController(
+            new \App\Infrastructure\Persistence\PdoDokterRanapRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1134,6 +1140,25 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $ranapController->apiCheckOut($data);
+        });
+
+        $router->get('/dokter-ranap', function () use ($dokterRanapController): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            return $dokterRanapController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/dokter-ranap/patients', function () use ($dokterRanapController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            return $dokterRanapController->apiPatients($queryParams);
+        });
+        $router->get('/api/v1/dokter-ranap/cppt', function () use ($dokterRanapController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            return $dokterRanapController->apiListCppt($queryParams);
+        });
+        $router->post('/api/v1/dokter-ranap/cppt/save', function () use ($dokterRanapController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $dokterRanapController->apiSaveCppt($user, $data);
         });
 
         return $router->dispatch($method, $path);

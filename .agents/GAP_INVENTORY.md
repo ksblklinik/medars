@@ -33,7 +33,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 11 | `dokter_igd` | ❌ Belum Ada | Layar SOAP, Triase IGD, tindakan emergensi, e-resep IGD, & order penunjang IGD. |
 | 12 | `kasir_igd` | ❌ Belum Ada | Layar billing & pelunasan khusus pasien IGD (termasuk pasien masuk ranap). |
 | 13 | `rawat_inap` | ✅ Selesai | Manajemen Kamar Inap (`/rawat-inap`): master bangsal & kamar, check-in kamar (`ISI` + `status_lanjut=Ranap`), & checkout pulang otomatis hitung lama inap + posting billing kamar ke `mlite_billing_ledger`. |
-| 14 | `dokter_ranap` | ❌ Belum Ada | Layar CPPT Dokter Ranap (`pemeriksaan_ranap` UI), visite, e-resep ranap, resume pulang. |
+| 14 | `dokter_ranap` | 🟡 Parsial | Layar CPPT Dokter Ranap (`/dokter-ranap`, `pemeriksaan_ranap` UI & riwayat visite) sudah ada. Sisa: tab E-Resep Ranap & Resume Pulang langsung di layar Dokter Ranap. |
 | 15 | `apotek_ranap` | ❌ Belum Ada | Pelayanan E-Resep & UDD/ODD pasien Rawat Inap. |
 | 16 | `kasir_rawat_inap` | ❌ Belum Ada | Billing akumulatif kamar, visite, tindakan, obat, & pelunasan pulang Rawat Inap. |
 | 17 | `operasi` | ❌ Belum Ada | Jadwal Operasi, laporan operasi, paket tindakan & tim bedah. |

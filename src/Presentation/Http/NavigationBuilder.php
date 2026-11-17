@@ -71,6 +71,14 @@ final class NavigationBuilder
                 'modules' => ['rawat_inap', 'dokter_ranap', 'kasir_rawat_inap'],
             ],
             [
+                'title' => 'Dokter Ranap',
+                'icon' => 'fa-user-doctor',
+                'route' => '/dokter-ranap',
+                'category' => 'Layanan',
+                'module_key' => 'dokter_ranap',
+                'modules' => ['dokter_ranap', 'rawat_inap'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',
