@@ -803,6 +803,17 @@ final class HttpApplication
             (string) ($postData['_csrf_token'] ?? ''),
             $ipAddress
         ));
+        $router->post('/users/bulk-reset-password', fn(): Response => $usersController->bulkResetPassword(
+            $this->requireAuthenticatedUser(),
+            $postData,
+            $ipAddress,
+            false
+        ));
+        $router->post('/api/v1/users/bulk-reset-password', function () use ($usersController, $postData, $rawBody, $headers, $ipAddress): Response {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $usersController->bulkResetPassword($user, $this->parseJsonOrPost($rawBody, $postData, $headers), $ipAddress, true);
+        });
 
         $router->get('/settings', fn(): Response => $settingsController->index($this->requireAuthenticatedUser()));
         $router->post('/settings/save', fn(): Response => $settingsController->save($this->requireAuthenticatedUser(), $postData, $ipAddress));

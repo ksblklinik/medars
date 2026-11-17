@@ -6,6 +6,9 @@
             </h6>
             <div class="d-flex align-items-center gap-2">
                 <input type="search" class="form-control form-control-sm" placeholder="Cari pengguna..." data-ksmlite-search="usersTableBody" style="max-width: 220px;">
+                <button type="button" id="btnBulkResetUsers" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalBulkReset">
+                    <i class="fa fa-key me-1"></i> Reset Password Massal
+                </button>
                 <button type="button" id="btnAddUser" class="btn btn-sm btn-medical-teal" data-bs-toggle="modal" data-bs-target="#modalUser">
                     <i class="fa fa-user-plus me-1"></i> Tambah Pengguna
                 </button>
@@ -137,6 +140,46 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary" style="background-color: #00897b; border-color: #00897b;">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reset Password Massal -->
+<div class="modal fade" id="modalBulkReset" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/users/bulk-reset-password">
+                <?= $csrf_input ?>
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Reset Password Massal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Role (kosongkan jika pakai ID)</label>
+                        <select class="form-select" name="role">
+                            <option value="">-- Pilih Role --</option>
+                            <option value="dokter">Dokter</option>
+                            <option value="perawat">Perawat / Bidan</option>
+                            <option value="kasir">Kasir</option>
+                            <option value="farmasi">Apoteker / Farmasi</option>
+                            <option value="staff">Staff / Loket</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Atau Daftar User ID (pisahkan koma)</label>
+                        <input type="text" class="form-control" name="user_ids" placeholder="Contoh: 2,3,4">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Kata Sandi Baru (min. 6 karakter) *</label>
+                        <input type="password" class="form-control" name="new_password" minlength="6" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Reset Massal</button>
                 </div>
             </form>
         </div>

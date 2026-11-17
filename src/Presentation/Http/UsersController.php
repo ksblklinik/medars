@@ -134,4 +134,75 @@ final class UsersController
 
         return Response::redirect('/users');
     }
+
+    /**
+     * @param array<string, mixed> $postData
+     */
+    public function bulkResetPassword(?UserAccount $currentUser, array $postData, string $ipAddress = '', bool $asJson = false): Response
+    {
+        $this->rbacGuard->assertCanAccessModule($currentUser, 'users');
+
+        if (!$asJson) {
+            $token = (string) ($postData['_csrf_token'] ?? '');
+            if (!$this->csrfGuard->validateToken($token)) {
+                return Response::html('Token CSRF tidak valid.', 403);
+            }
+        }
+
+        $newPassword = (string) ($postData['new_password'] ?? '');
+        if (strlen($newPassword) < 6) {
+            return $asJson
+                ? Response::json(['status' => 'error', 'message' => 'Kata sandi baru minimal 6 karakter.'], 422)
+                : Response::html('Kata sandi baru minimal 6 karakter.', 422);
+        }
+
+        $rawIds = $postData['user_ids'] ?? [];
+        if (is_string($rawIds)) {
+            $rawIds = array_filter(array_map('trim', explode(',', $rawIds)));
+        }
+        $targetIds = array_values(array_unique(array_map('intval', is_array($rawIds) ? $rawIds : [])));
+        $targetRole = trim((string) ($postData['role'] ?? ''));
+
+        $allUsers = $this->userRepo->findAll();
+        $hash = password_hash($newPassword, PASSWORD_BCRYPT);
+        $resetCount = 0;
+
+        foreach ($allUsers as $u) {
+            $uid = (int) ($u->getId() ?? 0);
+            if ($uid <= 1) {
+                continue;
+            }
+            $matchesId = $targetIds !== [] && in_array($uid, $targetIds, true);
+            $matchesRole = $targetIds === [] && $targetRole !== '' && $u->getRole() === $targetRole;
+            if (!$matchesId && !$matchesRole) {
+                continue;
+            }
+            $updated = UserAccount::fromLegacy(
+                id: $uid,
+                username: $u->getUsername(),
+                passwordHash: $hash,
+                email: $u->getEmail(),
+                fullname: $u->getFullname(),
+                role: $u->getRole(),
+                accessRaw: implode(',', $u->getAccess()),
+                capRaw: implode(',', $u->getCap()),
+                avatar: $u->getAvatar(),
+                status: $u->isActive() ? '1' : '0'
+            );
+            $this->userRepo->save($updated);
+            $resetCount++;
+        }
+
+        $this->auditLogRepo->log(
+            $currentUser?->getId() ?? 0,
+            $currentUser?->getUsername() ?? 'system',
+            'USER_BULK_PASSWORD_RESET',
+            "Reset password massal untuk {$resetCount} pengguna",
+            $ipAddress
+        );
+
+        return $asJson
+            ? Response::json(['status' => 'success', 'data' => ['reset_count' => $resetCount]], 200)
+            : Response::redirect('/users');
+    }
 }

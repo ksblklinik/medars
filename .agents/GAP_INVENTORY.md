@@ -90,7 +90,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 47 | `presensi` | ✅ Selesai | Modul absensi / presensi shift pegawai (`/presensi`): clock-in, clock-out, anti-duplikasi harian, & riwayat presensi (`mlite_presensi`). |
 | 48 | `profil` | ✅ Selesai | Halaman profil & keamanan akun sendiri (`/profil`): ubah nama lengkap/email & ganti password terverifikasi (`password_verify` + `PASSWORD_BCRYPT`). |
 | 49 | `riwayat_simgos` | ✅ Selesai | Lengkap: viewer arsip & import riwayat migrasi SIMGOS lama (`/riwayat-simgos`, `/api/v1/riwayat-simgos*`, `mlite_riwayat_simgos`). |
-| 50 | `users` | 🟡 Parsial | Sudah ada CRUD dasar & pencarian/filter tabel pengguna (`usersTableBody`). Sisa: reset password massal. |
+| 50 | `users` | ✅ Selesai | Lengkap: CRUD pengguna, pencarian/filter tabel (`usersTableBody`), & reset password massal berdasarkan role atau daftar ID (`/api/v1/users/bulk-reset-password`, `/users/bulk-reset-password`). |
 | 51 | `settings` | ✅ Selesai | Pengaturan Sistem lengkap (`/settings`): tab Profil Instansi (`kode_rs`, `logo_url`), Pendaftaran, Farmasi, Bridging BPJS & SatuSehat, WhatsApp Gateway, serta Tarif & Billing. |
 | 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
 | 53 | `mlite_api_key` | ✅ Selesai | Manajemen API Key Eksternal (`/api-keys`): generate key ter-hash SHA-256 (`raw_key` tampil sekali), whitelist IP, scope method, toggle aktif/nonaktif, & hapus (`mlite_api_keys`). |

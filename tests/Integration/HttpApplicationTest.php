@@ -2752,4 +2752,27 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $list['status']);
         $this->assertCount(1, json_decode($list['body'], true)['data']);
     }
+
+    public function testUsersBulkResetPasswordEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $usersPage = $this->app->handle('GET', '/users');
+        $this->assertSame(200, $usersPage['status']);
+        $this->assertStringContainsString('btnBulkResetUsers', $usersPage['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $oldHash = password_hash('OldPass123!', PASSWORD_BCRYPT);
+        $this->pdo->exec("INSERT INTO mlite_users (username, password, email, fullname, role, access, cap, status) VALUES ('staff1', '{$oldHash}', 's1@medars.id', 'Staff Satu', 'staff', 'pendaftaran', 'all', '1')");
+        $this->pdo->exec("INSERT INTO mlite_users (username, password, email, fullname, role, access, cap, status) VALUES ('staff2', '{$oldHash}', 's2@medars.id', 'Staff Dua', 'staff', 'pendaftaran', 'all', '1')");
+
+        $res = $this->app->handle('POST', '/api/v1/users/bulk-reset-password', postData: [
+            'role' => 'staff',
+            'new_password' => 'ResetBaru2026!',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $res['status']);
+        $this->assertSame(2, json_decode($res['body'], true)['data']['reset_count']);
+
+        $newHash = (string) $this->pdo->query("SELECT password FROM mlite_users WHERE username = 'staff1'")->fetchColumn();
+        $this->assertTrue(password_verify('ResetBaru2026!', $newHash));
+    }
 }
