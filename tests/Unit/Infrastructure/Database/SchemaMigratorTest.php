@@ -71,6 +71,7 @@ class SchemaMigratorTest extends TestCase
             'bridging_orthanc',
             'mlite_smartagent_knowledge',
             'mlite_smartagent_profiles',
+            'mlite_sdm_berkas',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

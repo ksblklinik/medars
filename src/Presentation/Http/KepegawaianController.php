@@ -47,7 +47,7 @@ final readonly class KepegawaianController
      */
     public function apiList(string $entity, array $query = []): array
     {
-        if (!in_array($entity, ['pegawai', 'petugas'], true)) {
+        if (!in_array($entity, ['pegawai', 'petugas', 'sdm_berkas'], true)) {
             return $this->jsonResponse(['status' => 'error', 'message' => 'Entitas SDM tidak valid.'], 422);
         }
         $q = trim((string) ($query['q'] ?? ''));
@@ -61,7 +61,7 @@ final readonly class KepegawaianController
     public function apiSave(string $entity, array $payload): array
     {
         try {
-            if (!in_array($entity, ['pegawai', 'petugas'], true)) {
+            if (!in_array($entity, ['pegawai', 'petugas', 'sdm_berkas'], true)) {
                 throw new \InvalidArgumentException('Entitas SDM tidak valid.');
             }
             $this->repo->save($entity, $payload);
@@ -78,7 +78,7 @@ final readonly class KepegawaianController
     public function apiDelete(string $entity, array $payload): array
     {
         try {
-            if (!in_array($entity, ['pegawai', 'petugas'], true)) {
+            if (!in_array($entity, ['pegawai', 'petugas', 'sdm_berkas'], true)) {
                 throw new \InvalidArgumentException('Entitas SDM tidak valid.');
             }
             $this->repo->delete($entity, $payload);

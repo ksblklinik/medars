@@ -1274,7 +1274,7 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
             return $kepegawaianController->printDirectory($queryParams);
         });
-        foreach (['pegawai', 'petugas'] as $sdmEntity) {
+        foreach (['pegawai', 'petugas', 'sdm_berkas'] as $sdmEntity) {
             $router->get("/api/v1/kepegawaian/{$sdmEntity}", function () use ($kepegawaianController, $sdmEntity, $queryParams): array {
                 $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
                 return $kepegawaianController->apiList($sdmEntity, $queryParams);

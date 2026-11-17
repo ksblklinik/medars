@@ -15,6 +15,7 @@
     <ul class="nav nav-tabs mt-2 mb-3" id="sdmTabs" role="tablist">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPegawai" data-entity="pegawai" type="button">Pegawai</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPetugas" data-entity="petugas" type="button">Petugas Medis</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBerkasSdm" data-entity="sdm_berkas" type="button">Berkas Digital SDM</button></li>
     </ul>
 
     <div class="tab-content">
@@ -65,6 +66,28 @@
                 </div>
             </div>
         </div>
+
+        <div class="tab-pane fade" id="tabBerkasSdm">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-medical-teal text-white py-2 fw-semibold">Upload Berkas Digital SDM</div>
+                        <div class="card-body">
+                            <form id="formBerkasSdm" class="row g-2">
+                                <div class="col-6"><label class="form-label small mb-1">NIK / NIP *</label><input type="text" id="berkasNik" class="form-control form-control-sm" required></div>
+                                <div class="col-6"><label class="form-label small mb-1">Jenis Berkas</label><select id="berkasJenis" class="form-select form-select-sm"><option value="STR">STR</option><option value="SIP">SIP</option><option value="KTP">KTP</option><option value="Ijazah">Ijazah</option><option value="Lainnya">Lainnya</option></select></div>
+                                <div class="col-12"><label class="form-label small mb-1">Berlaku Hingga</label><input type="date" id="berkasExp" class="form-control form-control-sm"></div>
+                                <div class="col-12"><label class="form-label small mb-1">File (PDF/JPG/PNG) *</label><input type="file" id="berkasFile" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.webp" required></div>
+                                <div class="col-12 mt-2"><button type="submit" class="btn btn-sm btn-teal text-white w-100">Upload Berkas</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0"><div class="card-body p-0 table-responsive"><table class="table table-sm table-hover align-middle mb-0 small"><thead class="table-light"><tr><th>NIK/NIP</th><th>Jenis</th><th>Nama File</th><th>Kadaluarsa</th><th>Tgl Upload</th><th class="text-center">Aksi</th></tr></thead><tbody id="tbodyBerkasSdm"></tbody></table></div></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script src="/assets/js/modules/kepegawaian.js?v=20261117b"></script>
+<script src="/assets/js/modules/kepegawaian.js?v=20261117c"></script>

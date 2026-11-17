@@ -68,6 +68,27 @@
                     status: document.getElementById('ptgStatus').value,
                 });
             });
+
+            document.getElementById('formBerkasSdm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const fileInput = document.getElementById('berkasFile');
+                const file = fileInput?.files?.[0];
+                if (!file) return this.showAlert('danger', 'Pilih berkas terlebih dahulu.');
+                const reader = new FileReader();
+                reader.onload = () => {
+                    this.save('sdm_berkas', {
+                        nik: document.getElementById('berkasNik').value,
+                        jenis_berkas: document.getElementById('berkasJenis').value,
+                        tgl_kadaluarsa: document.getElementById('berkasExp').value,
+                        nama_file: file.name,
+                        mime_type: file.type || 'application/pdf',
+                        file_size: file.size || 0,
+                        content_base64: String(reader.result || ''),
+                    });
+                    document.getElementById('formBerkasSdm')?.reset();
+                };
+                reader.readAsDataURL(file);
+            });
         },
 
         loadList: function (entity) {
@@ -107,7 +128,8 @@
         },
 
         renderTable: function (entity, rows) {
-            const tbody = document.getElementById(entity === 'pegawai' ? 'tbodyPegawai' : 'tbodyPetugas');
+            const idMap = { pegawai: 'tbodyPegawai', petugas: 'tbodyPetugas', sdm_berkas: 'tbodyBerkasSdm' };
+            const tbody = document.getElementById(idMap[entity] || 'tbodyPegawai');
             if (!tbody) return;
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Belum ada data SDM.</td></tr>';
@@ -119,6 +141,9 @@
                 if (entity === 'pegawai') {
                     tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.nik)}</td><td>${this.escapeHtml(r.nama)}</td><td>${this.escapeHtml(r.jbtn)}</td><td>${this.escapeHtml(r.departemen)}</td><td>${this.escapeHtml(r.status)}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
                     tr.querySelector('.btn-del')?.addEventListener('click', () => this.deleteRow('pegawai', { nik: r.nik }));
+                } else if (entity === 'sdm_berkas') {
+                    tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.nik)}</td><td><span class="badge bg-info text-dark">${this.escapeHtml(r.jenis_berkas)}</span></td><td>${this.escapeHtml(r.nama_file)}</td><td>${this.escapeHtml(r.tgl_kadaluarsa || '-')}</td><td>${this.escapeHtml(r.uploaded_at)}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
+                    tr.querySelector('.btn-del')?.addEventListener('click', () => this.deleteRow('sdm_berkas', { id: r.id }));
                 } else {
                     tr.innerHTML = `<td class="font-monospace">${this.escapeHtml(r.nip)}</td><td>${this.escapeHtml(r.nama)}</td><td>${this.escapeHtml(r.jbtn)}</td><td>${this.escapeHtml(r.no_telp)}</td><td>${this.escapeHtml(r.status === '1' ? 'Aktif' : 'Nonaktif')}</td><td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del">Hapus</button></td>`;
                     tr.querySelector('.btn-del')?.addEventListener('click', () => this.deleteRow('petugas', { nip: r.nip }));

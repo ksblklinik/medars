@@ -2095,4 +2095,31 @@ class HttpApplicationTest extends TestCase
         $pList = $this->app->handle('GET', '/api/v1/master/penyakit', queryParams: ['q' => 'A09']);
         $this->assertCount(1, json_decode($pList['body'], true)['data']);
     }
+
+    public function testKepegawaianBerkasDigitalEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/kepegawaian');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Berkas Digital SDM', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/api/v1/kepegawaian/sdm_berkas/save', rawBody: json_encode([
+            'nik' => '32010101',
+            'jenis_berkas' => 'STR',
+            'nama_file' => 'str_dokter.pdf',
+            'mime_type' => 'application/pdf',
+            'file_size' => 1024,
+            'tgl_kadaluarsa' => '2029-12-31',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $save['status']);
+
+        $list = $this->app->handle('GET', '/api/v1/kepegawaian/sdm_berkas', queryParams: ['q' => '32010101']);
+        $rows = json_decode($list['body'], true)['data'];
+        $this->assertCount(1, $rows);
+        $this->assertSame('STR', $rows[0]['jenis_berkas']);
+
+        $del = $this->app->handle('POST', '/api/v1/kepegawaian/sdm_berkas/delete', rawBody: json_encode(['id' => $rows[0]['id']]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $del['status']);
+    }
 }

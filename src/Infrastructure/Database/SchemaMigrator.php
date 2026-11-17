@@ -977,6 +977,18 @@ final class SchemaMigrator
                 is_active INT NOT NULL DEFAULT 1
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_sdm_berkas (
+                id {$bigAutoIncPk},
+                nik VARCHAR(30) NOT NULL,
+                jenis_berkas VARCHAR(40) NOT NULL DEFAULT 'STR',
+                nama_file VARCHAR(150) NOT NULL,
+                mime_type VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
+                file_size INT NOT NULL DEFAULT 0,
+                storage_path VARCHAR(255) NOT NULL DEFAULT '',
+                tgl_kadaluarsa VARCHAR(15) NOT NULL DEFAULT '',
+                uploaded_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

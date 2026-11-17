@@ -90,6 +90,13 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
                  ORDER BY kd_penyakit ASC LIMIT 100',
                 [':q' => $like]
             ),
+            'sdm_berkas' => $this->fetchAll(
+                'SELECT id, nik, jenis_berkas, nama_file, mime_type, file_size, tgl_kadaluarsa, uploaded_at
+                 FROM mlite_sdm_berkas
+                 WHERE nik LIKE :q OR jenis_berkas LIKE :q OR nama_file LIKE :q
+                 ORDER BY id DESC LIMIT 100',
+                [':q' => $like]
+            ),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -107,6 +114,7 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'bangsal' => $this->saveBangsal($payload),
             'kamar' => $this->saveKamar($payload),
             'penyakit' => $this->savePenyakit($payload),
+            'sdm_berkas' => $this->saveSdmBerkas($payload),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -124,6 +132,7 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'bangsal' => $this->deleteBangsal((string) ($keys['kd_bangsal'] ?? '')),
             'kamar' => $this->deleteKamar((string) ($keys['kd_kamar'] ?? '')),
             'penyakit' => $this->deletePenyakit((string) ($keys['kd_penyakit'] ?? '')),
+            'sdm_berkas' => $this->deleteSdmBerkas((int) ($keys['id'] ?? 0)),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -512,6 +521,67 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             throw new \InvalidArgumentException('Kode ICD-10 wajib diisi.');
         }
         $this->pdo->prepare('DELETE FROM penyakit WHERE kd_penyakit = :k')->execute([':k' => $k]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function saveSdmBerkas(array $p): void
+    {
+        $nik = trim((string) ($p['nik'] ?? ''));
+        $jenis = trim((string) ($p['jenis_berkas'] ?? 'STR')) ?: 'STR';
+        $namaFile = trim((string) ($p['nama_file'] ?? ''));
+        $mime = trim((string) ($p['mime_type'] ?? 'application/pdf')) ?: 'application/pdf';
+        if ($nik === '' || $namaFile === '') {
+            throw new \InvalidArgumentException('NIK/NIP dan nama file berkas wajib diisi.');
+        }
+        if (!in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'], true)) {
+            throw new \InvalidArgumentException('Tipe berkas tidak diizinkan (hanya PDF/JPG/PNG/WEBP).');
+        }
+        $size = max(0, (int) ($p['file_size'] ?? 0));
+        if ($size > 5 * 1024 * 1024) {
+            throw new \InvalidArgumentException('Ukuran berkas maksimal 5 MB.');
+        }
+
+        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($namaFile)) ?: 'berkas';
+        $storagePath = 'sdm_berkas/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $nik) . '_' . uniqid('', true) . '_' . $safeName;
+        $rawBase64 = trim((string) ($p['content_base64'] ?? ''));
+        if ($rawBase64 !== '') {
+            if (str_contains($rawBase64, ',')) {
+                $rawBase64 = substr($rawBase64, strpos($rawBase64, ',') + 1);
+            }
+            $binary = base64_decode($rawBase64, true);
+            if ($binary !== false) {
+                $size = strlen($binary);
+                $fullDir = dirname(__DIR__, 3) . '/storage/sdm_berkas';
+                if (!is_dir($fullDir)) {
+                    mkdir($fullDir, 0775, true);
+                }
+                file_put_contents(dirname(__DIR__, 3) . '/storage/' . $storagePath, $binary);
+            }
+        }
+
+        $this->pdo->prepare(
+            'INSERT INTO mlite_sdm_berkas (nik, jenis_berkas, nama_file, mime_type, file_size, storage_path, tgl_kadaluarsa, uploaded_at)
+             VALUES (:nik, :jb, :nf, :mt, :fs, :sp, :tk, :ua)'
+        )->execute([
+            ':nik' => $nik,
+            ':jb' => $jenis,
+            ':nf' => $safeName,
+            ':mt' => $mime,
+            ':fs' => $size,
+            ':sp' => $storagePath,
+            ':tk' => trim((string) ($p['tgl_kadaluarsa'] ?? '')),
+            ':ua' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function deleteSdmBerkas(int $id): void
+    {
+        if ($id <= 0) {
+            throw new \InvalidArgumentException('ID berkas SDM tidak valid.');
+        }
+        $this->pdo->prepare('DELETE FROM mlite_sdm_berkas WHERE id = :id')->execute([':id' => $id]);
     }
 
     /**
