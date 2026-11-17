@@ -224,7 +224,7 @@ final class HttpApplication
         $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
 
         $registerInSiteUseCase = new RegisterInSiteUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $ledgerRepo);
-        $checkInMobileJknUseCase = new CheckInMobileJknUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $tx);
+        $checkInMobileJknUseCase = new CheckInMobileJknUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $tx, $ledgerRepo);
         $clinicalGuardUseCase = new ClinicalGuardShieldUseCase($regRepo);
 
         $regController = new RegistrationController(
@@ -459,7 +459,10 @@ final class HttpApplication
         $dokterRanapController = new DokterRanapController(
             new \App\Infrastructure\Persistence\PdoDokterRanapRepository($this->pdo),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            new SaveTindakanDokterUseCase($tindakanRepo, $ledgerRepo, $tx),
+            new CreateLabOrderUseCase($labRepo, $ledgerRepo, $tx),
+            new CreateRadiologyOrderUseCase($labRepo, $ledgerRepo, $tx)
         );
 
         $gudangFarmasiController = new GudangFarmasiController(
@@ -1757,6 +1760,21 @@ final class HttpApplication
         $router->get('/dokter-ranap/resume/cetak', function () use ($dokterRalanController, $queryParams): array {
             $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
             return $dokterRalanController->printResumeMedis($user, $queryParams);
+        });
+        $router->post('/api/v1/dokter-ranap/tindakan', function () use ($dokterRanapController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $dokterRanapController->apiSaveTindakan($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/dokter-ranap/lab-order', function () use ($dokterRanapController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $dokterRanapController->apiOrderLab($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/dokter-ranap/radiologi-order', function () use ($dokterRanapController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ranap', 'rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $dokterRanapController->apiOrderRadiologi($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         $router->get('/farmasi-gudang', function () use ($gudangFarmasiController): array {

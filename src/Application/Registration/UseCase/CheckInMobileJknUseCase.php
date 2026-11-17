@@ -6,6 +6,10 @@ namespace App\Application\Registration\UseCase;
 
 use App\Application\Registration\DTO\CheckInMobileJknCommand;
 use App\Application\Registration\Exception\BookingCheckInException;
+use App\Domain\Billing\Entity\BillingLedgerItem;
+use App\Domain\Billing\Repository\BillingLedgerRepositoryInterface;
+use App\Domain\Billing\ValueObject\ClaimType;
+use App\Domain\Billing\ValueObject\LedgerStatus;
 use App\Domain\Registration\Entity\RegPeriksa;
 use App\Domain\Registration\Repository\BookingRegistrasiRepositoryInterface;
 use App\Domain\Registration\Repository\PasienRepositoryInterface;
@@ -21,7 +25,8 @@ final readonly class CheckInMobileJknUseCase
         private PoliklinikRepositoryInterface $poliRepo,
         private RegPeriksaRepositoryInterface $regRepo,
         private BookingRegistrasiRepositoryInterface $bookingRepo,
-        private TransactionManagerInterface $tx
+        private TransactionManagerInterface $tx,
+        private ?BillingLedgerRepositoryInterface $ledgerRepo = null,
     ) {}
 
     public function execute(CheckInMobileJknCommand $cmd): RegPeriksa
@@ -87,9 +92,27 @@ final readonly class CheckInMobileJknUseCase
         );
 
         // Eksekusi atomik dalam transaksi ACID (preserveNoReg = true agar no_reg booking tidak berubah)
-        return $this->tx->transaction(function () use ($reg, $pasien, $today): RegPeriksa {
+        return $this->tx->transaction(function () use ($reg, $pasien, $today, $booking, $poliklinik, $biayaReg): RegPeriksa {
             $saved = $this->regRepo->saveWithAtomicRetry($reg, 5, true);
             $this->bookingRepo->markAsRegistered($pasien->noRkmMedis, $today);
+
+            if ($this->ledgerRepo !== null && $biayaReg > 0) {
+                $claimType = strtoupper($booking->kdPj) === 'BPJ' ? 'Kapitasi' : 'Tunai';
+                $this->ledgerRepo->addItem(new BillingLedgerItem(
+                    id: null,
+                    noRawat: $saved->noRawat,
+                    itemCode: 'REG-' . $booking->kdPoli,
+                    itemName: 'Biaya Registrasi ' . $poliklinik->nmPoli,
+                    category: 'Registrasi',
+                    qty: 1.0,
+                    unitPrice: $biayaReg,
+                    totalAmount: $biayaReg,
+                    claimType: ClaimType::fromString($claimType),
+                    status: LedgerStatus::fromString('Pending'),
+                    providerId: 'REG|' . $saved->noRawat->value(),
+                    createdAt: $today->format('Y-m-d') . ' ' . $saved->jamReg,
+                ));
+            }
 
             return $saved;
         });

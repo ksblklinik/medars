@@ -89,9 +89,47 @@
                             </form>
                         </div>
                     </div>
+
+                    <hr class="my-3">
+                    <div class="border rounded p-2 bg-light" id="ranapQuickActionPanel">
+                        <div class="small fw-bold text-medical-teal mb-2">Aksi Cepat Ranap: Tindakan &amp; Order Lab / Radiologi</div>
+                        <form id="formRanapQuickAction" class="row g-2">
+                            <div class="col-md-4"><input type="text" id="ranapActNoRawat" class="form-control form-control-sm" placeholder="No. Rawat" required></div>
+                            <div class="col-md-3">
+                                <select id="ranapActType" class="form-select form-select-sm">
+                                    <option value="tindakan">Tindakan Ranap</option>
+                                    <option value="lab">Order Lab Ranap</option>
+                                    <option value="radiologi">Order Radiologi Ranap</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3"><input type="text" id="ranapActKode" class="form-control form-control-sm" placeholder="Kode Prw" required></div>
+                            <div class="col-md-2"><button type="submit" class="btn btn-sm btn-medical-teal w-100">Kirim</button></div>
+                        </form>
+                        <div id="ranapActFeedback" class="small mt-1"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 <script src="/assets/js/modules/dokter-ranap.js?v=20261117b"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const api = window.MedarsApp && window.MedarsApp.apiJson ? window.MedarsApp.apiJson : null;
+    if (!api) return;
+    document.getElementById('formRanapQuickAction')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const type = ranapActType.value;
+        const nr = ranapActNoRawat.value.trim();
+        const kd = ranapActKode.value.trim();
+        let res;
+        if (type === 'tindakan') {
+            res = await api('/api/v1/dokter-ranap/tindakan', { method: 'POST', body: JSON.stringify({ no_rawat: nr, kd_jenis_prw: kd, claim_type: 'Tunai' }) });
+        } else {
+            const ep = type === 'lab' ? '/api/v1/dokter-ranap/lab-order' : '/api/v1/dokter-ranap/radiologi-order';
+            res = await api(ep, { method: 'POST', body: JSON.stringify({ no_rawat: nr, items: [{ kd_jenis_prw: kd, nm_perawatan: kd, harga: 50000, claim_type: 'Tunai' }] }) });
+        }
+        ranapActFeedback.textContent = res.status === 'success' ? 'Berhasil disimpan ke billing & antrean penunjang.' : (res.message || 'Gagal');
+    });
+});
+</script>

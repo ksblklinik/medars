@@ -3021,4 +3021,40 @@ class HttpApplicationTest extends TestCase
         $obatTotal = (float) $this->pdo->query("SELECT total_amount FROM mlite_billing_ledger WHERE provider_id = 'RSP|{$noResep}|OBT-RT-01'")->fetchColumn();
         $this->assertSame(4000.0, $obatTotal);
     }
+
+    public function testCheckInMobileJknPostsRegistrasiLedgerAndDokterRanapActionsEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $today = date('Y-m-d');
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('RM-CI-01', 'Sari CheckIn', '1991-01-01', 'P')");
+        $this->pdo->exec("INSERT INTO booking_registrasi (tanggal_booking, jam_booking, no_rkm_medis, tanggal_periksa, kd_dokter, kd_poli, no_reg, kd_pj, status) VALUES ('{$today}', '07:00:00', 'RM-CI-01', '{$today}', 'DR001', 'UMU01', '001', 'UMU', 'Belum')");
+        $this->pdo->exec("INSERT INTO jns_perawatan (kd_jenis_prw, nm_perawatan, kd_kategori, material, tarif_tindakandr, total_byrdr, status) VALUES ('TND-RNP-1', 'Visite Dokter Spesialis', 'RNP', 0, 150000, 150000, '1')");
+
+        $this->app->handle('GET', '/dokter-ranap');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $ci = $this->app->handle('POST', '/api/v1/registration/checkin', postData: ['no_rkm_medis' => 'RM-CI-01'], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $ci['status']);
+        $noRawat = json_decode($ci['body'], true)['data']['no_rawat'];
+
+        $regFee = (float) $this->pdo->query("SELECT total_amount FROM mlite_billing_ledger WHERE no_rawat = '{$noRawat}' AND category = 'Registrasi'")->fetchColumn();
+        $this->assertSame(25000.0, $regFee);
+
+        $tnd = $this->app->handle('POST', '/api/v1/dokter-ranap/tindakan', rawBody: json_encode([
+            'no_rawat' => $noRawat, 'kd_jenis_prw' => 'TND-RNP-1', 'claim_type' => 'Tunai',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $tnd['status']);
+
+        $lab = $this->app->handle('POST', '/api/v1/dokter-ranap/lab-order', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'items' => [['kd_jenis_prw' => 'LAB-RNP', 'nm_perawatan' => 'Elektrolit', 'harga' => 80000, 'claim_type' => 'Tunai']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $lab['status']);
+
+        $rad = $this->app->handle('POST', '/api/v1/dokter-ranap/radiologi-order', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'items' => [['kd_jenis_prw' => 'RAD-RNP', 'nm_perawatan' => 'USG Abdomen', 'harga' => 200000, 'claim_type' => 'Tunai']],
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $rad['status']);
+    }
 }
