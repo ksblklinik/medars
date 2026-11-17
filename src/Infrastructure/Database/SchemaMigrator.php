@@ -1182,6 +1182,35 @@ final class SchemaMigrator
                 created_at VARCHAR(30) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS referensi_mobilejkn_bpjs (
+                nobooking VARCHAR(40) PRIMARY KEY,
+                no_rawat VARCHAR(25) NOT NULL DEFAULT '',
+                nomorkartu VARCHAR(25) NOT NULL DEFAULT '',
+                nik VARCHAR(25) NOT NULL DEFAULT '',
+                nohp VARCHAR(25) NOT NULL DEFAULT '',
+                kodepoli VARCHAR(15) NOT NULL DEFAULT '',
+                pasienbaru INTEGER NOT NULL DEFAULT 0,
+                norm VARCHAR(20) NOT NULL DEFAULT '',
+                tanggalperiksa VARCHAR(15) NOT NULL,
+                kodedokter VARCHAR(25) NOT NULL DEFAULT '',
+                jampraktek VARCHAR(25) NOT NULL DEFAULT '',
+                jeniskunjungan INTEGER NOT NULL DEFAULT 1,
+                nomorreferensi VARCHAR(45) NOT NULL DEFAULT '',
+                nomorantrean VARCHAR(20) NOT NULL DEFAULT '',
+                angkaantrean INTEGER NOT NULL DEFAULT 1,
+                estimasidilayani BIGINT NOT NULL DEFAULT 0,
+                sisakuotajkn INTEGER NOT NULL DEFAULT 20,
+                kuotajkn INTEGER NOT NULL DEFAULT 20,
+                sisakuotanonjkn INTEGER NOT NULL DEFAULT 10,
+                kuotanonjkn INTEGER NOT NULL DEFAULT 10,
+                status VARCHAR(20) NOT NULL DEFAULT 'Belum',
+                validasi VARCHAR(30) NOT NULL DEFAULT '',
+                keterangan_batal VARCHAR(200) NOT NULL DEFAULT '',
+                antrean_farmasi INTEGER NOT NULL DEFAULT 0,
+                jenisresep VARCHAR(30) NOT NULL DEFAULT '',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

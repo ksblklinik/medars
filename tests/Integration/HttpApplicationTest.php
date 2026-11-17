@@ -2484,4 +2484,75 @@ class HttpApplicationTest extends TestCase
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/hfis/jadwal')['body'], true)['data']);
         $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/bridging/antrol/tasks')['body'], true)['data']);
     }
+
+    public function testJknMobileFkrtlApiEndToEnd(): void
+    {
+        $tokenRes = $this->app->handle('GET', '/api/v1/jkn-mobile/token', headers: [
+            'X-Username' => 'admin',
+            'X-Password' => 'AdminPass2026!',
+        ]);
+        $this->assertSame(200, $tokenRes['status']);
+        $tokenData = json_decode($tokenRes['body'], true);
+        $this->assertSame(200, $tokenData['metadata']['code']);
+        $token = (string) ($tokenData['response']['token'] ?? '');
+        $this->assertNotEmpty($token);
+
+        $headers = ['Content-Type' => 'application/json', 'X-Token' => $token, 'X-Username' => 'admin'];
+
+        $pb = $this->app->handle('POST', '/api/v1/jkn-mobile/pasien-baru', rawBody: json_encode([
+            'nomorkartu' => '0001234567899',
+            'nik' => '3500099887766',
+            'nama' => 'Dewi JKN',
+            'jeniskelamin' => 'P',
+            'tanggallahir' => '1992-05-10',
+            'nohp' => '081234567890',
+        ]), headers: $headers);
+        $this->assertSame(200, json_decode($pb['body'], true)['metadata']['code']);
+        $norm = json_decode($pb['body'], true)['response']['norm'];
+
+        $ambil = $this->app->handle('POST', '/api/v1/jkn-mobile/antrean', rawBody: json_encode([
+            'nomorkartu' => '0001234567899',
+            'nik' => '3500099887766',
+            'nohp' => '081234567890',
+            'kodepoli' => 'INT',
+            'norm' => $norm,
+            'tanggalperiksa' => '2026-11-17',
+            'kodedokter' => 'D001',
+        ]), headers: $headers);
+        $ambilJson = json_decode($ambil['body'], true);
+        $this->assertSame(200, $ambilJson['metadata']['code']);
+        $kodebooking = $ambilJson['response']['kodebooking'];
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/status-antrean', rawBody: json_encode([
+            'kodepoli' => 'INT', 'kodedokter' => 'D001', 'tanggalperiksa' => '2026-11-17',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/sisa-antrean', rawBody: json_encode([
+            'kodebooking' => $kodebooking,
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/checkin', rawBody: json_encode([
+            'kodebooking' => $kodebooking, 'waktu' => 1763352000000,
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/antrean-farmasi', rawBody: json_encode([
+            'kodebooking' => $kodebooking, 'jenisresep' => 'Non Racikan',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/status-antrean-farmasi', rawBody: json_encode([
+            'kodebooking' => $kodebooking,
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/jadwal-operasi-rs', rawBody: json_encode([
+            'tanggalawal' => '2026-11-01', 'tanggalakhir' => '2026-11-30',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/jadwal-operasi-pasien', rawBody: json_encode([
+            'nopeserta' => '0001234567899',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile/batal-antrean', rawBody: json_encode([
+            'kodebooking' => $kodebooking, 'keterangan' => 'Batal tes',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+    }
 }

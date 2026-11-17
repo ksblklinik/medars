@@ -68,7 +68,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 32 | `pcare` | ✅ Selesai | Lengkap: modul Bridging FKTP PCare BPJS (`/pcare`, `/pcare/rujukan/cetak`, `/api/v1/pcare/*`) untuk Pendaftaran, Kunjungan, Obat DPHO, Lab/Tindakan, & Rujukan FKTP. |
 | 33 | `icare` | ✅ Selesai | Integrasi tombol `i-Care JKN` di layar dokter (`/dokter-ralan`), viewer riwayat i-Care (`/icare/riwayat`), & endpoint `/api/v1/icare/riwayat` (`FetchIcareHistoryUseCase`). |
 | 34 | `bridging_hfis` | ✅ Selesai | Lengkap: `HfisLeanCalculator` + sinkron jadwal dokter HFIS (`mlite_hfis_jadwal`, `/api/v1/bridging/hfis/jadwal*`) & Antrean Online BPJS `antrol` Task ID 1–7 (`mlite_antrol_log`, `/api/v1/bridging/antrol/*`) di `/bridging`. |
-| 35 | `jkn_mobile` | 🟡 Parsial | Baru ada check-in dasar; belum ada endpoint penuh API Antrean Online Mobile JKN FKRTL. |
+| 35 | `jkn_mobile` | ✅ Selesai | Lengkap: API penuh Antrean Online Mobile JKN FKRTL (`/api/v1/jkn-mobile/*`: `token`, `antrean`, `status-antrean`, `sisa-antrean`, `batal-antrean`, `checkin`, `pasien-baru`, `antrean-farmasi`, `status-antrean-farmasi`, `jadwal-operasi-rs`, `jadwal-operasi-pasien`) dengan tabel `referensi_mobilejkn_bpjs`. |
 | 36 | `jkn_mobile_fktp` | ❌ Belum Ada | Endpoint API Mobile JKN khusus FKTP. |
 | 37 | `satu_sehat` | 🟡 Parsial | Baru ada OAuth2 + async queue `Encounter` & `Condition`; belum ada UI mapping IHS ID, `Observation`, `MedicationRequest`, & `ServiceRequest`. |
 | 38 | `vedika` | ✅ Selesai | Verifikasi `Layak`/`Perlu Perbaikan`, UI daftar pengajuan klaim BPJS (`/api/v1/bridging/vedika/claims`), & cetak bundel berkas Vedika (`/vedika/bundel`). |
