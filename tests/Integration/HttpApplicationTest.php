@@ -1706,4 +1706,43 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $seq['status']);
     }
+
+    public function testVerifikasiSuratPublikEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $suratPage = $this->app->handle('GET', '/surat');
+        $this->assertSame(200, $suratPage['status']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $today = date('Y-m-d');
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/surat/create',
+            rawBody: json_encode([
+                'type' => 'sakit',
+                'no_rawat' => '2026/11/17/000040',
+                'tanggal_awal' => $today,
+                'tanggal_akhir' => $today,
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $create['status']);
+        $noSurat = (string) json_decode($create['body'], true)['data']['no_surat'];
+
+        // Public verification without login session
+        unset($this->session['user_id']);
+        $hash = \App\Application\Rme\UseCase\VerifySuratUseCase::encodeHash('sakit', '2026/11/17/000040', $noSurat);
+
+        $publicPage = $this->app->handle('GET', '/verifikasi', queryParams: ['hash' => $hash]);
+        $this->assertSame(200, $publicPage['status']);
+        $this->assertStringContainsString('Dokumen Terverifikasi Asli', $publicPage['body']);
+        $this->assertStringContainsString($noSurat, $publicPage['body']);
+
+        $apiRes = $this->app->handle('GET', '/api/v1/verifikasi', queryParams: ['type' => 'sakit', 'no_surat' => $noSurat]);
+        $this->assertSame(200, $apiRes['status']);
+        $this->assertTrue(json_decode($apiRes['body'], true)['valid']);
+
+        $notFound = $this->app->handle('GET', '/api/v1/verifikasi', queryParams: ['type' => 'sakit', 'no_surat' => 'PALSU-999']);
+        $this->assertSame(404, $notFound['status']);
+    }
 }

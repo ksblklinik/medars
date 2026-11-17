@@ -103,4 +103,4 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 60 | `api` | ⚪ Infra | Digantikan oleh REST API `/api/v1/*` di `ksm-next`. |
 | 61 | `apps` | ⚪ Legacy/Khusus | Launcher aplikasi eksternal legacy. |
 | 62 | `dokter_app` | ⚪ Legacy/Khusus | Wrapper aplikasi mobile dokter lama (digantikan Mobile App Shell responsif). |
-| 63 | `verifikasi` | ❌ Belum Ada | Verifikasi keaslian surat medis/dokumen publik via QR code. |
+| 63 | `verifikasi` | ✅ Selesai | Verifikasi keaslian surat medis publik via QR/hash token atau nomor surat (`/verifikasi` & `/api/v1/verifikasi`). |

@@ -484,6 +484,11 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $verifikasiController = new VerifikasiController(
+            new \App\Application\Rme\UseCase\VerifySuratUseCase($suratRepo),
+            $this->renderer
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1446,6 +1451,13 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $moduleManagerController->apiSequence($data);
+        });
+
+        $router->get('/verifikasi', function () use ($verifikasiController, $queryParams): array {
+            return $verifikasiController->index($queryParams);
+        });
+        $router->get('/api/v1/verifikasi', function () use ($verifikasiController, $queryParams): array {
+            return $verifikasiController->apiVerify($queryParams);
         });
 
         return $router->dispatch($method, $path);
