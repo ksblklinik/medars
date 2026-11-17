@@ -1972,4 +1972,27 @@ class HttpApplicationTest extends TestCase
         $stokAfter = $this->app->handle('GET', '/api/v1/utd/stok', queryParams: ['golongan' => 'AB']);
         $this->assertSame('Terpakai', json_decode($stokAfter['body'], true)['data'][0]['status']);
     }
+
+    public function testVeronisaEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/veronisa');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Veronisa', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle('POST', '/api/v1/veronisa/claims-save', rawBody: json_encode(['no_rawat' => '2026/11/17/000040', 'nosep' => '0001R0011126V000040', 'catatan' => 'PRB']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $save['status']);
+        $id = (int) json_decode($save['body'], true)['data']['id'];
+
+        $statusRes = $this->app->handle('POST', '/api/v1/veronisa/claims-status', rawBody: json_encode(['id' => $id, 'status' => 'Layak', 'catatan' => 'OK']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $statusRes['status']);
+
+        $pdf = $this->app->handle('GET', '/veronisa/pdf', queryParams: ['id' => $id]);
+        $this->assertSame(200, $pdf['status']);
+        $this->assertStringContainsString('0001R0011126V000040', $pdf['body']);
+
+        $map = $this->app->handle('POST', '/api/v1/veronisa/mapping-save', rawBody: json_encode(['kode_brng' => 'OB01', 'kode_dpho' => 'DPHO-01', 'nama_dpho' => 'Paracetamol', 'harga_dpho' => 250]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $map['status']);
+    }
 }

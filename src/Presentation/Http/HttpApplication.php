@@ -513,6 +513,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $veronisaController = new VeronisaController(
+            new \App\Infrastructure\Persistence\PdoVeronisaRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1694,6 +1700,43 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
             $this->assertCsrfHeaderOrPost($postData, $headers);
             return $utdController->apiCrossmatch($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+
+        $router->get('/veronisa', function () use ($veronisaController): array {
+            $user = $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            return $veronisaController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/veronisa/pdf', function () use ($veronisaController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            return $veronisaController->printBerkas($queryParams);
+        });
+        $router->get('/api/v1/veronisa/claims', function () use ($veronisaController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            return $veronisaController->apiClaimsList($queryParams);
+        });
+        $router->post('/api/v1/veronisa/claims-save', function () use ($veronisaController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $veronisaController->apiClaimSave($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/veronisa/claims-status', function () use ($veronisaController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $veronisaController->apiClaimStatus($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/veronisa/claims-delete', function () use ($veronisaController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $veronisaController->apiClaimDelete($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/veronisa/mapping', function () use ($veronisaController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            return $veronisaController->apiMappingList($queryParams);
+        });
+        $router->post('/api/v1/veronisa/mapping-save', function () use ($veronisaController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['veronisa', 'vedika', 'bridging_bpjs', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $veronisaController->apiMappingSave($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         return $router->dispatch($method, $path);

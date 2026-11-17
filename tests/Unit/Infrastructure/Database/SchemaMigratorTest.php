@@ -63,6 +63,8 @@ class SchemaMigratorTest extends TestCase
             'utd_pendonor',
             'utd_stok_darah',
             'utd_permintaan_darah',
+            'mlite_veronisa',
+            'mlite_veronisa_obat_mapping',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

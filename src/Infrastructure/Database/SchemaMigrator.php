@@ -898,6 +898,25 @@ final class SchemaMigrator
                 status VARCHAR(20) NOT NULL DEFAULT 'Menunggu'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_veronisa (
+                id {$bigAutoIncPk},
+                tanggal VARCHAR(15) NOT NULL,
+                no_rkm_medis VARCHAR(20) NOT NULL DEFAULT '',
+                no_rawat VARCHAR(20) NOT NULL,
+                nosep VARCHAR(40) NOT NULL DEFAULT '',
+                status VARCHAR(25) NOT NULL DEFAULT 'Pengajuan',
+                catatan TEXT NOT NULL,
+                username VARCHAR(50) NOT NULL DEFAULT 'system'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_veronisa_obat_mapping (
+                kode_brng VARCHAR(20) PRIMARY KEY,
+                kode_dpho VARCHAR(30) NOT NULL,
+                nama_dpho VARCHAR(150) NOT NULL DEFAULT '',
+                harga_dpho DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(20) NOT NULL DEFAULT 'Aktif'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

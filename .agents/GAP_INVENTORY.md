@@ -72,7 +72,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 36 | `jkn_mobile_fktp` | ❌ Belum Ada | Endpoint API Mobile JKN khusus FKTP. |
 | 37 | `satu_sehat` | 🟡 Parsial | Baru ada OAuth2 + async queue `Encounter` & `Condition`; belum ada UI mapping IHS ID, `Observation`, `MedicationRequest`, & `ServiceRequest`. |
 | 38 | `vedika` | ✅ Selesai | Verifikasi `Layak`/`Perlu Perbaikan`, UI daftar pengajuan klaim BPJS (`/api/v1/bridging/vedika/claims`), & cetak bundel berkas Vedika (`/vedika/bundel`). |
-| 39 | `veronisa` | ❌ Belum Ada | Modul verifikasi internal klaim / non-kapitasi (`veronisa`). |
+| 39 | `veronisa` | ✅ Selesai | Modul Veronisa (`/veronisa`, `/veronisa/pdf`): verifikasi internal klaim non-kapitasi/PRB (`mlite_veronisa`), mapping obat DPHO (`mlite_veronisa_obat_mapping`), & cetak berkas verifikasi. |
 | 40 | `sep_internal` | ✅ Selesai | Pembuatan & monitoring Rujukan / SEP Internal antar poli (`/api/v1/rujukan-internal` & tab di `/surat`). |
 | 41 | `smartagent` | ❌ Belum Ada | Asisten AI Klinis, RAG Knowledge Vault (`knowledge-vault/`), & rekomendasi ICD-10 berbasis PDT. |
 | 42 | `chat` | ❌ Belum Ada | Live Chat internal staf / integrasi percakapan CS. |

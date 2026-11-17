@@ -199,6 +199,14 @@ final class NavigationBuilder
                 'modules' => ['bridging_bpjs', 'vclaim', 'satu_sehat', 'vedika'],
             ],
             [
+                'title' => 'Veronisa Klaim',
+                'icon' => 'fa-file-shield',
+                'route' => '/veronisa',
+                'category' => 'Bridging & CRM',
+                'module_key' => 'veronisa',
+                'modules' => ['veronisa', 'vedika', 'bridging_bpjs', 'admin'],
+            ],
+            [
                 'title' => 'WhatsApp CRM',
                 'icon' => 'fa-brands fa-whatsapp',
                 'route' => '/wagateway',
