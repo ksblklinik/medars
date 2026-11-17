@@ -6,6 +6,7 @@
 
         init: function () {
             this.loadQueue();
+            this.loadPosSales();
             this.bindEvents();
         },
 
@@ -288,8 +289,33 @@
             .then(res => res.json())
             .then(res => {
                 this.showAlert(res.status === 'success' ? 'success' : 'danger', this.escapeHtml(res.message));
+                if (res.status === 'success') this.loadPosSales();
             })
             .catch(() => this.showAlert('danger', 'Gagal memproses POS Apotek Umum.'));
+        },
+
+        loadPosSales: function () {
+            const tbody = document.getElementById('tbodyPosSales');
+            if (!tbody) return;
+            this.apiFetch('/api/v1/apotek-umum/sales')
+                .then(res => res.json())
+                .then(res => {
+                    const rows = (res && res.data) ? res.data : [];
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-2">Belum ada transaksi POS hari ini.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = rows.map(s => `
+                        <tr>
+                            <td class="font-monospace">${this.escapeHtml(s.no_nota)}</td>
+                            <td>${this.escapeHtml(s.tgl_jual)} ${this.escapeHtml(s.jam_jual)}</td>
+                            <td>${this.escapeHtml(s.payment_method)}</td>
+                            <td class="text-end">Rp ${this.escapeHtml(Number(s.total || 0).toLocaleString('id-ID'))}</td>
+                            <td class="text-center"><a href="/apotek-umum/struk?no_nota=${encodeURIComponent(s.no_nota)}" target="_blank" class="btn btn-xs btn-outline-teal">Struk</a></td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(() => {});
         }
     };
 

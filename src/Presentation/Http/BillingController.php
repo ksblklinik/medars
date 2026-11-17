@@ -370,6 +370,66 @@ final readonly class BillingController
     }
 
     /**
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListPosSales(array $queryParams = []): array
+    {
+        $today = date('Y-m-d');
+        $from = trim((string) ($queryParams['from'] ?? $today)) ?: $today;
+        $to = trim((string) ($queryParams['to'] ?? $from)) ?: $from;
+
+        $stmt = $this->pdo->prepare("
+            SELECT no_nota, tgl_jual, jam_jual, payment_method, total, petugas_nip, keterangan
+            FROM mlite_penjualan_apotek_umum
+            WHERE tgl_jual BETWEEN :from AND :to
+            ORDER BY tgl_jual DESC, jam_jual DESC LIMIT 100
+        ");
+        $stmt->execute([':from' => $from, ':to' => $to]);
+        return $this->jsonResponse(['status' => 'success', 'data' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
+    }
+
+    /**
+     * @param array<string, mixed> $queryParams
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printPosReceipt(array $queryParams = []): array
+    {
+        $noNota = trim((string) ($queryParams['no_nota'] ?? ''));
+        $stmt = $this->pdo->prepare('SELECT * FROM mlite_penjualan_apotek_umum WHERE no_nota = :n LIMIT 1');
+        $stmt->execute([':n' => $noNota]);
+        $sale = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if ($sale === false) {
+            return [
+                'status' => 404,
+                'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+                'body' => '<h3>Struk penjualan tidak ditemukan.</h3>',
+            ];
+        }
+
+        $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Struk ' . $e($noNota) . '</title>'
+            . '<style>body{font-family:monospace;width:300px;margin:16px auto;font-size:12px}h3{text-align:center;margin:0 0 6px}hr{border:none;border-top:1px dashed #333}@media print{.no-print{display:none}}</style>'
+            . '</head><body>'
+            . '<div class="no-print" style="text-align:center;margin-bottom:8px;"><button onclick="window.print()">Cetak Struk</button></div>'
+            . '<h3>APOTEK UMUM MEDARS</h3>'
+            . '<div>No. Nota: <strong>' . $e($sale['no_nota']) . '</strong></div>'
+            . '<div>Tanggal : ' . $e($sale['tgl_jual']) . ' ' . $e($sale['jam_jual']) . '</div>'
+            . '<div>Petugas : ' . $e($sale['petugas_nip']) . '</div><hr>'
+            . '<div>Metode  : <strong>' . $e($sale['payment_method']) . '</strong></div>'
+            . '<div>Total   : <strong>Rp ' . number_format((float) $sale['total'], 0, ',', '.') . '</strong></div>'
+            . '<div>Catatan : ' . $e($sale['keterangan'] ?: '-') . '</div><hr>'
+            . '<div style="text-align:center;">Terima kasih atas kunjungan Anda</div>'
+            . '</body></html>';
+
+        return [
+            'status' => 200,
+            'headers' => ['Content-Type' => 'text/html; charset=utf-8'],
+            'body' => $html,
+        ];
+    }
+
+    /**
      * @param mixed $data
      * @return array{status: int, headers: array<string, string>, body: string}
      */

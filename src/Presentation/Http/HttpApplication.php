@@ -816,6 +816,14 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $billingController->apiPosApotekUmum($user, $data);
         });
+        $router->get('/api/v1/apotek-umum/sales', function () use ($billingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'apotek_umum', 'farmasi']);
+            return $billingController->apiListPosSales($queryParams);
+        });
+        $router->get('/apotek-umum/struk', function () use ($billingController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kasir', 'apotek_umum', 'farmasi']);
+            return $billingController->printPosReceipt($queryParams);
+        });
 
         // Laboratorium, Radiologi & Laporan Operasional (PLN-26)
         $router->get('/laboratorium', function () use ($supportController): array {

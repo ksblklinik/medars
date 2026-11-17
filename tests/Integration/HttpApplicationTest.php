@@ -1424,4 +1424,36 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('BUNDEL BERKAS KLAIM VEDIKA BPJS', $bundle['body']);
         $this->assertStringContainsString('Budi BPJS', $bundle['body']);
     }
+
+    public function testApotekUmumPosSalesAndReceiptEndToEnd(): void
+    {
+        $this->pdo->exec("
+            INSERT INTO databarang (kode_brng, nama_brng, h_beli, harga_tunai, jualbebas, status) VALUES ('OBT888', 'Vitamin C', 500, 1500, 2000, '1');
+            INSERT INTO gudangbarang (kode_brng, kd_bangsal, no_batch, no_faktur, stok) VALUES ('OBT888', 'APT', '', '', 50);
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/kasir');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('tbodyPosSales', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $pos = $this->app->handle(
+            'POST',
+            '/api/v1/apotek-umum/pos',
+            rawBody: json_encode(['payment_method' => 'QRIS', 'items' => [['kode_brng' => 'OBT888', 'jml' => 2]]]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $pos['status']);
+        $noNota = json_decode($pos['body'], true)['data']['no_nota'];
+
+        $sales = $this->app->handle('GET', '/api/v1/apotek-umum/sales');
+        $this->assertSame(200, $sales['status']);
+        $this->assertCount(1, json_decode($sales['body'], true)['data']);
+
+        $struk = $this->app->handle('GET', '/apotek-umum/struk', queryParams: ['no_nota' => $noNota]);
+        $this->assertSame(200, $struk['status']);
+        $this->assertStringContainsString('APOTEK UMUM MEDARS', $struk['body']);
+        $this->assertStringContainsString('QRIS', $struk['body']);
+    }
 }

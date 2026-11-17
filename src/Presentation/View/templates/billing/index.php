@@ -131,6 +131,12 @@
                             </div>
                             <div class="col-md-2"><button type="button" id="btnSubmitPos" class="btn btn-sm btn-primary w-100" style="background:#00897b;border-color:#00897b;">Jual</button></div>
                         </div>
+                        <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered small mb-0">
+                                <thead class="table-light"><tr><th>No. Nota</th><th>Tanggal</th><th>Cara Bayar</th><th class="text-end">Total</th><th class="text-center">Struk</th></tr></thead>
+                                <tbody id="tbodyPosSales"><tr><td colspan="5" class="text-center text-muted py-2">Memuat penjualan POS...</td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,4 +144,4 @@
     </div>
 </div>
 
-<script src="/assets/js/modules/billing.js?v=20261117b"></script>
+<script src="/assets/js/modules/billing.js?v=20261117c"></script>
