@@ -1234,6 +1234,27 @@ final class SchemaMigrator
                 status INTEGER NOT NULL DEFAULT 0
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS wagateway_cs_chat (
+                id {$bigAutoIncPk},
+                session_name VARCHAR(20) NOT NULL DEFAULT 'cs',
+                phone VARCHAR(25) NOT NULL,
+                sender_name VARCHAR(80) NOT NULL DEFAULT '',
+                direction VARCHAR(10) NOT NULL,
+                message TEXT NOT NULL,
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS wagateway_broadcast_templates (
+                id {$bigAutoIncPk},
+                title VARCHAR(120) NOT NULL,
+                session_name VARCHAR(20) NOT NULL DEFAULT 'cs',
+                message_template TEXT NOT NULL,
+                schedule_at VARCHAR(30) NOT NULL DEFAULT '',
+                target_filter VARCHAR(60) NOT NULL DEFAULT 'all',
+                status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
+                created_at VARCHAR(30) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

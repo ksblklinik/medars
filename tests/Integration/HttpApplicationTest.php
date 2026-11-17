@@ -2668,4 +2668,37 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $call['status']);
         $this->assertSame('F001', json_decode($call['body'], true)['data']['noantrian']);
     }
+
+    public function testWaGatewayCsChatBroadcastAndAiDraftEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/wagateway');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('waCrmPanel', $page['body']);
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        $draft = $this->app->handle('POST', '/api/v1/wagateway/ai-draft', postData: [
+            'incoming_message' => 'Apakah jadwal poli anak buka hari ini?',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $draft['status']);
+        $draftText = json_decode($draft['body'], true)['data']['draft'];
+        $this->assertNotEmpty($draftText);
+
+        $send = $this->app->handle('POST', '/api/v1/wagateway/cs-chat-send', postData: [
+            'phone' => '628123456789',
+            'direction' => 'out',
+            'message' => $draftText,
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $send['status']);
+
+        $bc = $this->app->handle('POST', '/api/v1/wagateway/broadcasts-save', postData: [
+            'title' => 'Reminder Kontrol',
+            'schedule_at' => '2026-11-18 07:00',
+            'message_template' => 'Halo {nama}, jadwal kontrol besok.',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $bc['status']);
+
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/wagateway/cs-chat', queryParams: ['phone' => '628123456789'])['body'], true)['data']);
+        $this->assertCount(1, json_decode($this->app->handle('GET', '/api/v1/wagateway/broadcasts')['body'], true)['data']);
+    }
 }

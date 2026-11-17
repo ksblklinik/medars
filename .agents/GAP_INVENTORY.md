@@ -84,7 +84,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | No | Plugin `ksmlite` | Status | Kekurangan Spesifik vs `.ref/ksmlite/` |
 | :-: | :--- | :---: | :--- |
 | 43 | `anjungan` | ✅ Selesai | Lengkap: Display TV, Kiosk, cetak tiket thermal (`/anjungan/tiket/cetak`), Display LEAN TV (`/display-lean`), serta antrean & display terpisah Farmasi (`/display-farmasi`) & Kasir (`/display-kasir`) (`mlite_antrian_loket`, `/api/v1/anjungan/*`). |
-| 44 | `wagateway` | 🟡 Parsial | Sudah ada kirim satuan, webhook QR, whitelist; belum ada UI live chat 2-arah sesi `cs`, template broadcast terjadwal, & AI draft CS. |
+| 44 | `wagateway` | ✅ Selesai | Lengkap: kirim satuan, webhook QR, whitelist + UI live chat 2-arah sesi `cs` (`wagateway_cs_chat`), template broadcast terjadwal (`wagateway_broadcast_templates`), & AI draft CS (`/api/v1/wagateway/ai-draft`) di `/wagateway`. |
 | 45 | `home_care` | 🟡 Parsial | Sudah ada jadwal, Privacy Shield & preceptor; belum ada PWA manifest/service worker, sign-off care plan DPJP, & pembayaran Midtrans/Kasera UI. |
 | 46 | `portal_pasien` | ✅ Selesai | Portal mandiri pasien publik (`/portal-pasien`): verifikasi No. RM + Tanggal Lahir, lihat riwayat kunjungan, hasil lab, & booking antrean online. |
 | 47 | `presensi` | ✅ Selesai | Modul absensi / presensi shift pegawai (`/presensi`): clock-in, clock-out, anti-duplikasi harian, & riwayat presensi (`mlite_presensi`). |

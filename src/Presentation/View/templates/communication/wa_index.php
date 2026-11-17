@@ -93,4 +93,91 @@
         </div>
     </div>
 </div>
+
+<div class="row g-3 mt-2" id="waCrmPanel">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-comments me-1"></i> Live Chat 2-Arah (Sesi CS) &amp; AI Draft CS</h6>
+                <button type="button" class="btn btn-xs btn-outline-primary" id="btnAiDraftCs">AI Draft CS</button>
+            </div>
+            <div class="card-body">
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="waCsPhone" class="form-control" placeholder="No. WA Pasien (628...)">
+                    <button type="button" id="btnLoadCsChat" class="btn btn-outline-secondary">Muat Chat</button>
+                </div>
+                <div id="waCsChatBox" class="border rounded p-2 mb-2 bg-light" style="height:180px;overflow-y:auto;font-size:12px;">
+                    <div class="text-muted text-center">Belum ada percakapan sesi CS.</div>
+                </div>
+                <form id="formWaCsSend" class="d-flex gap-2">
+                    <input type="text" id="waCsMessage" class="form-control form-control-sm" placeholder="Ketik balasan CS atau klik AI Draft CS..." required>
+                    <button type="submit" class="btn btn-sm btn-medical-teal">Kirim</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-2">
+                <h6 class="m-0 fw-bold text-medical-teal"><i class="fa fa-bullhorn me-1"></i> Template Broadcast Terjadwal</h6>
+            </div>
+            <div class="card-body">
+                <form id="formWaBroadcast" class="row g-2 mb-2">
+                    <div class="col-md-6"><input type="text" id="waBcTitle" class="form-control form-control-sm" placeholder="Judul Broadcast" required></div>
+                    <div class="col-md-6"><input type="datetime-local" id="waBcSchedule" class="form-control form-control-sm"></div>
+                    <div class="col-md-12"><textarea id="waBcTemplate" class="form-control form-control-sm" rows="2" placeholder="Isi template (spintax / {nama})..." required></textarea></div>
+                    <div class="col-md-12"><button type="submit" class="btn btn-sm btn-success">Jadwalkan Broadcast</button></div>
+                </form>
+                <div style="max-height:140px;overflow-y:auto;">
+                    <table class="table table-sm table-bordered mb-0" style="font-size:12px;">
+                        <thead><tr><th>Judul</th><th>Jadwal</th><th>Status</th></tr></thead>
+                        <tbody id="waBcBody"><tr><td colspan="3" class="text-center text-muted">Belum ada template terjadwal.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="/assets/js/modules/wagateway.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const api = window.MedarsApp && window.MedarsApp.apiFetch ? window.MedarsApp.apiFetch : null;
+    if (!api) return;
+
+    let lastIncoming = '';
+    async function loadCsChat() {
+        const phone = document.getElementById('waCsPhone').value.trim();
+        const res = await api('/api/v1/wagateway/cs-chat?phone=' + encodeURIComponent(phone));
+        const rows = res.data || [];
+        const box = document.getElementById('waCsChatBox');
+        lastIncoming = '';
+        rows.forEach((r) => { if (r.direction === 'in') lastIncoming = r.message; });
+        box.innerHTML = rows.length ? rows.map((r) => '<div class="mb-1 ' + (r.direction === 'out' ? 'text-end' : '') + '"><span class="badge ' + (r.direction === 'out' ? 'bg-success' : 'bg-secondary') + '">' + esc(r.sender_name) + '</span> ' + esc(r.message) + '</div>').join('') : '<div class="text-muted text-center">Belum ada percakapan sesi CS.</div>';
+    }
+    async function loadBroadcasts() {
+        const res = await api('/api/v1/wagateway/broadcasts');
+        const rows = res.data || [];
+        document.getElementById('waBcBody').innerHTML = rows.length ? rows.map((r) => '<tr><td>' + esc(r.title) + '</td><td>' + esc(r.schedule_at) + '</td><td>' + esc(r.status) + '</td></tr>').join('') : '<tr><td colspan="3" class="text-center text-muted">Belum ada template terjadwal.</td></tr>';
+    }
+    document.getElementById('btnLoadCsChat')?.addEventListener('click', loadCsChat);
+    document.getElementById('btnAiDraftCs')?.addEventListener('click', async () => {
+        const res = await api('/api/v1/wagateway/ai-draft', { method: 'POST', body: JSON.stringify({ incoming_message: lastIncoming || document.getElementById('waCsMessage').value }) });
+        if (res.status === 'success' && res.data) {
+            document.getElementById('waCsMessage').value = res.data.draft || '';
+        }
+    });
+    document.getElementById('formWaCsSend')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/wagateway/cs-chat-send', { method: 'POST', body: JSON.stringify({ phone: document.getElementById('waCsPhone').value, message: document.getElementById('waCsMessage').value, direction: 'out' }) });
+        if (res.status === 'success') { document.getElementById('waCsMessage').value = ''; loadCsChat(); }
+    });
+    document.getElementById('formWaBroadcast')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await api('/api/v1/wagateway/broadcasts-save', { method: 'POST', body: JSON.stringify({ title: waBcTitle.value, schedule_at: waBcSchedule.value, message_template: waBcTemplate.value }) });
+        if (res.status === 'success') { waBcTitle.value = ''; waBcTemplate.value = ''; loadBroadcasts(); }
+    });
+    loadCsChat();
+    loadBroadcasts();
+});
+</script>

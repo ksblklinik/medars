@@ -371,6 +371,7 @@ final class HttpApplication
         );
         $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));
         $anjunganController = new AnjunganController(new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo));
+        $waCrmController = new WaCrmController(new \App\Infrastructure\Persistence\PdoWaCrmRepository($this->pdo));
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1361,6 +1362,29 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $communicationController->apiAddWaWhitelist($data);
+        });
+        $router->get('/api/v1/wagateway/cs-chat', function () use ($waCrmController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            return $waCrmController->apiCsChatsList($queryParams);
+        });
+        $router->post('/api/v1/wagateway/cs-chat-send', function () use ($waCrmController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $waCrmController->apiCsChatSend($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/wagateway/broadcasts', function () use ($waCrmController): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            return $waCrmController->apiBroadcastList();
+        });
+        $router->post('/api/v1/wagateway/broadcasts-save', function () use ($waCrmController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $waCrmController->apiBroadcastSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/wagateway/ai-draft', function () use ($waCrmController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['wagateway', 'crm', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $waCrmController->apiAiDraft($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         $router->post('/api/v1/homecare/kunjungan', function () use ($communicationController, $postData, $rawBody, $headers): array {
