@@ -507,6 +507,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $utdController = new UtdController(
+            new \App\Infrastructure\Persistence\PdoUtdRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1642,6 +1648,52 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $ruangTindakanController->apiDelete($data);
+        });
+
+        $router->get('/utd', function () use ($utdController): array {
+            $user = $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            return $utdController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/utd/komponen', function () use ($utdController): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            return $utdController->apiKomponenList();
+        });
+        $router->post('/api/v1/utd/komponen-save', function () use ($utdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $utdController->apiKomponenSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/utd/pendonor', function () use ($utdController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            return $utdController->apiPendonorList($queryParams);
+        });
+        $router->post('/api/v1/utd/pendonor-save', function () use ($utdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $utdController->apiPendonorSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/utd/stok', function () use ($utdController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            return $utdController->apiStokList($queryParams);
+        });
+        $router->post('/api/v1/utd/stok-save', function () use ($utdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $utdController->apiStokSave($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/utd/permintaan', function () use ($utdController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            return $utdController->apiPermintaanList($queryParams);
+        });
+        $router->post('/api/v1/utd/permintaan-save', function () use ($utdController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $utdController->apiPermintaanSave($user, $this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/utd/crossmatch', function () use ($utdController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['utd', 'laboratorium', 'rawat_inap', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $utdController->apiCrossmatch($this->parseJsonOrPost($rawBody, $postData, $headers));
         });
 
         return $router->dispatch($method, $path);

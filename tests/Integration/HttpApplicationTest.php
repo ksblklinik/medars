@@ -1947,4 +1947,29 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $del['status']);
     }
+
+    public function testUtdBankDarahEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/utd');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Unit Transfusi Darah', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $komp = $this->app->handle('POST', '/api/v1/utd/komponen-save', rawBody: json_encode(['kode' => 'WB', 'nama' => 'Whole Blood', 'total' => 350000]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $komp['status']);
+
+        $stok = $this->app->handle('POST', '/api/v1/utd/stok-save', rawBody: json_encode(['no_kantong' => 'KTG-99', 'kode_komponen' => 'WB', 'golongan_darah' => 'AB']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $stok['status']);
+
+        $req = $this->app->handle('POST', '/api/v1/utd/permintaan-save', rawBody: json_encode(['no_rawat' => '2026/11/17/000040', 'golongan_darah' => 'AB', 'no_kantong' => 'KTG-99']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $req['status']);
+        $reqId = (int) json_decode($req['body'], true)['data']['id'];
+
+        $cm = $this->app->handle('POST', '/api/v1/utd/crossmatch', rawBody: json_encode(['id' => $reqId, 'no_kantong' => 'KTG-99', 'hasil_crossmatch' => 'Cocok', 'status' => 'Diserahkan']), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $cm['status']);
+
+        $stokAfter = $this->app->handle('GET', '/api/v1/utd/stok', queryParams: ['golongan' => 'AB']);
+        $this->assertSame('Terpakai', json_decode($stokAfter['body'], true)['data'][0]['status']);
+    }
 }

@@ -38,7 +38,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 16 | `kasir_rawat_inap` | ✅ Selesai | Billing akumulatif kamar (`ManageKamarInapUseCase`), tindakan, obat, & pelunasan pulang Ranap terintegrasi di `/kasir` dengan filter `status_lanjut=Ranap`. |
 | 17 | `operasi` | ✅ Selesai | Modul Kamar Operasi (`/operasi`): jadwal booking OK (`booking_operasi`), laporan operasi & tim bedah (`laporan_operasi`), master paket tindakan (`paket_operasi`), & auto-posting ke `mlite_billing_ledger`. |
 | 18 | `ruang_tindakan` | ✅ Selesai | Layar Ruang Tindakan Medis & Keperawatan (`/ruang-tindakan`, `/ruang-tindakan/cetak`): input follow-up operatif, guard approval paramedis->dokter (`Draft` vs `Selesai`), & cetak laporan (`mlite_followup_operatif`). |
-| 19 | `utd` | ❌ Belum Ada | Unit Transfusi Darah / Bank Darah (permintaan, crossmatch, stok kantong darah). |
+| 19 | `utd` | ✅ Selesai | Unit Transfusi Darah / Bank Darah (`/utd`): master komponen (`utd_komponen_darah`), data pendonor (`utd_pendonor`), stok kantong (`utd_stok_darah`), serta permintaan & crossmatch (`utd_permintaan_darah`). |
 
 ---
 

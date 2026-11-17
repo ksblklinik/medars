@@ -858,6 +858,46 @@ final class SchemaMigrator
                 status VARCHAR(20) NOT NULL DEFAULT 'Menunggu'
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS utd_komponen_darah (
+                kode VARCHAR(15) PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                lama INT NOT NULL DEFAULT 35,
+                total DECIMAL(15,2) NOT NULL DEFAULT 0
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS utd_pendonor (
+                no_pendonor VARCHAR(20) PRIMARY KEY,
+                nama VARCHAR(120) NOT NULL,
+                no_ktp VARCHAR(25) NOT NULL DEFAULT '',
+                jk VARCHAR(5) NOT NULL DEFAULT 'L',
+                golongan_darah VARCHAR(5) NOT NULL DEFAULT 'O',
+                resus VARCHAR(5) NOT NULL DEFAULT '+',
+                no_telp VARCHAR(30) NOT NULL DEFAULT '',
+                alamat VARCHAR(200) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS utd_stok_darah (
+                no_kantong VARCHAR(25) PRIMARY KEY,
+                kode_komponen VARCHAR(15) NOT NULL,
+                golongan_darah VARCHAR(5) NOT NULL,
+                resus VARCHAR(5) NOT NULL DEFAULT '+',
+                tanggal_aftap VARCHAR(15) NOT NULL,
+                tanggal_kadaluarsa VARCHAR(15) NOT NULL,
+                asal_darah VARCHAR(80) NOT NULL DEFAULT 'PMI',
+                status VARCHAR(20) NOT NULL DEFAULT 'Ada'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS utd_permintaan_darah (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                no_kantong VARCHAR(25) NOT NULL DEFAULT '',
+                golongan_darah VARCHAR(5) NOT NULL,
+                hasil_crossmatch VARCHAR(25) NOT NULL DEFAULT 'Menunggu',
+                petugas VARCHAR(60) NOT NULL DEFAULT 'Sistem',
+                tanggal VARCHAR(15) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'Menunggu'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

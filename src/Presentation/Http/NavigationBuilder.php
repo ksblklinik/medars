@@ -95,6 +95,14 @@ final class NavigationBuilder
                 'modules' => ['ruang_tindakan', 'rawat_jalan', 'igd', 'admin'],
             ],
             [
+                'title' => 'Bank Darah (UTD)',
+                'icon' => 'fa-droplet',
+                'route' => '/utd',
+                'category' => 'Layanan',
+                'module_key' => 'utd',
+                'modules' => ['utd', 'laboratorium', 'rawat_inap', 'admin'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',
