@@ -500,6 +500,21 @@ final class SchemaMigrator
                 kredit DECIMAL(15,2) NOT NULL DEFAULT 0
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS bangsal (
+                kd_bangsal VARCHAR(10) PRIMARY KEY,
+                nm_bangsal VARCHAR(100) NOT NULL,
+                status VARCHAR(5) NOT NULL DEFAULT '1'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS kamar (
+                kd_kamar VARCHAR(20) PRIMARY KEY,
+                kd_bangsal VARCHAR(10) NOT NULL,
+                trf_kamar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                status VARCHAR(20) NOT NULL DEFAULT 'KOSONG',
+                kelas VARCHAR(30) NOT NULL DEFAULT 'Kelas 3',
+                statusdata VARCHAR(5) NOT NULL DEFAULT '1'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS kamar_inap (
                 no_rawat VARCHAR(20) NOT NULL,
                 kd_kamar VARCHAR(20) NOT NULL,

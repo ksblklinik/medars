@@ -408,6 +408,14 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $ranapRepo = new \App\Infrastructure\Persistence\PdoRawatInapRepository($this->pdo);
+        $ranapController = new RawatInapController(
+            $ranapRepo,
+            new \App\Application\Ranap\UseCase\ManageKamarInapUseCase($ranapRepo, $ledgerRepo, $tx),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1095,6 +1103,37 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $igdController->apiUpdateDisposisi($data);
+        });
+
+        $router->get('/rawat-inap', function () use ($ranapController): array {
+            $user = $this->requireAnyServiceModuleAccess(['rawat_inap', 'dokter_ranap', 'kasir_rawat_inap']);
+            return $ranapController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/ranap/inpatients', function () use ($ranapController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['rawat_inap', 'dokter_ranap', 'kasir_rawat_inap']);
+            return $ranapController->apiListInpatients($queryParams);
+        });
+        $router->get('/api/v1/ranap/kamar', function () use ($ranapController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['rawat_inap', 'dokter_ranap', 'master']);
+            return $ranapController->apiListKamar($queryParams);
+        });
+        $router->post('/api/v1/ranap/kamar/save', function () use ($ranapController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['rawat_inap', 'master']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $ranapController->apiSaveKamar($data);
+        });
+        $router->post('/api/v1/ranap/checkin', function () use ($ranapController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['rawat_inap', 'pendaftaran']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $ranapController->apiCheckIn($data);
+        });
+        $router->post('/api/v1/ranap/checkout', function () use ($ranapController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['rawat_inap', 'kasir_rawat_inap']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $ranapController->apiCheckOut($data);
         });
 
         return $router->dispatch($method, $path);

@@ -63,6 +63,14 @@ final class NavigationBuilder
                 'modules' => ['igd', 'dokter_igd', 'pendaftaran'],
             ],
             [
+                'title' => 'Rawat Inap',
+                'icon' => 'fa-bed-pulse',
+                'route' => '/rawat-inap',
+                'category' => 'Layanan',
+                'module_key' => 'rawat_inap',
+                'modules' => ['rawat_inap', 'dokter_ranap', 'kasir_rawat_inap'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',

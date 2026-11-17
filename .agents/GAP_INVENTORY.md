@@ -32,7 +32,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 10 | `igd` | ✅ Selesai | Modul Pendaftaran & Triase IGD (`/igd`): antrean prioritas zona ATS/ESI (`Merah` &rarr; `Kuning` &rarr; `Hijau` &rarr; `Hitam`), form triase TTV/GCS/SpO2, & disposisi (`Pulang`/`Rawat Inap`/`Rujuk`). |
 | 11 | `dokter_igd` | ❌ Belum Ada | Layar SOAP, Triase IGD, tindakan emergensi, e-resep IGD, & order penunjang IGD. |
 | 12 | `kasir_igd` | ❌ Belum Ada | Layar billing & pelunasan khusus pasien IGD (termasuk pasien masuk ranap). |
-| 13 | `rawat_inap` | ❌ Belum Ada | Manajemen Kamar Inap (`kamar_inap`), check-in/pindah kamar, mutasi pasien ranap, pulang/status keluar. |
+| 13 | `rawat_inap` | ✅ Selesai | Manajemen Kamar Inap (`/rawat-inap`): master bangsal & kamar, check-in kamar (`ISI` + `status_lanjut=Ranap`), & checkout pulang otomatis hitung lama inap + posting billing kamar ke `mlite_billing_ledger`. |
 | 14 | `dokter_ranap` | ❌ Belum Ada | Layar CPPT Dokter Ranap (`pemeriksaan_ranap` UI), visite, e-resep ranap, resume pulang. |
 | 15 | `apotek_ranap` | ❌ Belum Ada | Pelayanan E-Resep & UDD/ODD pasien Rawat Inap. |
 | 16 | `kasir_rawat_inap` | ❌ Belum Ada | Billing akumulatif kamar, visite, tindakan, obat, & pelunasan pulang Rawat Inap. |

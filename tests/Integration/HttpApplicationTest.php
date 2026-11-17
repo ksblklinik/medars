@@ -1106,4 +1106,46 @@ class HttpApplicationTest extends TestCase
         $this->assertSame('Merah', $rows[0]['zona_triase']);
         $this->assertSame('Ranap', $rows[0]['status_lanjut']);
     }
+
+    public function testRawatInapEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000070', 'Slamet Ranap', '1975-01-01', 'L');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_lanjut, status_bayar)
+            VALUES ('001', '2026/11/17/000070', '{$today}', '09:00:00', 'DR01', '000070', 'IGDK', 'A09', 'Belum', 'Ralan', 'Belum Bayar');
+        ");
+
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/rawat-inap');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Rawat Inap &amp; Manajemen Kamar', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $saveKamar = $this->app->handle(
+            'POST',
+            '/api/v1/ranap/kamar/save',
+            rawBody: json_encode(['kd_kamar' => 'VIP-01', 'kd_bangsal' => 'B01', 'nm_bangsal' => 'Anggrek', 'kelas' => 'VIP', 'trf_kamar' => 500000]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $saveKamar['status']);
+
+        $checkIn = $this->app->handle(
+            'POST',
+            '/api/v1/ranap/checkin',
+            rawBody: json_encode(['no_rawat' => '2026/11/17/000070', 'kd_kamar' => 'VIP-01']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $checkIn['status']);
+
+        $checkOut = $this->app->handle(
+            'POST',
+            '/api/v1/ranap/checkout',
+            rawBody: json_encode(['no_rawat' => '2026/11/17/000070', 'kd_kamar' => 'VIP-01', 'stts_pulang' => 'Membaik']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $checkOut['status']);
+        $outJson = json_decode($checkOut['body'], true);
+        $this->assertSame(500000, $outJson['data']['ttl_biaya']);
+    }
 }
