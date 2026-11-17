@@ -159,6 +159,14 @@ final class NavigationBuilder
                 'modules' => ['manajemen', 'laporan', 'admin'],
             ],
             [
+                'title' => 'Penjualan Non-Resep',
+                'icon' => 'fa-bag-shopping',
+                'route' => '/penjualan',
+                'category' => 'Keuangan & Penunjang',
+                'module_key' => 'penjualan',
+                'modules' => ['penjualan', 'apotek_umum', 'kasir', 'admin'],
+            ],
+            [
                 'title' => 'Bridging BPJS',
                 'icon' => 'fa-network-wired',
                 'route' => '/bridging',

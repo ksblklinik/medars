@@ -759,6 +759,53 @@ final class SchemaMigrator
                 created_at VARCHAR(25) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan_barang (
+                id {$bigAutoIncPk},
+                nama_barang VARCHAR(150) NOT NULL,
+                kode_satuan VARCHAR(20) NOT NULL DEFAULT 'Pcs',
+                stok INT NOT NULL DEFAULT 0,
+                harga DECIMAL(15,2) NOT NULL DEFAULT 0,
+                keterangan VARCHAR(255) NOT NULL DEFAULT ''
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan (
+                id {$bigAutoIncPk},
+                nama_pembeli VARCHAR(120) NOT NULL DEFAULT 'Umum',
+                alamat_pembeli VARCHAR(255) NOT NULL DEFAULT '',
+                nomor_telepon VARCHAR(30) NOT NULL DEFAULT '',
+                tanggal VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                id_user VARCHAR(50) NOT NULL DEFAULT 'system',
+                keterangan VARCHAR(255) NOT NULL DEFAULT '',
+                status VARCHAR(20) NOT NULL DEFAULT 'Draft'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan_detail (
+                id {$bigAutoIncPk},
+                id_penjualan INT NOT NULL,
+                id_barang INT NOT NULL,
+                nama_barang VARCHAR(150) NOT NULL,
+                harga DECIMAL(15,2) NOT NULL DEFAULT 0,
+                jumlah INT NOT NULL DEFAULT 1,
+                harga_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                tanggal VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                id_user VARCHAR(50) NOT NULL DEFAULT 'system'
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS mlite_penjualan_billing (
+                id {$bigAutoIncPk},
+                id_penjualan INT NOT NULL,
+                jumlah_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+                potongan DECIMAL(15,2) NOT NULL DEFAULT 0,
+                jumlah_harus_bayar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                jumlah_bayar DECIMAL(15,2) NOT NULL DEFAULT 0,
+                cara_bayar VARCHAR(30) NOT NULL DEFAULT 'Tunai',
+                tanggal VARCHAR(15) NOT NULL,
+                jam VARCHAR(10) NOT NULL,
+                id_user VARCHAR(50) NOT NULL DEFAULT 'system'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

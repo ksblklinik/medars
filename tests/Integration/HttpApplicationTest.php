@@ -1807,4 +1807,55 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $del['status']);
     }
+
+    public function testPenjualanNonResepEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/penjualan');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Penjualan Non-Resep', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $saveBarang = $this->app->handle(
+            'POST',
+            '/api/v1/penjualan/barang-save',
+            rawBody: json_encode(['nama_barang' => 'Termometer Infra', 'kode_satuan' => 'Unit', 'stok' => 10, 'harga' => 120000]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $saveBarang['status']);
+        $barangId = (int) json_decode($saveBarang['body'], true)['data']['id'];
+
+        $order = $this->app->handle(
+            'POST',
+            '/api/v1/penjualan/order-create',
+            rawBody: json_encode(['nama_pembeli' => 'Ny. Rina']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $order['status']);
+        $orderId = (int) json_decode($order['body'], true)['data']['id'];
+
+        $addItem = $this->app->handle(
+            'POST',
+            '/api/v1/penjualan/item-add',
+            rawBody: json_encode(['id_penjualan' => $orderId, 'id_barang' => $barangId, 'jumlah' => 2]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $addItem['status']);
+
+        $settle = $this->app->handle(
+            'POST',
+            '/api/v1/penjualan/settle',
+            rawBody: json_encode(['id_penjualan' => $orderId, 'potongan' => 0, 'jumlah_bayar' => 240000, 'cara_bayar' => 'Tunai']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $settle['status']);
+
+        $faktur = $this->app->handle('GET', '/penjualan/faktur', queryParams: ['id' => $orderId]);
+        $this->assertSame(200, $faktur['status']);
+        $this->assertStringContainsString('Ny. Rina', $faktur['body']);
+
+        $report = $this->app->handle('GET', '/api/v1/penjualan/report');
+        $this->assertSame(200, $report['status']);
+        $this->assertSame(240000, (int) json_decode($report['body'], true)['data']['total_omzet']);
+    }
 }

@@ -48,7 +48,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | :-: | :--- | :---: | :--- |
 | 20 | `farmasi` | ✅ Selesai | Manajemen Gudang Obat (`/farmasi-gudang`): CRUD Master `databarang`, Penerimaan Stok/PO, Mutasi antar Depo (`InsufficientStockException` guard), & Kartu Stok (`riwayat_barang_medis`). |
 | 21 | `apotek_umum` | ✅ Selesai | POS retail mandiri `PO-APT-` dengan 5 cara bayar, daftar riwayat penjualan (`/api/v1/apotek-umum/sales`), & cetak struk thermal (`/apotek-umum/struk`). |
-| 22 | `penjualan` | ❌ Belum Ada | Modul penjualan non-resep / alkes / laporan omzet penjualan barang. |
+| 22 | `penjualan` | ✅ Selesai | Modul Penjualan Non-Resep & Alkes (`/penjualan`, `/penjualan/faktur`): katalog barang (`mlite_penjualan_barang`), order & pemotongan stok atomik, pelunasan, serta laporan omzet (`/api/v1/penjualan/report`). |
 | 23 | `keuangan` | ✅ Selesai | Modul Akuntansi & Keuangan (`/keuangan`): Jurnal Umum, Pengeluaran Kas, Buku Besar, Laba Rugi, & Master Akun Rekening (`mlite_rekening` + `mlite_jurnal`). |
 | 24 | `jasa_medis` | ✅ Selesai | Rekap & cetak Jasa Medis Dokter (`/jasa-medis`, `/jasa-medis/cetak`): agregasi tindakan per dokter, rincian per pasien, & pemisahan pilar klaim (`Tunai`, `BPJS`, `Piutang`). |
 | 25 | `inventaris` | ✅ Selesai | Manajemen inventaris barang medis & non-medis (`/inventaris`): CRUD aset, kategori, lokasi, kondisi, & nilai perolehan (`mlite_inventaris`). |

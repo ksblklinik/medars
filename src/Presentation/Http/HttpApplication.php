@@ -489,6 +489,12 @@ final class HttpApplication
             $this->renderer
         );
 
+        $penjualanController = new PenjualanController(
+            new \App\Infrastructure\Persistence\PdoPenjualanRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1503,6 +1509,61 @@ final class HttpApplication
         });
         $router->get('/api/v1/verifikasi', function () use ($verifikasiController, $queryParams): array {
             return $verifikasiController->apiVerify($queryParams);
+        });
+
+        $router->get('/penjualan', function () use ($penjualanController): array {
+            $user = $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/penjualan/faktur', function () use ($penjualanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->printFaktur($queryParams);
+        });
+        $router->get('/api/v1/penjualan/barang', function () use ($penjualanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->apiBarangList($queryParams);
+        });
+        $router->post('/api/v1/penjualan/barang-save', function () use ($penjualanController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $penjualanController->apiBarangSave($data);
+        });
+        $router->get('/api/v1/penjualan/orders', function () use ($penjualanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->apiOrders($queryParams);
+        });
+        $router->get('/api/v1/penjualan/order-detail', function () use ($penjualanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->apiOrderDetail($queryParams);
+        });
+        $router->post('/api/v1/penjualan/order-create', function () use ($penjualanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $penjualanController->apiOrderCreate($user, $data);
+        });
+        $router->post('/api/v1/penjualan/item-add', function () use ($penjualanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $penjualanController->apiAddItem($user, $data);
+        });
+        $router->post('/api/v1/penjualan/item-remove', function () use ($penjualanController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $penjualanController->apiRemoveItem($data);
+        });
+        $router->post('/api/v1/penjualan/settle', function () use ($penjualanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $penjualanController->apiSettle($user, $data);
+        });
+        $router->get('/api/v1/penjualan/report', function () use ($penjualanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['penjualan', 'apotek_umum', 'kasir', 'admin']);
+            return $penjualanController->apiReport($queryParams);
         });
 
         return $router->dispatch($method, $path);
