@@ -686,4 +686,82 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $kartu['status']);
         $this->assertStringContainsString('Dewi Lestari', $kartu['body']);
     }
+
+    public function testPoliDeepeningEndToEnd(): void
+    {
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000010', 'Siti Aminah', '1988-04-10', 'P');
+            INSERT INTO dokter (kd_dokter, nm_dokter, status) VALUES ('DR01', 'dr. Andi', '1');
+            INSERT INTO poliklinik (kd_poli, nm_poli, status) VALUES ('U01', 'Poli Umum', '1');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, stts, status_bayar)
+            VALUES ('001', '2026/11/16/000010', '{$yesterday}', '09:00:00', 'DR01', '000010', 'U01', 'BPJ', 'Belum', 'Belum Bayar');
+            INSERT INTO jns_perawatan (kd_jenis_prw, nm_perawatan, kd_kategori, material, tarif_tindakandr, total_byrdr, status)
+            VALUES ('TND01', 'Nebulizer Dewasa', 'KAT01', 15000, 35000, 50000, '1');
+        ");
+
+        $this->session['user_id'] = 1;
+        $regPage = $this->app->handle('GET', '/pendaftaran');
+        $this->assertSame(200, $regPage['status']);
+        $this->assertStringContainsString('regFilterFrom', $regPage['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        // 1. Multi-day filter on /api/v1/registration/today
+        $listRes = $this->app->handle('GET', '/api/v1/registration/today', queryParams: ['from' => $yesterday, 'to' => $today]);
+        $this->assertSame(200, $listRes['status']);
+        $rows = json_decode($listRes['body'], true);
+        $this->assertCount(1, $rows);
+        $this->assertSame('2026/11/16/000010', $rows[0]['no_rawat']);
+
+        // 2. Update status via /api/v1/registration/update-status
+        $sttsRes = $this->app->handle(
+            'POST',
+            '/api/v1/registration/update-status',
+            rawBody: json_encode(['no_rawat' => '2026/11/16/000010', 'stts' => 'Sudah']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $sttsRes['status']);
+        $sttsJson = json_decode($sttsRes['body'], true);
+        $this->assertSame('success', $sttsJson['status']);
+
+        // 3. Save Tindakan Dokter via /api/v1/dokter-ralan/tindakan/save
+        $tindakanRes = $this->app->handle(
+            'POST',
+            '/api/v1/dokter-ralan/tindakan/save',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000010',
+                'kd_jenis_prw' => 'TND01',
+                'claim_type' => 'Tunai',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $tindakanRes['status']);
+        $tindakanJson = json_decode($tindakanRes['body'], true);
+        $this->assertSame('success', $tindakanJson['status']);
+
+        // 4. Save & Get Resume Medis
+        $resumeRes = $this->app->handle(
+            'POST',
+            '/api/v1/dokter-ralan/resume',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/16/000010',
+                'keluhan_utama' => 'Sesak napas ringan',
+                'jalannya_penyakit' => 'Membaik pasca nebulizer',
+                'diagnosa_utama' => 'Asma Bronkial',
+                'kd_diagnosa_utama' => 'J45',
+                'kondisi_pulang' => 'Hidup',
+                'obat_pulang' => 'Salbutamol inhaler',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $resumeRes['status']);
+        $resumeJson = json_decode($resumeRes['body'], true);
+        $this->assertSame('success', $resumeJson['status']);
+
+        $getResume = $this->app->handle('GET', '/api/v1/dokter-ralan/resume', queryParams: ['no_rawat' => '2026/11/16/000010']);
+        $this->assertSame(200, $getResume['status']);
+        $getResumeJson = json_decode($getResume['body'], true);
+        $this->assertSame('J45', $getResumeJson['data']['kd_diagnosa_utama']);
+    }
 }

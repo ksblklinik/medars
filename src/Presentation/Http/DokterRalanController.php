@@ -8,13 +8,17 @@ use App\Application\Rme\DTO\SavePrbCommand;
 use App\Application\Rme\DTO\SaveSoapCommand;
 use App\Application\Rme\UseCase\CreateSuratMedisUseCase;
 use App\Application\Rme\UseCase\DeleteOdontogramUseCase;
+use App\Application\Rme\UseCase\DeleteTindakanDokterUseCase;
 use App\Application\Rme\UseCase\SaveOdontogramUseCase;
 use App\Application\Rme\UseCase\SavePrbPrescriptionUseCase;
+use App\Application\Rme\UseCase\SaveResumeMedisUseCase;
 use App\Application\Rme\UseCase\SaveSoapUseCase;
+use App\Application\Rme\UseCase\SaveTindakanDokterUseCase;
 use App\Domain\Registration\ValueObject\NoRawat;
 use App\Domain\Registration\ValueObject\NoRkmMedis;
 use App\Domain\Rme\Entity\DiagnosaPasien;
 use App\Domain\Rme\Entity\Odontogram;
+use App\Domain\Rme\Repository\DokterTindakanRepositoryInterface;
 use App\Domain\Rme\Repository\IcdGroundingRepositoryInterface;
 use App\Domain\Rme\Repository\OdontogramRepositoryInterface;
 use App\Domain\Rme\Repository\RmeHistoryRepositoryInterface;
@@ -36,6 +40,10 @@ final readonly class DokterRalanController
         private CreateSuratMedisUseCase $suratUseCase,
         private ViewRenderer $renderer,
         private ?NavigationBuilder $navBuilder = null,
+        private ?DokterTindakanRepositoryInterface $tindakanRepo = null,
+        private ?SaveTindakanDokterUseCase $saveTindakanUseCase = null,
+        private ?DeleteTindakanDokterUseCase $deleteTindakanUseCase = null,
+        private ?SaveResumeMedisUseCase $saveResumeUseCase = null,
     ) {
     }
 
@@ -367,6 +375,119 @@ final readonly class DokterRalanController
 
         if (!$actor->canAccessPoli($kdPoli) && $actor->getUsername() !== $kdDokter) {
             throw new ForbiddenException("Anda tidak memiliki izin melayani poliklinik {$kdPoli}.");
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSearchTindakan(array $query): array
+    {
+        if ($this->tindakanRepo === null) {
+            return $this->jsonResponse(['status' => 'success', 'data' => []]);
+        }
+        $q = trim((string) ($query['q'] ?? ''));
+        return $this->jsonResponse(['status' => 'success', 'data' => $this->tindakanRepo->searchTarifTindakan($q, 20)]);
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiListTindakan(UserAccount $actor, array $query): array
+    {
+        $nr = trim((string) ($query['no_rawat'] ?? ''));
+        if ($nr === '' || $this->tindakanRepo === null) {
+            return $this->jsonResponse(['status' => 'success', 'data' => []]);
+        }
+        $this->assertCanAccessNoRawat($actor, $nr);
+        return $this->jsonResponse(['status' => 'success', 'data' => $this->tindakanRepo->listByNoRawat(new NoRawat($nr))]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSaveTindakan(UserAccount $actor, array $payload): array
+    {
+        try {
+            if ($this->saveTindakanUseCase === null) {
+                throw new \DomainException('Layanan tindakan dokter belum dikonfigurasi.');
+            }
+            $nr = trim((string) ($payload['no_rawat'] ?? ''));
+            $this->assertCanAccessNoRawat($actor, $nr);
+            $kdJenisPrw = trim((string) ($payload['kd_jenis_prw'] ?? ''));
+            $claimType = trim((string) ($payload['claim_type'] ?? 'Tunai')) ?: 'Tunai';
+
+            $saved = $this->saveTindakanUseCase->execute(
+                new NoRawat($nr),
+                $kdJenisPrw,
+                $actor->getUsername(),
+                $claimType
+            );
+            return $this->jsonResponse(['status' => 'success', 'data' => $saved]);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiDeleteTindakan(UserAccount $actor, array $payload): array
+    {
+        try {
+            if ($this->deleteTindakanUseCase === null) {
+                throw new \DomainException('Layanan hapus tindakan belum dikonfigurasi.');
+            }
+            $nr = trim((string) ($payload['no_rawat'] ?? ''));
+            $this->assertCanAccessNoRawat($actor, $nr);
+            $this->deleteTindakanUseCase->execute(
+                new NoRawat($nr),
+                trim((string) ($payload['kd_jenis_prw'] ?? '')),
+                trim((string) ($payload['kd_dokter'] ?? $actor->getUsername())),
+                trim((string) ($payload['tgl_perawatan'] ?? '')),
+                trim((string) ($payload['jam_rawat'] ?? '')),
+            );
+            return $this->jsonResponse(['status' => 'success']);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiGetResume(UserAccount $actor, array $query): array
+    {
+        $nr = trim((string) ($query['no_rawat'] ?? ''));
+        if ($nr === '' || $this->tindakanRepo === null) {
+            return $this->jsonResponse(['status' => 'success', 'data' => null]);
+        }
+        $this->assertCanAccessNoRawat($actor, $nr);
+        return $this->jsonResponse(['status' => 'success', 'data' => $this->tindakanRepo->findResume(new NoRawat($nr))]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiSaveResume(UserAccount $actor, array $payload): array
+    {
+        try {
+            if ($this->saveResumeUseCase === null) {
+                throw new \DomainException('Layanan resume medis belum dikonfigurasi.');
+            }
+            $nr = trim((string) ($payload['no_rawat'] ?? ''));
+            $this->assertCanAccessNoRawat($actor, $nr);
+            $payload['kd_dokter'] = $actor->getUsername();
+            $this->saveResumeUseCase->execute($payload);
+            return $this->jsonResponse(['status' => 'success', 'message' => 'Resume medis tersimpan.']);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
 

@@ -650,6 +650,34 @@ final class SchemaMigrator
                 verified_at VARCHAR(30) NOT NULL
             ){$suffix}",
 
+            // 11. Tindakan Dokter Ralan & Resume Medis (Poli Deepening)
+            "CREATE TABLE IF NOT EXISTS rawat_jl_dr (
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL,
+                tgl_perawatan VARCHAR(15) NOT NULL,
+                jam_rawat VARCHAR(10) NOT NULL,
+                material DECIMAL(15,2) NOT NULL DEFAULT 0,
+                tarif_tindakandr DECIMAL(15,2) NOT NULL DEFAULT 0,
+                biaya_rawat DECIMAL(15,2) NOT NULL DEFAULT 0,
+                stts_bayar VARCHAR(15) NOT NULL DEFAULT 'Belum',
+                jenis_klaim VARCHAR(20) NOT NULL DEFAULT 'Tunai',
+                PRIMARY KEY (no_rawat, kd_jenis_prw, kd_dokter, tgl_perawatan, jam_rawat)
+            ){$suffix}",
+
+            "CREATE TABLE IF NOT EXISTS resume_pasien (
+                no_rawat VARCHAR(20) PRIMARY KEY,
+                kd_dokter VARCHAR(20) NOT NULL,
+                keluhan_utama TEXT NOT NULL,
+                jalannya_penyakit TEXT,
+                pemeriksaan_penunjang TEXT,
+                hasil_laborat TEXT,
+                diagnosa_utama VARCHAR(200) NOT NULL DEFAULT '-',
+                kd_diagnosa_utama VARCHAR(20) NOT NULL DEFAULT '-',
+                kondisi_pulang VARCHAR(50) NOT NULL DEFAULT 'Membaik',
+                obat_pulang TEXT
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_homecare_kunjungan (
                 id {$bigAutoIncPk},
                 no_rawat VARCHAR(20) NOT NULL,

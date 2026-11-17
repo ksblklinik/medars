@@ -88,6 +88,9 @@
                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabSoap" type="button">SOAP & TTV</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabIcd10" type="button">Diagnosa ICD-10</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPrbSurat" type="button">PRB 30 Hari & Surat Medis</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabTindakan" type="button">Tindakan Dokter</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOrderPenunjang" type="button">Order Lab/Rad & E-Resep</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabResumeMedis" type="button">Resume Medis</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPoliSpesifik" type="button">Poli Spesifik & Odontogram</button></li>
                     </ul>
 
@@ -208,6 +211,154 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tab 4: Tindakan Dokter -->
+                        <div class="tab-pane fade" id="tabTindakan">
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Cari Tarif Tindakan (jns_perawatan)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="tindakanSearchInput" class="form-control" placeholder="Ketik nama/kode tindakan...">
+                                        <button type="button" id="btnSearchTindakan" class="btn btn-outline-teal">Cari</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-1">Jenis Klaim</label>
+                                    <select id="tindakanClaimType" class="form-select form-select-sm">
+                                        <option value="Tunai">TUNAI / UMUM</option>
+                                        <option value="Kapitasi">BPJS KAPITASI</option>
+                                        <option value="Non-Kapitasi">BPJS NON-KAPITASI</option>
+                                        <option value="Piutang">PIUTANG</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" id="btnRefreshTindakan" class="btn btn-sm btn-outline-secondary w-100">Muat Ulang</button>
+                                </div>
+                            </div>
+                            <div id="tindakanSearchResults" class="list-group list-group-flush small border rounded mb-3 d-none" style="max-height: 180px; overflow-y: auto;"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle mb-0">
+                                    <thead class="table-light small">
+                                        <tr>
+                                            <th>Kode</th>
+                                            <th>Nama Tindakan</th>
+                                            <th class="text-end">Tarif (Rp)</th>
+                                            <th>Waktu</th>
+                                            <th class="text-center" style="width: 70px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyTindakanDokter" class="small">
+                                        <tr><td colspan="5" class="text-center text-muted py-2">Belum ada tindakan tercatat.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab 5: Order Lab/Radiologi & E-Resep -->
+                        <div class="tab-pane fade" id="tabOrderPenunjang">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 bg-light-subtle">
+                                        <div class="fw-bold small text-teal mb-2">Order Laboratorium / Radiologi</div>
+                                        <div class="mb-2">
+                                            <label class="form-label small mb-1">Unit Penunjang</label>
+                                            <select id="orderPenunjangUnit" class="form-select form-select-sm">
+                                                <option value="lab">Laboratorium</option>
+                                                <option value="radiologi">Radiologi</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small mb-1">Kode Pemeriksaan</label>
+                                            <input type="text" id="orderPenunjangKode" class="form-control form-control-sm" placeholder="Contoh: LAB001 / RAD001">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small mb-1">Nama Pemeriksaan</label>
+                                            <input type="text" id="orderPenunjangNama" class="form-control form-control-sm" placeholder="Contoh: Darah Lengkap / Thorax PA">
+                                        </div>
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Tarif (Rp)</label>
+                                                <input type="number" id="orderPenunjangHarga" class="form-control form-control-sm" value="0" min="0">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Klaim</label>
+                                                <select id="orderPenunjangClaim" class="form-select form-select-sm">
+                                                    <option value="Tunai">TUNAI</option>
+                                                    <option value="Kapitasi">BPJS KAPITASI</option>
+                                                    <option value="Non-Kapitasi">BPJS NON-KAPITASI</option>
+                                                    <option value="Piutang">PIUTANG</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="btnKirimOrderPenunjang" class="btn btn-sm btn-teal w-100">Kirim Order Penunjang</button>
+                                        <div id="orderPenunjangFeedback" class="small mt-2"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2 bg-light-subtle">
+                                        <div class="fw-bold small text-teal mb-2">E-Resep Cepat Poli</div>
+                                        <div class="input-group input-group-sm mb-2">
+                                            <input type="text" id="eresepSearchObat" class="form-control" placeholder="Cari obat (databarang)...">
+                                            <button type="button" id="btnSearchObatResep" class="btn btn-outline-teal">Cari</button>
+                                        </div>
+                                        <div id="eresepObatResults" class="list-group list-group-flush small border rounded mb-2 d-none" style="max-height: 120px; overflow-y: auto;"></div>
+                                        <div id="eresepDraftList" class="small mb-2 border rounded p-2 bg-white" style="min-height: 60px;">
+                                            <span class="text-muted">Belum ada item obat dipilih.</span>
+                                        </div>
+                                        <button type="button" id="btnKirimEresep" class="btn btn-sm btn-primary w-100">Kirim E-Resep ke Farmasi</button>
+                                        <div id="eresepFeedback" class="small mt-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 6: Resume Medis -->
+                        <div class="tab-pane fade" id="tabResumeMedis">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Keluhan Utama</label>
+                                    <textarea id="resumeKeluhanUtama" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Jalannya Penyakit</label>
+                                    <textarea id="resumeJalannyaPenyakit" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Pemeriksaan Penunjang</label>
+                                    <textarea id="resumePenunjang" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-1">Hasil Laboratorium</label>
+                                    <textarea id="resumeLaborat" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-1">Kode Diagnosa (ICD-10)</label>
+                                    <input type="text" id="resumeKdDiagnosa" class="form-control form-control-sm" placeholder="Contoh: J06.9">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold mb-1">Diagnosa Utama</label>
+                                    <input type="text" id="resumeDiagnosaUtama" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-1">Kondisi Pulang</label>
+                                    <select id="resumeKondisiPulang" class="form-select form-select-sm">
+                                        <option value="Hidup">Hidup / Membaik</option>
+                                        <option value="Rujuk">Rujuk</option>
+                                        <option value="Pulang Paksa">Pulang Paksa</option>
+                                        <option value="Meninggal">Meninggal</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold mb-1">Obat Pulang & Edukasi</label>
+                                    <textarea id="resumeObatPulang" class="form-control form-control-sm" rows="2"></textarea>
+                                </div>
+                                <div class="col-12 d-flex gap-2 mt-2">
+                                    <button type="button" id="btnSaveResume" class="btn btn-sm btn-teal">Simpan Resume Medis</button>
+                                    <button type="button" id="btnLoadResume" class="btn btn-sm btn-outline-secondary">Muat Resume</button>
+                                    <span id="resumeFeedback" class="small align-self-center ms-2"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -215,4 +366,4 @@
     </div>
 </div>
 
-<script src="/assets/js/modules/dokter-ralan.js"></script>
+<script src="/assets/js/modules/dokter-ralan.js?v=20261117b"></script>

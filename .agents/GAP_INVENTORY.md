@@ -17,8 +17,8 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 2 | `master` | ❌ Belum Ada | UI CRUD Master Data: Poliklinik, Jadwal Dokter, Penjamin (`penjab`), Bangsal/Kamar, Tarif Tindakan (`jns_perawatan`), Penyakit ICD-10. (Saat ini baru ada repo backend tanpa UI). |
 | 3 | `kepegawaian` | ❌ Belum Ada | UI CRUD Dokter, Petugas, Pegawai & berkas SDM. (Saat ini baru ada repo backend). |
 | 4 | `surat` | 🟡 Parsial | Sudah ada `CreateSuratMedisUseCase`, belum ada halaman UI daftar surat & cetak PDF (Surat Sakit, Sehat, Hamil, Cuti Hamil, Rujukan, Bebas Narkoba). |
-| 5 | `rawat_jalan` | 🟡 Parsial | Belum ada filter periode tanggal multi-hari, ubah status periksa/dokter/poli, SEP/rujukan internal, upload berkas digital, cetak rincian/antrean. |
-| 6 | `dokter_ralan` | 🟡 Parsial | Belum ada input tindakan/layanan dokter, order lab/rad langsung dari layar dokter, riwayat lengkap per tab, cetak e-resep/resume medis. |
+| 5 | `rawat_jalan` | 🟡 Parsial | Filter periode tanggal multi-hari (`from`–`to`) & status (`stts`) serta ubah status periksa (`ClinicalGuardShield`) sudah ada. Sisa: ubah dokter/poli di UI, SEP/rujukan internal, upload berkas digital, cetak rincian/antrean. |
+| 6 | `dokter_ralan` | 🟡 Parsial | Input tindakan dokter (`rawat_jl_dr` + ledger), order lab/rad & E-Resep langsung dari layar dokter, serta Resume Medis (`resume_pasien`) sudah ada. Sisa: cetak PDF e-resep/resume medis & riwayat lengkap per tab. |
 | 7 | `apotek_ralan` | 🟡 Parsial | Belum ada cetak etiket obat, copy resep UI, riwayat penyerahan multi-hari, dan penyesuaian stok per batch/depo dari layar apotek. |
 | 8 | `kasir_rawat_jalan` | 🟡 Parsial | Belum ada cetak kuitansi/faktur PDF/thermal, filter periode tanggal, manajemen piutang pasien, dan rincian billing dari tindakan/lab/rad terpadu. |
 | 9 | `frontoffice` | ❌ Belum Ada | Dashboard khusus Front Office / Gatekeeper konfirmasi antrean & pendaftaran loket terpadu. |

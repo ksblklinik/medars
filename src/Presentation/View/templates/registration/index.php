@@ -16,8 +16,20 @@
                 <option value="batal">Batal</option>
             </select>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-light text-dark border"><i class="fa fa-calendar me-1 text-medical-teal"></i>Periode: <?= date('d-m-Y') ?></span>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="width: auto;">
+                <span class="input-group-text bg-white text-muted">Dari</span>
+                <input type="date" id="regFilterFrom" class="form-control" value="<?= date('Y-m-d') ?>">
+                <span class="input-group-text bg-white text-muted">s/d</span>
+                <input type="date" id="regFilterTo" class="form-control" value="<?= date('Y-m-d') ?>">
+                <select id="regFilterStts" class="form-select" style="max-width: 130px;">
+                    <option value="">Semua Status</option>
+                    <option value="Belum">Belum</option>
+                    <option value="Sudah">Sudah</option>
+                    <option value="Batal">Batal</option>
+                </select>
+                <button type="button" id="btnFilterRegistrations" class="btn btn-outline-teal">Filter</button>
+            </div>
             <a href="/display-antrean" target="_blank" class="btn btn-sm btn-outline-teal"><i class="fa fa-tv me-1"></i>Display TV</a>
         </div>
     </div>
@@ -183,5 +195,5 @@
         </div>
     </div>
 </div>
-<script src="/assets/js/modules/registration.js"></script>
+<script src="/assets/js/modules/registration.js?v=20261117b"></script>
 

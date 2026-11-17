@@ -48,6 +48,13 @@ interface RegPeriksaRepositoryInterface
      */
     public function hasClinicalRecords(NoRawat $noRawat): bool;
 
+    public function updateStatusAndAssignment(
+        NoRawat $noRawat,
+        string $stts,
+        ?string $kdPoli = null,
+        ?string $kdDokter = null,
+    ): void;
+
     public function countVisitsByPatient(NoRkmMedis $noRkmMedis): int;
 
     public function countVisitsByPatientAndPoli(NoRkmMedis $noRkmMedis, string $kdPoli): int;

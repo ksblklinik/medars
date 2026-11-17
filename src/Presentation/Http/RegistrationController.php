@@ -10,11 +10,13 @@ use App\Application\Registration\DTO\ShiftQueueCommand;
 use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
 use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
+use App\Application\Registration\UseCase\UpdateRegistrationStatusUseCase;
 use App\Domain\Registration\Entity\BookingRegistrasi;
 use App\Domain\Registration\Entity\RegPeriksa;
 use App\Domain\Registration\Repository\PasienRepositoryInterface;
 use App\Domain\Registration\Repository\PoliklinikRepositoryInterface;
 use App\Domain\Registration\Repository\RegPeriksaRepositoryInterface;
+use App\Domain\Registration\ValueObject\NoRawat;
 use App\Domain\Security\Entity\UserAccount;
 use App\Infrastructure\Realtime\EventBroadcasterInterface;
 use App\Infrastructure\Realtime\EventMessage;
@@ -32,7 +34,8 @@ final readonly class RegistrationController
         private ClinicalGuardShieldUseCase $clinicalGuardUseCase,
         private ViewRenderer $renderer,
         private ?EventBroadcasterInterface $broadcaster = null,
-        private ?NavigationBuilder $navBuilder = null
+        private ?NavigationBuilder $navBuilder = null,
+        private ?UpdateRegistrationStatusUseCase $updateStatusUseCase = null,
     ) {}
 
     /**
@@ -200,22 +203,60 @@ final readonly class RegistrationController
     public function apiListToday(array $queryParams = []): array
     {
         $date = (string) ($queryParams['date'] ?? date('Y-m-d'));
+        $from = trim((string) ($queryParams['from'] ?? $date)) ?: $date;
+        $to = trim((string) ($queryParams['to'] ?? $from)) ?: $from;
+        $sttsFilter = trim((string) ($queryParams['stts'] ?? ''));
 
-        $sql = "SELECT r.no_reg, r.no_rawat, r.no_rkm_medis, p.nm_pasien, 
+        $where = 'r.tgl_registrasi BETWEEN :from AND :to';
+        $params = ['from' => $from, 'to' => $to];
+
+        if ($sttsFilter === 'all') {
+            // show all including Batal
+        } elseif ($sttsFilter !== '') {
+            $where .= ' AND r.stts = :stts';
+            $params['stts'] = $sttsFilter;
+        } else {
+            $where .= " AND r.stts != 'Batal'";
+        }
+
+        $sql = "SELECT r.no_reg, r.no_rawat, r.tgl_registrasi, r.no_rkm_medis, p.nm_pasien,
                        pol.nm_poli, d.nm_dokter, pj.png_jawab, r.stts, r.status_bayar
                 FROM reg_periksa r
                 LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
                 LEFT JOIN poliklinik pol ON r.kd_poli = pol.kd_poli
                 LEFT JOIN dokter d ON r.kd_dokter = d.kd_dokter
                 LEFT JOIN penjab pj ON r.kd_pj = pj.kd_pj
-                WHERE r.tgl_registrasi = :tgl AND r.stts != 'Batal'
-                ORDER BY r.no_reg ASC";
+                WHERE {$where}
+                ORDER BY r.tgl_registrasi DESC, r.no_reg ASC";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['tgl' => $date]);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $this->jsonResponse($rows);
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiUpdateStatus(array $postData = []): array
+    {
+        try {
+            if ($this->updateStatusUseCase === null) {
+                throw new \DomainException('Layanan ubah status registrasi belum dikonfigurasi.');
+            }
+            $nr = new NoRawat((string) ($postData['no_rawat'] ?? ''));
+            $stts = trim((string) ($postData['stts'] ?? ''));
+            $kdPoli = isset($postData['kd_poli']) ? trim((string) $postData['kd_poli']) : null;
+            $kdDokter = isset($postData['kd_dokter']) ? trim((string) $postData['kd_dokter']) : null;
+
+            $this->updateStatusUseCase->execute($nr, $stts, $kdPoli, $kdDokter);
+
+            return $this->jsonResponse(['status' => 'success', 'message' => 'Status kunjungan berhasil diperbarui.']);
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
     }
 
     /**

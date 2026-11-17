@@ -306,6 +306,26 @@ final readonly class PdoRegPeriksaRepository implements RegPeriksaRepositoryInte
         ]);
     }
 
+    public function updateStatusAndAssignment(
+        NoRawat $noRawat,
+        string $stts,
+        ?string $kdPoli = null,
+        ?string $kdDokter = null,
+    ): void {
+        $sets = ['stts = :stts'];
+        $params = [':stts' => $stts, ':nr' => $noRawat->value()];
+        if ($kdPoli !== null && $kdPoli !== '') {
+            $sets[] = 'kd_poli = :poli';
+            $params[':poli'] = $kdPoli;
+        }
+        if ($kdDokter !== null && $kdDokter !== '') {
+            $sets[] = 'kd_dokter = :dokter';
+            $params[':dokter'] = $kdDokter;
+        }
+        $sql = 'UPDATE reg_periksa SET ' . implode(', ', $sets) . ' WHERE no_rawat = :nr';
+        $this->pdo->prepare($sql)->execute($params);
+    }
+
     public function updateStatus(NoRawat $noRawat, string $stts): void
     {
         $stmt = $this->pdo->prepare('UPDATE reg_periksa SET stts = :stts WHERE no_rawat = :no_rawat');

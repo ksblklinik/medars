@@ -23,11 +23,15 @@ use App\Application\Registration\UseCase\ClinicalGuardShieldUseCase;
 use App\Application\Registration\UseCase\DeleteMasterPasienUseCase;
 use App\Application\Registration\UseCase\RegisterInSiteUseCase;
 use App\Application\Registration\UseCase\SaveMasterPasienUseCase;
+use App\Application\Registration\UseCase\UpdateRegistrationStatusUseCase;
 use App\Application\Rme\UseCase\CreateSuratMedisUseCase;
 use App\Application\Rme\UseCase\DeleteOdontogramUseCase;
+use App\Application\Rme\UseCase\DeleteTindakanDokterUseCase;
 use App\Application\Rme\UseCase\SaveOdontogramUseCase;
 use App\Application\Rme\UseCase\SavePrbPrescriptionUseCase;
+use App\Application\Rme\UseCase\SaveResumeMedisUseCase;
 use App\Application\Rme\UseCase\SaveSoapUseCase;
+use App\Application\Rme\UseCase\SaveTindakanDokterUseCase;
 use App\Application\Support\UseCase\CreateLabOrderUseCase;
 use App\Application\Support\UseCase\CreateRadiologyOrderUseCase;
 use App\Application\Support\UseCase\DeleteLabOrderUseCase;
@@ -53,6 +57,7 @@ use App\Infrastructure\Persistence\PdoBookingRegistrasiRepository;
 use App\Infrastructure\Persistence\PdoBridgingQueueRepository;
 use App\Infrastructure\Persistence\PdoDataBarangRepository;
 use App\Infrastructure\Persistence\PdoDataIntegrityAuditRepository;
+use App\Infrastructure\Persistence\PdoDokterTindakanRepository;
 use App\Infrastructure\Persistence\PdoGudangBarangRepository;
 use App\Infrastructure\Persistence\PdoHomeCareRepository;
 use App\Infrastructure\Persistence\PdoIcdGroundingRepository;
@@ -230,7 +235,8 @@ final class HttpApplication
             $clinicalGuardUseCase,
             $this->renderer,
             $this->broadcaster,
-            $this->navBuilder
+            $this->navBuilder,
+            new UpdateRegistrationStatusUseCase($regRepo, $clinicalGuardUseCase, $tx)
         );
 
         $displayController = new DisplayQueueController(
@@ -247,6 +253,8 @@ final class HttpApplication
         $icdRepo = new PdoIcdGroundingRepository($this->pdo);
         $odoRepo = new PdoOdontogramRepository($this->pdo);
         $suratRepo = new PdoSuratMedisRepository($this->pdo);
+        $tindakanRepo = new PdoDokterTindakanRepository($this->pdo);
+        $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
 
         $dokterRalanController = new DokterRalanController(
             $this->pdo,
@@ -259,7 +267,11 @@ final class HttpApplication
             new DeleteOdontogramUseCase($odoRepo),
             new CreateSuratMedisUseCase($suratRepo, $tx),
             $this->renderer,
-            $this->navBuilder
+            $this->navBuilder,
+            $tindakanRepo,
+            new SaveTindakanDokterUseCase($tindakanRepo, $ledgerRepo, $tx),
+            new DeleteTindakanDokterUseCase($tindakanRepo, $ledgerRepo, $tx),
+            new SaveResumeMedisUseCase($tindakanRepo, $tx)
         );
 
         $barangRepo = new PdoDataBarangRepository($this->pdo);
@@ -278,7 +290,6 @@ final class HttpApplication
             $this->navBuilder
         );
 
-        $ledgerRepo = new PdoBillingLedgerRepository($this->pdo);
         $posRepo = new PdoPosApotekUmumRepository($this->pdo);
 
         $billingController = new BillingController(
@@ -475,6 +486,12 @@ final class HttpApplication
             $this->requireModuleAccess('pendaftaran');
             return $regController->apiListToday($queryParams);
         });
+        $router->post('/api/v1/registration/update-status', function () use ($regController, $postData, $rawBody, $headers): array {
+            $this->requireModuleAccess('pendaftaran');
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $regController->apiUpdateStatus($data);
+        });
 
         $router->post('/api/v1/registration/insite', function () use ($regController, $postData, $rawBody, $headers): array {
             $this->requireModuleAccess('pendaftaran');
@@ -540,6 +557,36 @@ final class HttpApplication
         $router->get('/api/v1/dokter-ralan/odontogram', function () use ($dokterRalanController, $queryParams): array {
             $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             return $dokterRalanController->apiListOdontogram($queryParams);
+        });
+        $router->get('/api/v1/dokter-ralan/tindakan/search', function () use ($dokterRalanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->apiSearchTindakan($queryParams);
+        });
+        $router->get('/api/v1/dokter-ralan/tindakan', function () use ($dokterRalanController, $queryParams): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->apiListTindakan($user, $queryParams);
+        });
+        $router->post('/api/v1/dokter-ralan/tindakan/save', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $dokterRalanController->apiSaveTindakan($user, $data);
+        });
+        $router->post('/api/v1/dokter-ralan/tindakan/delete', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $dokterRalanController->apiDeleteTindakan($user, $data);
+        });
+        $router->get('/api/v1/dokter-ralan/resume', function () use ($dokterRalanController, $queryParams): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->apiGetResume($user, $queryParams);
+        });
+        $router->post('/api/v1/dokter-ralan/resume', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $dokterRalanController->apiSaveResume($user, $data);
         });
         $router->post('/api/v1/dokter-ralan/soap', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
             $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);

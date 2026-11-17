@@ -68,6 +68,17 @@
             if (btnRefresh) {
                 btnRefresh.addEventListener('click', () => this.loadTodayRegistrations());
             }
+
+            const btnFilter = document.getElementById('btnFilterRegistrations');
+            if (btnFilter) {
+                btnFilter.addEventListener('click', () => this.loadTodayRegistrations());
+            }
+            ['regFilterFrom', 'regFilterTo', 'regFilterStts'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', () => this.loadTodayRegistrations());
+                }
+            });
         },
 
         openSearchPatientModal: function (initialQuery = '') {
@@ -263,12 +274,21 @@
 
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin me-1"></i> Memuat...</td></tr>';
 
+            const fromEl = document.getElementById('regFilterFrom');
+            const toEl = document.getElementById('regFilterTo');
+            const sttsEl = document.getElementById('regFilterStts');
+            const params = new URLSearchParams();
+            if (fromEl && fromEl.value) params.set('from', fromEl.value);
+            if (toEl && toEl.value) params.set('to', toEl.value);
+            if (sttsEl && sttsEl.value) params.set('stts', sttsEl.value);
+            const qs = params.toString();
+
             const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
-            fetcher('/api/v1/registration/today')
+            fetcher('/api/v1/registration/today' + (qs ? '?' + qs : ''))
                 .then(res => res.json())
                 .then(rows => {
                     if (!rows || rows.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Belum ada pasien terdaftar untuk hari ini.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Belum ada pasien terdaftar untuk periode ini.</td></tr>';
                         return;
                     }
 
@@ -277,6 +297,10 @@
                         const bayarBadge = r.status_bayar === 'Sudah Bayar' 
                             ? '<span class="badge bg-success-subtle text-success">Lunas</span>'
                             : '<span class="badge bg-warning-subtle text-warning-emphasis">Belum Bayar</span>';
+                        const currentStts = r.stts || 'Belum';
+                        const statusOptions = ['Belum', 'Sudah', 'Batal', 'Berkas Diterima', 'Dirujuk', 'Meninggal', 'Dirawat']
+                            .map(opt => `<option value="${this.escapeHtml(opt)}"${opt === currentStts ? ' selected' : ''}>${this.escapeHtml(opt)}</option>`)
+                            .join('');
 
                         return `
                             <tr>
@@ -296,14 +320,49 @@
                                     <span class="text-muted small">${this.escapeHtml(r.nm_dokter || '-')}</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge ${statusClass}">${this.escapeHtml(r.stts)}</span>
+                                    <span class="badge ${statusClass} d-block mb-1">${this.escapeHtml(currentStts)}</span>
+                                    <select class="form-select form-select-sm reg-status-select" data-no-rawat="${this.escapeHtml(r.no_rawat)}" aria-label="Ubah status kunjungan">
+                                        ${statusOptions}
+                                    </select>
                                 </td>
                             </tr>
                         `;
                     }).join('');
+
+                    tbody.querySelectorAll('.reg-status-select').forEach((sel) => {
+                        sel.addEventListener('change', (e) => {
+                            const noRawat = e.target.getAttribute('data-no-rawat');
+                            const newStts = e.target.value;
+                            this.updateRegistrationStatus(noRawat, newStts);
+                        });
+                    });
                 })
                 .catch(err => {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Gagal memuat daftar kunjungan.</td></tr>';
+                });
+        },
+
+        updateRegistrationStatus: function (noRawat, stts) {
+            if (!noRawat || !stts) return;
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/registration/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ no_rawat: noRawat, stts: stts }),
+            })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        this.showAlert('success', `Status <strong>${this.escapeHtml(noRawat)}</strong> diubah menjadi <strong>${this.escapeHtml(stts)}</strong>.`);
+                        this.loadTodayRegistrations();
+                    } else {
+                        this.showAlert('danger', this.escapeHtml(res.message || 'Gagal memperbarui status kunjungan.'));
+                        this.loadTodayRegistrations();
+                    }
+                })
+                .catch(() => {
+                    this.showAlert('danger', 'Gagal menghubungi server saat mengubah status kunjungan.');
+                    this.loadTodayRegistrations();
                 });
         },
 
