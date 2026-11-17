@@ -1773,4 +1773,38 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('ORG-123', $reloaded['body']);
         $this->assertStringContainsString('15000', $reloaded['body']);
     }
+
+    public function testDashboardTrendsAndAnnouncementsEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/dashboard');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Tren Kunjungan', $page['body']);
+        $this->assertStringContainsString('Pengumuman Internal', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $create = $this->app->handle(
+            'POST',
+            '/api/v1/dashboard/announcements/create',
+            rawBody: json_encode([
+                'judul' => 'Maintenance Server Malam',
+                'isi' => 'Dilakukan pukul 23:00 WIB.',
+                'prioritas' => 'Penting',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(201, $create['status']);
+        $annId = (int) json_decode($create['body'], true)['data']['id'];
+
+        $afterCreate = $this->app->handle('GET', '/dashboard');
+        $this->assertStringContainsString('Maintenance Server Malam', $afterCreate['body']);
+
+        $del = $this->app->handle(
+            'POST',
+            '/api/v1/dashboard/announcements/delete',
+            rawBody: json_encode(['id' => $annId]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $del['status']);
+    }
 }

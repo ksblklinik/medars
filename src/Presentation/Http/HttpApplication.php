@@ -582,6 +582,8 @@ final class HttpApplication
                 'kasir_pending' => $safeCount("SELECT COUNT(DISTINCT no_rawat) FROM mlite_billing_ledger WHERE status = 'Pending'"),
             ];
 
+            $dashboardSummaryRepo = new \App\Infrastructure\Persistence\PdoDashboardSummaryRepository($this->pdo);
+
             return $this->renderer->render('dashboard', [
                 'judul' => 'Dashboard Utama',
                 'klinik_nama' => 'SIMRS Medars',
@@ -592,10 +594,53 @@ final class HttpApplication
                 'csrf_token' => $this->csrfGuard->getToken(),
                 'navigations' => $this->navBuilder->buildForUser($user),
                 'dashboard_stats' => $stats,
+                'dashboard_trends' => $dashboardSummaryRepo->getSevenDayTrends(),
+                'dashboard_announcements' => $dashboardSummaryRepo->listAnnouncements(8),
             ]);
         };
         $router->get('/', $renderDashboard);
         $router->get('/dashboard', $renderDashboard);
+
+        $router->post('/api/v1/dashboard/announcements/create', function () use ($postData, $rawBody, $headers): array {
+            $user = $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            $judul = trim((string) ($data['judul'] ?? ''));
+            $isi = trim((string) ($data['isi'] ?? ''));
+            if ($judul === '' || $isi === '') {
+                return [
+                    'status' => 422,
+                    'headers' => ['Content-Type' => 'application/json; charset=utf-8'],
+                    'body' => json_encode(['status' => 'error', 'message' => 'Judul dan isi pengumuman wajib diisi.'], JSON_UNESCAPED_UNICODE),
+                ];
+            }
+            $repo = new \App\Infrastructure\Persistence\PdoDashboardSummaryRepository($this->pdo);
+            $created = $repo->createAnnouncement([
+                'judul' => $judul,
+                'isi' => $isi,
+                'prioritas' => (string) ($data['prioritas'] ?? 'Info'),
+                'penulis' => $user->getFullname() ?: $user->getUsername(),
+            ]);
+            return [
+                'status' => 201,
+                'headers' => ['Content-Type' => 'application/json; charset=utf-8'],
+                'body' => json_encode(['status' => 'success', 'data' => $created], JSON_UNESCAPED_UNICODE),
+            ];
+        });
+
+        $router->post('/api/v1/dashboard/announcements/delete', function () use ($postData, $rawBody, $headers): array {
+            $this->requireAuthenticatedUser();
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            $id = (int) ($data['id'] ?? 0);
+            $repo = new \App\Infrastructure\Persistence\PdoDashboardSummaryRepository($this->pdo);
+            $ok = $id > 0 && $repo->deleteAnnouncement($id);
+            return [
+                'status' => $ok ? 200 : 404,
+                'headers' => ['Content-Type' => 'application/json; charset=utf-8'],
+                'body' => json_encode(['status' => $ok ? 'success' : 'error'], JSON_UNESCAPED_UNICODE),
+            ];
+        });
 
         $router->get('/pendaftaran', function () use ($regController): array {
             $user = $this->requireModuleAccess('pendaftaran');

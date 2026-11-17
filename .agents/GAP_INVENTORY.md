@@ -95,7 +95,7 @@ Dokumen ini menjadi daftar kerja resmi untuk mengejar paritas fitur aplikasi lam
 | 52 | `mlite_logs` | ✅ Selesai | Sudah ada `/audit`, rotasi log operasional, & UI Audit Trail Viewer (`mlite_logs` berfilter di `/api/v1/audit/logs`). |
 | 53 | `mlite_api_key` | ✅ Selesai | Manajemen API Key Eksternal (`/api-keys`): generate key ter-hash SHA-256 (`raw_key` tampil sekali), whitelist IP, scope method, toggle aktif/nonaktif, & hapus (`mlite_api_keys`). |
 | 54 | `modules` | ✅ Selesai | UI Manajer Modul SIMRS (`/modules`): daftar modul aktif/nonaktif/semua, pencarian, proteksi modul inti (`dashboard`, `users`, `settings`, `modules`, `profil`), toggle aktivasi, & atur urutan (`mlite_modules`). |
-| 55 | `dashboard` | 🟡 Parsial | Sudah ada 4 KPI + grid menu; belum ada grafik kunjungan/pendapatan & pengumuman internal. |
+| 55 | `dashboard` | ✅ Selesai | Dashboard utama (`/dashboard`): 4 KPI real-time, grid menu modul, grafik tren kunjungan & pendapatan 7 hari, serta pengumuman internal staf (`mlite_pengumuman`). |
 | 56 | `website` | ⚪ Opsional | CMS halaman depan website klinik publik. |
 | 57 | `bantuan` | ⚪ Opsional | Halaman dokumentasi/panduan penggunaan internal. |
 | 58 | `afm` | ⚪ Legacy/Khusus | Modul integrasi spesifik legacy `afm`. |

@@ -7,6 +7,9 @@
         'lab_pending' => 0,
     ];
     $navList = is_array($navigations ?? null) ? $navigations : [];
+    $trends = is_array($dashboard_trends ?? null) ? $dashboard_trends : [];
+    $announcements = is_array($dashboard_announcements ?? null) ? $dashboard_announcements : [];
+    $maxVisits = max(1, ...array_map(static fn (array $t): int => (int) ($t['kunjungan'] ?? 0), $trends ?: [['kunjungan' => 0]]));
 ?>
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
@@ -84,7 +87,7 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white fw-bold small text-medical-teal py-2">
                 <i class="fa fa-keyboard me-1"></i> Pintasan Keyboard Operasional
             </div>
@@ -95,5 +98,104 @@
                 <div class="d-flex justify-content-between"><span>Reset Form / Tutup Modal</span><span><kbd>F9</kbd> / <kbd>Esc</kbd></span></div>
             </div>
         </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white fw-bold small text-medical-teal py-2">
+                <i class="fa fa-chart-column me-1"></i> Tren Kunjungan &amp; Pendapatan (7 Hari)
+            </div>
+            <div class="card-body small">
+                <?php if ($trends === []): ?>
+                    <div class="text-muted">Belum ada data tren 7 hari.</div>
+                <?php else: ?>
+                    <?php foreach ($trends as $t): ?>
+                        <?php
+                            $visits = (int) ($t['kunjungan'] ?? 0);
+                            $rev = (float) ($t['pendapatan'] ?? 0);
+                            $pct = (int) round(($visits / $maxVisits) * 100);
+                        ?>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span><?= $this->e(substr((string) ($t['tanggal'] ?? ''), 5)) ?></span>
+                                <span class="fw-semibold"><?= $visits ?> psn &middot; Rp <?= number_format($rev, 0, ',', '.') ?></span>
+                            </div>
+                            <div class="progress" style="height:6px;">
+                                <div class="progress-bar" role="progressbar" style="width:<?= $pct ?>%; background-color:#00897b;"></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm" id="dashboardAnnouncementsCard" data-csrf="<?= $this->e($csrf_token ?? '') ?>">
+            <div class="card-header bg-white fw-bold small text-medical-teal py-2 d-flex justify-content-between align-items-center">
+                <span><i class="fa fa-bullhorn me-1"></i> Pengumuman Internal</span>
+            </div>
+            <div class="card-body small">
+                <form id="dashAnnouncementForm" class="mb-3">
+                    <input type="text" id="dashAnnTitle" class="form-control form-control-sm mb-1" placeholder="Judul pengumuman..." required>
+                    <textarea id="dashAnnBody" class="form-control form-control-sm mb-1" rows="2" placeholder="Isi pengumuman staf..." required></textarea>
+                    <div class="d-flex gap-1">
+                        <select id="dashAnnPriority" class="form-select form-select-sm" style="max-width:110px;">
+                            <option value="Info">Info</option>
+                            <option value="Penting">Penting</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm text-white flex-grow-1" style="background-color:#00897b;">Terbitkan</button>
+                    </div>
+                </form>
+                <div id="dashAnnList">
+                    <?php if ($announcements === []): ?>
+                        <div class="text-muted">Belum ada pengumuman aktif.</div>
+                    <?php else: ?>
+                        <?php foreach ($announcements as $ann): ?>
+                            <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <span class="fw-bold">
+                                        <span class="badge <?= ($ann['prioritas'] ?? '') === 'Penting' ? 'bg-danger' : 'bg-info text-dark' ?> me-1"><?= $this->e($ann['prioritas'] ?? 'Info') ?></span>
+                                        <?= $this->e($ann['judul'] ?? '') ?>
+                                    </span>
+                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 js-del-ann" data-id="<?= (int) ($ann['id'] ?? 0) ?>" title="Hapus">&times;</button>
+                                </div>
+                                <div class="mt-1"><?= $this->e($ann['isi'] ?? '') ?></div>
+                                <div class="text-muted" style="font-size:11px;"><?= $this->e($ann['penulis'] ?? 'Admin') ?> &middot; <?= $this->e($ann['created_at'] ?? '') ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <script>
+        (() => {
+            const card = document.getElementById('dashboardAnnouncementsCard');
+            const form = document.getElementById('dashAnnouncementForm');
+            if (!card || !form) return;
+            const csrf = card.dataset.csrf || '';
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const res = await fetch('/api/v1/dashboard/announcements/create', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+                    body: JSON.stringify({
+                        judul: document.getElementById('dashAnnTitle').value.trim(),
+                        isi: document.getElementById('dashAnnBody').value.trim(),
+                        prioritas: document.getElementById('dashAnnPriority').value
+                    })
+                });
+                if (res.ok) window.location.reload();
+            });
+            card.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.js-del-ann');
+                if (!btn) return;
+                const res = await fetch('/api/v1/dashboard/announcements/delete', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+                    body: JSON.stringify({ id: Number(btn.dataset.id) })
+                });
+                if (res.ok) window.location.reload();
+            });
+        })();
+        </script>
     </div>
 </div>

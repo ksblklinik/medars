@@ -749,6 +749,16 @@ final class SchemaMigrator
                 updated_at VARCHAR(25) NOT NULL DEFAULT ''
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_pengumuman (
+                id {$bigAutoIncPk},
+                judul VARCHAR(150) NOT NULL,
+                isi TEXT NOT NULL,
+                prioritas VARCHAR(20) NOT NULL DEFAULT 'Info',
+                penulis VARCHAR(60) NOT NULL DEFAULT 'Admin',
+                is_active INT NOT NULL DEFAULT 1,
+                created_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,
