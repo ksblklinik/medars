@@ -105,7 +105,21 @@
         revBody.innerHTML = data.revenue_by_claim.length
             ? data.revenue_by_claim.map((r) => `<tr><td class="ps-2">${escapeHtml(r.claim_type)} (${escapeHtml(r.total_items)})</td><td class="text-end pe-2 fw-bold">Rp ${Number(r.total_amount).toLocaleString('id-ID')}</td></tr>`).join('')
             : '<tr><td class="text-center text-muted p-2 small">Tidak ada data</td></tr>';
+
+        const recBody = document.getElementById('repReconcileBody');
+        if (recBody) {
+            const recs = Array.isArray(data.reconciliation) ? data.reconciliation : [];
+            recBody.innerHTML = recs.length
+                ? recs.map((o) => `<tr><td class="font-monospace">${escapeHtml(o.no_rawat)}</td><td>${escapeHtml(o.nm_pasien)}</td><td>${escapeHtml(o.item_name)}</td><td><span class="badge bg-secondary">${escapeHtml(o.status)}</span></td><td class="text-end">Rp ${Number(o.total_amount).toLocaleString('id-ID')}</td></tr>`).join('')
+                : '<tr><td colspan="5" class="text-center text-muted p-2 small">Tidak ada order pending/cancelled/void.</td></tr>';
+        }
     }
+
+    document.getElementById('btnExportLaporanCsv')?.addEventListener('click', () => {
+        const from = document.getElementById('repFrom')?.value || '';
+        const to = document.getElementById('repTo')?.value || '';
+        window.open(`/api/v1/laporan/export-csv?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, '_blank');
+    });
 
     document.getElementById('btnRefreshLab')?.addEventListener('click', loadLabOrders);
     document.getElementById('btnRefreshRad')?.addEventListener('click', loadRadOrders);

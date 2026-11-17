@@ -880,6 +880,10 @@ final class HttpApplication
             $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);
             return $supportController->operationalReports($queryParams);
         });
+        $router->get('/api/v1/laporan/export-csv', function () use ($supportController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['laporan', 'kasir', 'laboratorium', 'radiologi']);
+            return $supportController->exportOperationalCsv($queryParams);
+        });
 
         // Bridging BPJS, SatuSehat FHIR & HFIS LEAN (PLN-30)
         $router->get('/bridging', function () use ($bridgingController): array {

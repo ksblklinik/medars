@@ -20,4 +20,9 @@ interface OperationalReportRepositoryInterface
      * @return list<array{claim_type: string, total_items: int, total_amount: float}>
      */
     public function getRevenueByClaimType(string $fromDate, string $toDate): array;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function getOrderReconciliationReport(string $fromDate, string $toDate): array;
 }

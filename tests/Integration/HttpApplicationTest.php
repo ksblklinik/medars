@@ -1317,4 +1317,27 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(1, $json['kpi']['total_kunjungan']);
         $this->assertCount(1, $json['lean_poli']);
     }
+
+    public function testLaporanCsvAndRekonsiliasiEndToEnd(): void
+    {
+        $today = date('Y-m-d');
+        $this->pdo->exec("
+            INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('000110', 'Dewi', '1990-01-01', 'P');
+            INSERT INTO reg_periksa (no_reg, no_rawat, tgl_registrasi, jam_reg, kd_dokter, no_rkm_medis, kd_poli, kd_pj, status_bayar)
+            VALUES ('001', '2026/11/17/000110', '{$today}', '08:00:00', 'DR01', '000110', 'U01', 'A09', 'Belum Bayar');
+            INSERT INTO mlite_billing_ledger (no_rawat, category, item_code, item_name, qty, unit_price, total_amount, claim_type, status, provider_id)
+            VALUES ('2026/11/17/000110', 'Lab', 'LAB01', 'Darah Lengkap', 1, 75000, 75000, 'Tunai', 'Cancelled', 'PL-1');
+        ");
+
+        $this->session['user_id'] = 1;
+        $rep = $this->app->handle('GET', '/api/v1/laporan/operasional', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $rep['status']);
+        $json = json_decode($rep['body'], true);
+        $this->assertCount(1, $json['reconciliation']);
+
+        $csv = $this->app->handle('GET', '/api/v1/laporan/export-csv', queryParams: ['from' => $today, 'to' => $today]);
+        $this->assertSame(200, $csv['status']);
+        $this->assertStringContainsString('text/csv', $csv['headers']['Content-Type']);
+        $this->assertStringContainsString('Darah Lengkap', $csv['body']);
+    }
 }

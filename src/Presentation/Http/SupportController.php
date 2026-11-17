@@ -243,7 +243,39 @@ final readonly class SupportController
             'visits_by_poli' => $this->reportRepo->getVisitSummaryByPoli($from, $to),
             'top_diseases' => $this->reportRepo->getTopDiseases($from, $to, 10),
             'revenue_by_claim' => $this->reportRepo->getRevenueByClaimType($from, $to),
+            'reconciliation' => $this->reportRepo->getOrderReconciliationReport($from, $to),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function exportOperationalCsv(array $query): array
+    {
+        $today = date('Y-m-d');
+        $from = trim((string) ($query['from'] ?? $today));
+        $to = trim((string) ($query['to'] ?? $today));
+
+        $lines = ["Section,Key,Label,Count,Amount"];
+        foreach ($this->reportRepo->getVisitSummaryByPoli($from, $to) as $v) {
+            $lines[] = sprintf('Kunjungan,"%s","%s",%d,0', $v['kd_poli'], str_replace('"', '""', $v['nm_poli']), $v['total_kunjungan']);
+        }
+        foreach ($this->reportRepo->getRevenueByClaimType($from, $to) as $r) {
+            $lines[] = sprintf('Pendapatan,"%s","%s",%d,%.2f', $r['claim_type'], $r['claim_type'], $r['total_items'], $r['total_amount']);
+        }
+        foreach ($this->reportRepo->getOrderReconciliationReport($from, $to) as $o) {
+            $lines[] = sprintf('Rekonsiliasi,"%s","%s (%s)",1,%.2f', $o['no_rawat'], str_replace('"', '""', (string) $o['item_name']), $o['status'], (float) $o['total_amount']);
+        }
+
+        return [
+            'status' => 200,
+            'headers' => [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => "attachment; filename=\"laporan_operasional_{$from}_{$to}.csv\"",
+            ],
+            'body' => implode("\n", $lines) . "\n",
+        ];
     }
 
     /**

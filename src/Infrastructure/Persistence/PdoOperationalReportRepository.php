@@ -94,4 +94,21 @@ final readonly class PdoOperationalReportRepository implements OperationalReport
         }
         return $result;
     }
+
+    public function getOrderReconciliationReport(string $fromDate, string $toDate): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT l.no_rawat, l.category, l.item_code, l.item_name, l.total_amount, l.claim_type, l.status, l.provider_id,
+                    r.tgl_registrasi, COALESCE(p.nm_pasien, '-') AS nm_pasien
+             FROM mlite_billing_ledger l
+             INNER JOIN reg_periksa r ON l.no_rawat = r.no_rawat
+             LEFT JOIN pasien p ON r.no_rkm_medis = p.no_rkm_medis
+             WHERE r.tgl_registrasi BETWEEN :from AND :to
+               AND l.status IN ('Pending', 'Cancelled', 'Void')
+             ORDER BY r.tgl_registrasi DESC, l.id DESC
+             LIMIT 200"
+        );
+        $stmt->execute([':from' => $fromDate, ':to' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

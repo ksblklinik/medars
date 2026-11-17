@@ -197,6 +197,9 @@
                         <button type="button" class="btn btn-sm btn-medical-teal" id="btnLoadReports">
                             <i class="fa fa-search me-1"></i> Tampilkan Laporan
                         </button>
+                        <button type="button" class="btn btn-sm btn-outline-teal" id="btnExportLaporanCsv">
+                            <i class="fa fa-file-csv me-1"></i> Export CSV/Excel
+                        </button>
                     </div>
                 </div>
                 <div class="row g-3">
@@ -224,9 +227,20 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white fw-bold small text-medical-teal">Rekonsiliasi Order (Pending / Cancelled / Void)</div>
+                            <div class="card-body p-0 table-responsive">
+                                <table class="table table-sm mb-0 small">
+                                    <thead class="table-light"><tr><th>No. Rawat</th><th>Pasien</th><th>Item Order</th><th>Status</th><th class="text-end">Nominal</th></tr></thead>
+                                    <tbody id="repReconcileBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script src="/assets/js/modules/support.js?v=20261117b" defer></script>
+<script src="/assets/js/modules/support.js?v=20261117c" defer></script>
