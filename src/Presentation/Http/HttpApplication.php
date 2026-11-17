@@ -501,6 +501,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $ruangTindakanController = new RuangTindakanController(
+            new \App\Infrastructure\Persistence\PdoRuangTindakanRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1611,6 +1617,31 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $operasiController->apiLaporanSave($data);
+        });
+
+        $router->get('/ruang-tindakan', function () use ($ruangTindakanController): array {
+            $user = $this->requireAnyServiceModuleAccess(['ruang_tindakan', 'rawat_jalan', 'igd', 'admin']);
+            return $ruangTindakanController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/ruang-tindakan/cetak', function () use ($ruangTindakanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['ruang_tindakan', 'rawat_jalan', 'igd', 'admin']);
+            return $ruangTindakanController->printLaporan($queryParams);
+        });
+        $router->get('/api/v1/ruang-tindakan/list', function () use ($ruangTindakanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['ruang_tindakan', 'rawat_jalan', 'igd', 'admin']);
+            return $ruangTindakanController->apiList($queryParams);
+        });
+        $router->post('/api/v1/ruang-tindakan/save', function () use ($ruangTindakanController, $postData, $rawBody, $headers): array {
+            $user = $this->requireAnyServiceModuleAccess(['ruang_tindakan', 'rawat_jalan', 'igd', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $ruangTindakanController->apiSave($user, $data);
+        });
+        $router->post('/api/v1/ruang-tindakan/delete', function () use ($ruangTindakanController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['ruang_tindakan', 'rawat_jalan', 'igd', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $ruangTindakanController->apiDelete($data);
         });
 
         return $router->dispatch($method, $path);

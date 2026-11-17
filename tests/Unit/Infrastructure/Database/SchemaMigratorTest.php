@@ -58,6 +58,7 @@ class SchemaMigratorTest extends TestCase
             'paket_operasi',
             'booking_operasi',
             'laporan_operasi',
+            'mlite_followup_operatif',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

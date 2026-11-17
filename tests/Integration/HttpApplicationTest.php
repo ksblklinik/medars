@@ -1907,4 +1907,44 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(201, $laporan['status']);
     }
+
+    public function testRuangTindakanEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/ruang-tindakan');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Ruang Tindakan', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/ruang-tindakan/save',
+            rawBody: json_encode([
+                'no_rawat' => '2026/11/17/000040',
+                'kd_jenis_prw' => 'TIND-02',
+                'diagnosis' => 'Abses Manus',
+                'laporan_operasi' => 'Insisi & drainase abses.',
+                'status' => 'Selesai',
+            ]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+        $id = (int) json_decode($save['body'], true)['data']['id'];
+
+        $list = $this->app->handle('GET', '/api/v1/ruang-tindakan/list', queryParams: ['q' => 'Abses']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+
+        $cetak = $this->app->handle('GET', '/ruang-tindakan/cetak', queryParams: ['id' => $id]);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('Abses Manus', $cetak['body']);
+
+        $del = $this->app->handle(
+            'POST',
+            '/api/v1/ruang-tindakan/delete',
+            rawBody: json_encode(['id' => $id]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $del['status']);
+    }
 }

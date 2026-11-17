@@ -841,6 +841,23 @@ final class SchemaMigrator
                 laporan_operasi TEXT NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_followup_operatif (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                kd_jenis_prw VARCHAR(20) NOT NULL,
+                tgl_order VARCHAR(15) NOT NULL,
+                tgl_tindakan VARCHAR(15) NOT NULL,
+                diagnosis VARCHAR(200) NOT NULL DEFAULT '-',
+                laporan_operasi TEXT NOT NULL,
+                catatan TEXT NOT NULL,
+                kd_dokter VARCHAR(20) NOT NULL DEFAULT '-',
+                kd_paramedis1 VARCHAR(20) NOT NULL DEFAULT '',
+                kd_paramedis2 VARCHAR(20) NOT NULL DEFAULT '',
+                nm_petugas VARCHAR(80) NOT NULL DEFAULT 'Sistem',
+                tgl_approve VARCHAR(25) NOT NULL DEFAULT '',
+                status VARCHAR(20) NOT NULL DEFAULT 'Menunggu'
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

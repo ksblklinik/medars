@@ -87,6 +87,14 @@ final class NavigationBuilder
                 'modules' => ['operasi', 'rawat_inap', 'dokter_ranap', 'admin'],
             ],
             [
+                'title' => 'Ruang Tindakan',
+                'icon' => 'fa-kit-medical',
+                'route' => '/ruang-tindakan',
+                'category' => 'Layanan',
+                'module_key' => 'ruang_tindakan',
+                'modules' => ['ruang_tindakan', 'rawat_jalan', 'igd', 'admin'],
+            ],
+            [
                 'title' => 'Surat Medis',
                 'icon' => 'fa-file-medical',
                 'route' => '/surat',
