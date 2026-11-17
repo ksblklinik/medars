@@ -739,6 +739,29 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $regController->apiShiftQueue($data);
         });
+        $router->get('/pendaftaran/cetak', function () use ($regController, $queryParams): array {
+            $this->requireModuleAccess('pendaftaran');
+            return $regController->printAntrean($queryParams);
+        });
+        $router->post('/api/v1/registration/change-poli-dokter', function () use ($regController, $postData, $rawBody, $headers): array {
+            $this->requireModuleAccess('pendaftaran');
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $regController->apiChangePoliDokter($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->get('/api/v1/registration/berkas', function () use ($regController, $queryParams): array {
+            $this->requireModuleAccess('pendaftaran');
+            return $regController->apiBerkasList($queryParams);
+        });
+        $router->post('/api/v1/registration/berkas-upload', function () use ($regController, $postData, $rawBody, $headers): array {
+            $this->requireModuleAccess('pendaftaran');
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $regController->apiBerkasUpload($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
+        $router->post('/api/v1/registration/berkas-delete', function () use ($regController, $postData, $rawBody, $headers): array {
+            $this->requireModuleAccess('pendaftaran');
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            return $regController->apiBerkasDelete($this->parseJsonOrPost($rawBody, $postData, $headers));
+        });
 
         $router->post('/api/v1/queue/call', function () use ($displayController, $postData, $rawBody, $headers): array {
             $this->requireAnyServiceModuleAccess(['pendaftaran', 'dokter_ralan', 'rawat_jalan', 'igd']);

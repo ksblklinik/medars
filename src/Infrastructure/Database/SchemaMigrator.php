@@ -1010,6 +1010,16 @@ final class SchemaMigrator
                 uploaded_at VARCHAR(25) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS berkas_digital_perawatan (
+                id {$bigAutoIncPk},
+                no_rawat VARCHAR(20) NOT NULL,
+                kode VARCHAR(30) NOT NULL DEFAULT 'BERKAS',
+                nama_file VARCHAR(150) NOT NULL,
+                mime_type VARCHAR(80) NOT NULL DEFAULT 'application/pdf',
+                lokasi_file VARCHAR(255) NOT NULL DEFAULT '',
+                uploaded_at VARCHAR(25) NOT NULL
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

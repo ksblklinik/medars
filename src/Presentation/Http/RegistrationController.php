@@ -320,6 +320,145 @@ final readonly class RegistrationController
     }
 
     /**
+     * @param array<string, mixed> $post
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiChangePoliDokter(array $post): array
+    {
+        $noRawat = trim((string) ($post['no_rawat'] ?? ''));
+        $kdPoli = trim((string) ($post['kd_poli'] ?? ''));
+        $kdDokter = trim((string) ($post['kd_dokter'] ?? ''));
+        if ($noRawat === '' || $kdPoli === '' || $kdDokter === '') {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'No. Rawat, Poliklinik, dan Dokter wajib diisi.'], 422);
+        }
+        $stmt = $this->pdo->prepare('UPDATE reg_periksa SET kd_poli = :kp, kd_dokter = :kd WHERE no_rawat = :nr');
+        $stmt->execute([':kp' => $kdPoli, ':kd' => $kdDokter, ':nr' => $noRawat]);
+        if ($stmt->rowCount() === 0) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Kunjungan tidak ditemukan.'], 404);
+        }
+        return $this->jsonResponse(['status' => 'success', 'message' => 'Poliklinik & Dokter diperbarui.']);
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiBerkasList(array $query = []): array
+    {
+        $noRawat = trim((string) ($query['no_rawat'] ?? ''));
+        $sql = 'SELECT id, no_rawat, kode, nama_file, mime_type, lokasi_file, uploaded_at FROM berkas_digital_perawatan';
+        $params = [];
+        if ($noRawat !== '') {
+            $sql .= ' WHERE no_rawat = :nr';
+            $params[':nr'] = $noRawat;
+        }
+        $sql .= ' ORDER BY id DESC LIMIT 100';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $this->jsonResponse(['status' => 'success', 'data' => $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []]);
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiBerkasUpload(array $post): array
+    {
+        $noRawat = trim((string) ($post['no_rawat'] ?? ''));
+        $kode = trim((string) ($post['kode'] ?? 'BERKAS')) ?: 'BERKAS';
+        $namaFile = trim((string) ($post['nama_file'] ?? ''));
+        $mime = trim((string) ($post['mime_type'] ?? 'application/pdf')) ?: 'application/pdf';
+        if ($noRawat === '' || $namaFile === '') {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'No. Rawat dan nama file wajib diisi.'], 422);
+        }
+        if (!in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'], true)) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'Format berkas harus PDF/JPG/PNG/WEBP.'], 422);
+        }
+        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($namaFile)) ?: 'berkas';
+        $lokasi = 'berkas_ralan/' . str_replace('/', '_', $noRawat) . '_' . uniqid('', true) . '_' . $safeName;
+        $rawBase64 = trim((string) ($post['content_base64'] ?? ''));
+        if ($rawBase64 !== '') {
+            if (str_contains($rawBase64, ',')) {
+                $rawBase64 = substr($rawBase64, strpos($rawBase64, ',') + 1);
+            }
+            $binary = base64_decode($rawBase64, true);
+            if ($binary !== false) {
+                $dir = dirname(__DIR__, 3) . '/storage/berkas_ralan';
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0775, true);
+                }
+                file_put_contents(dirname(__DIR__, 3) . '/storage/' . $lokasi, $binary);
+            }
+        }
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO berkas_digital_perawatan (no_rawat, kode, nama_file, mime_type, lokasi_file, uploaded_at)
+             VALUES (:nr, :k, :nf, :mt, :lf, :ua)'
+        );
+        $stmt->execute([
+            ':nr' => $noRawat,
+            ':k' => $kode,
+            ':nf' => $safeName,
+            ':mt' => $mime,
+            ':lf' => $lokasi,
+            ':ua' => date('Y-m-d H:i:s'),
+        ]);
+        return $this->jsonResponse(['status' => 'success', 'data' => ['id' => (int) $this->pdo->lastInsertId(), 'nama_file' => $safeName]], 201);
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function apiBerkasDelete(array $post): array
+    {
+        $id = (int) ($post['id'] ?? 0);
+        if ($id <= 0) {
+            return $this->jsonResponse(['status' => 'error', 'message' => 'ID berkas tidak valid.'], 422);
+        }
+        $stmt = $this->pdo->prepare('DELETE FROM berkas_digital_perawatan WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        return $this->jsonResponse(['status' => $stmt->rowCount() > 0 ? 'success' : 'error'], $stmt->rowCount() > 0 ? 200 : 404);
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    public function printAntrean(array $query = []): array
+    {
+        $noRawat = trim((string) ($query['no_rawat'] ?? ''));
+        $stmt = $this->pdo->prepare(
+            'SELECT r.no_rawat, r.no_reg, r.tgl_registrasi, r.jam_reg, r.stts, p.no_rkm_medis, p.nm_pasien, pol.nm_poli, d.nm_dokter, pj.png_jawab
+             FROM reg_periksa r
+             LEFT JOIN pasien p ON p.no_rkm_medis = r.no_rkm_medis
+             LEFT JOIN poliklinik pol ON pol.kd_poli = r.kd_poli
+             LEFT JOIN dokter d ON d.kd_dokter = r.kd_dokter
+             LEFT JOIN penjab pj ON pj.kd_pj = r.kd_pj
+             WHERE r.no_rawat = :nr LIMIT 1'
+        );
+        $stmt->execute([':nr' => $noRawat]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return ['status' => 404, 'headers' => ['Content-Type' => 'text/html; charset=utf-8'], 'body' => '<h3>Data kunjungan tidak ditemukan.</h3>'];
+        }
+        $e = static fn (mixed $v): string => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bukti Antrean ' . $e($row['no_reg']) . '</title>'
+            . '<style>body{font-family:monospace;max-width:340px;margin:20px auto;font-size:13px;}@media print{.no-print{display:none;}}</style></head><body>'
+            . '<div class="no-print" style="margin-bottom:8px;"><button onclick="window.print()">Cetak Antrean</button></div>'
+            . '<h3 style="text-align:center;margin:0;">BUKTI ANTREAN RAWAT JALAN</h3><hr>'
+            . '<div style="text-align:center;font-size:28px;font-weight:bold;margin:8px 0;">' . $e($row['no_reg']) . '</div>'
+            . '<div>No. Rawat: ' . $e($row['no_rawat']) . '</div>'
+            . '<div>No. RM: ' . $e($row['no_rkm_medis']) . '</div>'
+            . '<div>Pasien: <strong>' . $e($row['nm_pasien']) . '</strong></div>'
+            . '<div>Poliklinik: ' . $e($row['nm_poli']) . '</div>'
+            . '<div>Dokter: ' . $e($row['nm_dokter']) . '</div>'
+            . '<div>Penjamin: ' . $e($row['png_jawab']) . '</div>'
+            . '<div>Tanggal: ' . $e($row['tgl_registrasi']) . ' ' . $e($row['jam_reg']) . '</div>'
+            . '</body></html>';
+        return ['status' => 200, 'headers' => ['Content-Type' => 'text/html; charset=utf-8'], 'body' => $html];
+    }
+
+    /**
      * @param mixed $data
      * @return array{status: int, headers: array<string, string>, body: string}
      */

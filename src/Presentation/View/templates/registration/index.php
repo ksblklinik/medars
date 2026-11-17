@@ -190,10 +190,93 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="border-top pt-2 mt-2 small" id="regVisitTools">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                            <input type="text" id="regToolNoRawat" class="form-control form-control-sm" style="max-width:170px;" placeholder="No. Rawat terpilih">
+                            <button type="button" id="btnRegPrintAntrean" class="btn btn-xs btn-outline-secondary"><i class="fa fa-print me-1"></i>Cetak Antrean</button>
+                            <button type="button" id="btnRegChangePoli" class="btn btn-xs btn-outline-primary"><i class="fa fa-exchange-alt me-1"></i>Ubah ke Poli/Dokter Form</button>
+                            <a href="/surat" class="btn btn-xs btn-outline-teal"><i class="fa fa-share me-1"></i>Rujukan Internal</a>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <input type="file" id="regBerkasFile" class="form-control form-control-sm" style="max-width:230px;" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                            <button type="button" id="btnRegUploadBerkas" class="btn btn-xs btn-teal text-white"><i class="fa fa-upload me-1"></i>Upload Berkas Kunjungan</button>
+                            <span id="regBerkasCount" class="text-muted"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tbody = document.getElementById('tbodyRegistrations');
+    const nrInput = document.getElementById('regToolNoRawat');
+    const fetcher = (url, opts) => (window.MedarsApp && window.MedarsApp.apiFetch) ? window.MedarsApp.apiFetch(url, opts) : fetch(url, opts);
+
+    tbody?.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr');
+        const code = tr?.querySelector('.font-monospace')?.textContent?.trim();
+        if (code && code.includes('/') && nrInput) {
+            nrInput.value = code;
+            fetcher('/api/v1/registration/berkas?no_rawat=' + encodeURIComponent(code))
+                .then(r => r.json())
+                .then(d => {
+                    const el = document.getElementById('regBerkasCount');
+                    if (el) el.textContent = `Berkas: ${(d.data || []).length} file`;
+                });
+        }
+    });
+
+    document.getElementById('btnRegPrintAntrean')?.addEventListener('click', () => {
+        const nr = nrInput?.value.trim();
+        if (!nr) return alert('Isi atau klik No. Rawat terlebih dahulu.');
+        window.open('/pendaftaran/cetak?no_rawat=' + encodeURIComponent(nr), '_blank');
+    });
+
+    document.getElementById('btnRegChangePoli')?.addEventListener('click', async () => {
+        const nr = nrInput?.value.trim();
+        const kp = document.getElementById('selectPoli')?.value;
+        const kd = document.getElementById('selectDokter')?.value;
+        if (!nr || !kp || !kd) return alert('Pilih No. Rawat, Poliklinik, dan Dokter.');
+        const res = await fetcher('/api/v1/registration/change-poli-dokter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ no_rawat: nr, kd_poli: kp, kd_dokter: kd }),
+        });
+        const json = await res.json();
+        alert(json.message || 'Selesai.');
+        document.getElementById('btnRefreshList')?.click();
+    });
+
+    document.getElementById('btnRegUploadBerkas')?.addEventListener('click', () => {
+        const nr = nrInput?.value.trim();
+        const file = document.getElementById('regBerkasFile')?.files?.[0];
+        if (!nr || !file) return alert('Pilih No. Rawat dan file berkas.');
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const res = await fetcher('/api/v1/registration/berkas-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    no_rawat: nr,
+                    nama_file: file.name,
+                    mime_type: file.type || 'application/pdf',
+                    content_base64: String(reader.result || ''),
+                }),
+            });
+            const json = await res.json();
+            if (json.status === 'success') {
+                document.getElementById('regBerkasFile').value = '';
+                const el = document.getElementById('regBerkasCount');
+                if (el) el.textContent = 'Berkas berhasil diunggah.';
+            } else {
+                alert(json.message || 'Gagal upload berkas.');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 <script src="/assets/js/modules/registration.js?v=20261117b"></script>
 

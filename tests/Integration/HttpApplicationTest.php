@@ -2162,4 +2162,41 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $cetakCuti['status']);
         $this->assertStringContainsString('SURAT KETERANGAN CUTI HAMIL', $cetakCuti['body']);
     }
+
+    public function testRawatJalanParityEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tmp_lahir, tgl_lahir, alamat)
+            VALUES ('000088', 'Pasien Ralan', '3201010101900088', 'L', 'Bandung', '1990-01-01', 'Jl. Ralan')");
+        $noRawat = '2026/11/17/000088';
+        $this->pdo->exec("INSERT INTO reg_periksa (no_reg, no_rawat, no_rkm_medis, tgl_registrasi, jam_reg, kd_dokter, kd_poli, kd_pj, status_lanjut, stts)
+            VALUES ('088', '{$noRawat}', '000088', '2026-11-17', '08:00:00', 'DR01', 'UMU', 'UMUM', 'Ralan', 'Belum')");
+
+        $page = $this->app->handle('GET', '/pendaftaran');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('btnRegPrintAntrean', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $chg = $this->app->handle('POST', '/api/v1/registration/change-poli-dokter', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'kd_poli' => 'GIG',
+            'kd_dokter' => 'DR02',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $chg['status']);
+
+        $up = $this->app->handle('POST', '/api/v1/registration/berkas-upload', rawBody: json_encode([
+            'no_rawat' => $noRawat,
+            'kode' => 'KTP',
+            'nama_file' => 'ktp_pasien.pdf',
+            'mime_type' => 'application/pdf',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(201, $up['status']);
+
+        $listBerkas = $this->app->handle('GET', '/api/v1/registration/berkas', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertCount(1, json_decode($listBerkas['body'], true)['data']);
+
+        $cetak = $this->app->handle('GET', '/pendaftaran/cetak', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('BUKTI ANTREAN RAWAT JALAN', $cetak['body']);
+    }
 }
