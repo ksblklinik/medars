@@ -390,6 +390,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $kepegawaianController = new KepegawaianController(
+            new \App\Infrastructure\Persistence\PdoMasterDataRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1021,6 +1027,33 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $suratController->apiCreate($user, $data);
         });
+
+        $router->get('/kepegawaian', function () use ($kepegawaianController): array {
+            $user = $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
+            return $kepegawaianController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/kepegawaian/cetak', function () use ($kepegawaianController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
+            return $kepegawaianController->printDirectory($queryParams);
+        });
+        foreach (['pegawai', 'petugas'] as $sdmEntity) {
+            $router->get("/api/v1/kepegawaian/{$sdmEntity}", function () use ($kepegawaianController, $sdmEntity, $queryParams): array {
+                $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
+                return $kepegawaianController->apiList($sdmEntity, $queryParams);
+            });
+            $router->post("/api/v1/kepegawaian/{$sdmEntity}/save", function () use ($kepegawaianController, $sdmEntity, $postData, $rawBody, $headers): array {
+                $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
+                $this->assertCsrfHeaderOrPost($postData, $headers);
+                $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+                return $kepegawaianController->apiSave($sdmEntity, $data);
+            });
+            $router->post("/api/v1/kepegawaian/{$sdmEntity}/delete", function () use ($kepegawaianController, $sdmEntity, $postData, $rawBody, $headers): array {
+                $this->requireAnyServiceModuleAccess(['kepegawaian', 'admin']);
+                $this->assertCsrfHeaderOrPost($postData, $headers);
+                $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+                return $kepegawaianController->apiDelete($sdmEntity, $data);
+            });
+        }
 
         return $router->dispatch($method, $path);
     }

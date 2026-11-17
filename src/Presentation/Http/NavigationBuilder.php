@@ -143,6 +143,14 @@ final class NavigationBuilder
                 'modules' => ['master', 'admin'],
             ],
             [
+                'title' => 'Kepegawaian',
+                'icon' => 'fa-id-badge',
+                'route' => '/kepegawaian',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'kepegawaian',
+                'modules' => ['kepegawaian', 'admin'],
+            ],
+            [
                 'title' => 'Pengaturan',
                 'icon' => 'fa-gear',
                 'route' => '/settings',

@@ -96,4 +96,34 @@ final class PdoMasterDataRepositoryTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->repo->delete('poliklinik', ['kd_poli' => 'UMU01']);
     }
+
+    public function testCrudPetugasAndPegawai(): void
+    {
+        $this->repo->save('pegawai', [
+            'nik' => 'PEG001',
+            'nama' => 'Siti Rahma',
+            'jk' => 'Wanita',
+            'jbtn' => 'Perawat',
+            'departemen' => 'Rawat Jalan',
+            'status' => 'AKTIF',
+        ]);
+        $this->assertCount(1, $this->repo->list('pegawai', 'Rahma'));
+
+        $this->repo->save('petugas', [
+            'nip' => 'PTG001',
+            'nama' => 'Budi Santoso',
+            'jk' => 'L',
+            'jbtn' => 'Analis Lab',
+            'status' => '1',
+            'almt_tgl' => 'Jl. Sudirman',
+            'no_telp' => '08111222',
+        ]);
+        $this->assertCount(1, $this->repo->list('petugas', 'Budi'));
+
+        $this->repo->delete('pegawai', ['nik' => 'PEG001']);
+        $this->assertCount(0, $this->repo->list('pegawai', 'Rahma'));
+
+        $this->repo->delete('petugas', ['nip' => 'PTG001']);
+        $this->assertCount(0, $this->repo->list('petugas', 'Budi'));
+    }
 }

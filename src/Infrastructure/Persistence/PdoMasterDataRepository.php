@@ -54,6 +54,20 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
                  ORDER BY j.hari_kerja ASC, j.jam_mulai ASC LIMIT 100',
                 [':q' => $like]
             ),
+            'pegawai' => $this->fetchAll(
+                'SELECT nik, nama, jk, jbtn, departemen, status
+                 FROM pegawai
+                 WHERE nik LIKE :q OR nama LIKE :q OR jbtn LIKE :q OR departemen LIKE :q
+                 ORDER BY nama ASC LIMIT 100',
+                [':q' => $like]
+            ),
+            'petugas' => $this->fetchAll(
+                'SELECT nip, nama, jk, jbtn, status, almt_tgl, no_telp
+                 FROM petugas
+                 WHERE nip LIKE :q OR nama LIKE :q OR jbtn LIKE :q
+                 ORDER BY nama ASC LIMIT 100',
+                [':q' => $like]
+            ),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -66,6 +80,8 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'penjab' => $this->savePenjab($payload),
             'jns_perawatan' => $this->saveTarif($payload),
             'jadwal' => $this->saveJadwal($payload),
+            'pegawai' => $this->savePegawai($payload),
+            'petugas' => $this->savePetugas($payload),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -78,6 +94,8 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             'penjab' => $this->deletePenjab((string) ($keys['kd_pj'] ?? '')),
             'jns_perawatan' => $this->deleteTarif((string) ($keys['kd_jenis_prw'] ?? '')),
             'jadwal' => $this->deleteJadwal($keys),
+            'pegawai' => $this->deletePegawai((string) ($keys['nik'] ?? '')),
+            'petugas' => $this->deletePetugas((string) ($keys['nip'] ?? '')),
             default => throw new \InvalidArgumentException("Entitas master tidak dikenal: '{$entity}'."),
         };
     }
@@ -303,6 +321,77 @@ final readonly class PdoMasterDataRepository implements MasterDataRepositoryInte
             ':h' => strtoupper(trim((string) ($keys['hari_kerja'] ?? ''))),
             ':jm' => trim((string) ($keys['jam_mulai'] ?? '')),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function savePegawai(array $p): void
+    {
+        $nik = trim((string) ($p['nik'] ?? ''));
+        $nama = trim((string) ($p['nama'] ?? ''));
+        if ($nik === '' || $nama === '') {
+            throw new \InvalidArgumentException('NIK dan nama pegawai wajib diisi.');
+        }
+
+        $exists = $this->exists('SELECT 1 FROM pegawai WHERE nik = :k', [':k' => $nik]);
+        $params = [
+            ':k' => $nik,
+            ':nm' => $nama,
+            ':jk' => (string) ($p['jk'] ?? 'Pria'),
+            ':jbtn' => (string) ($p['jbtn'] ?? ''),
+            ':dept' => (string) ($p['departemen'] ?? ''),
+            ':stts' => (string) ($p['status'] ?? 'AKTIF'),
+        ];
+        $sql = $exists
+            ? 'UPDATE pegawai SET nama = :nm, jk = :jk, jbtn = :jbtn, departemen = :dept, status = :stts WHERE nik = :k'
+            : 'INSERT INTO pegawai (nik, nama, jk, jbtn, departemen, status) VALUES (:k, :nm, :jk, :jbtn, :dept, :stts)';
+        $this->pdo->prepare($sql)->execute($params);
+    }
+
+    /**
+     * @param array<string, mixed> $p
+     */
+    private function savePetugas(array $p): void
+    {
+        $nip = trim((string) ($p['nip'] ?? ''));
+        $nama = trim((string) ($p['nama'] ?? ''));
+        if ($nip === '' || $nama === '') {
+            throw new \InvalidArgumentException('NIP dan nama petugas wajib diisi.');
+        }
+
+        $exists = $this->exists('SELECT 1 FROM petugas WHERE nip = :k', [':k' => $nip]);
+        $params = [
+            ':k' => $nip,
+            ':nm' => $nama,
+            ':jk' => (string) ($p['jk'] ?? 'L'),
+            ':jbtn' => (string) ($p['jbtn'] ?? ''),
+            ':stts' => (string) ($p['status'] ?? '1'),
+            ':almt' => (string) ($p['almt_tgl'] ?? ''),
+            ':telp' => (string) ($p['no_telp'] ?? ''),
+        ];
+        $sql = $exists
+            ? 'UPDATE petugas SET nama = :nm, jk = :jk, jbtn = :jbtn, status = :stts, almt_tgl = :almt, no_telp = :telp WHERE nip = :k'
+            : 'INSERT INTO petugas (nip, nama, jk, jbtn, status, almt_tgl, no_telp) VALUES (:k, :nm, :jk, :jbtn, :stts, :almt, :telp)';
+        $this->pdo->prepare($sql)->execute($params);
+    }
+
+    private function deletePegawai(string $nik): void
+    {
+        $k = trim($nik);
+        if ($k === '') {
+            throw new \InvalidArgumentException('NIK pegawai wajib diisi.');
+        }
+        $this->pdo->prepare('DELETE FROM pegawai WHERE nik = :k')->execute([':k' => $k]);
+    }
+
+    private function deletePetugas(string $nip): void
+    {
+        $k = trim($nip);
+        if ($k === '') {
+            throw new \InvalidArgumentException('NIP petugas wajib diisi.');
+        }
+        $this->pdo->prepare('DELETE FROM petugas WHERE nip = :k')->execute([':k' => $k]);
     }
 
     /**

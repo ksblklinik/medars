@@ -1002,4 +1002,33 @@ class HttpApplicationTest extends TestCase
         $this->assertStringContainsString('SURAT KETERANGAN SAKIT', $cetak['body']);
         $this->assertStringContainsString('Dian Permata', $cetak['body']);
     }
+
+    public function testKepegawaianEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/kepegawaian');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Manajemen Kepegawaian', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $save = $this->app->handle(
+            'POST',
+            '/api/v1/kepegawaian/pegawai/save',
+            rawBody: json_encode(['nik' => 'PEG99', 'nama' => 'Dr. Maya', 'jbtn' => 'Dokter Umum', 'departemen' => 'Medis']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $save['status']);
+
+        $cetak = $this->app->handle('GET', '/kepegawaian/cetak', queryParams: ['entity' => 'pegawai']);
+        $this->assertSame(200, $cetak['status']);
+        $this->assertStringContainsString('Dr. Maya', $cetak['body']);
+
+        $del = $this->app->handle(
+            'POST',
+            '/api/v1/kepegawaian/pegawai/delete',
+            rawBody: json_encode(['nik' => 'PEG99']),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $del['status']);
+    }
 }
