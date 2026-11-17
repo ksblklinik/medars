@@ -6,6 +6,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Infrastructure\Database\ConnectionConfig;
 use App\Infrastructure\Database\ConnectionFactory;
+use App\Infrastructure\Database\SchemaMigrator;
 use App\Presentation\Http\HttpApplication;
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -35,6 +36,11 @@ $getPdo = static function (): PDO {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $pdo->exec('PRAGMA foreign_keys = ON;');
+        try {
+            $pdo->query('SELECT 1 FROM mlite_smartagent_profiles LIMIT 1');
+        } catch (Throwable) {
+            (new SchemaMigrator($pdo))->migrate();
+        }
     } else {
         $config = new ConnectionConfig(
             driver: 'mysql',
