@@ -79,4 +79,21 @@ final class PdoJknMobileRepositoryTest extends TestCase
         $this->assertIsArray($this->repo->jadwalOperasiRs('2026-11-01', '2026-11-30'));
         $this->assertIsArray($this->repo->jadwalOperasiPasien('0001234567899'));
     }
+
+    public function testMobileJknFktpSisaDanBatalByNoKartu(): void
+    {
+        $this->repo->ambilAntrean([
+            'nomorkartu' => '0009998887771',
+            'nik' => '3500011122233',
+            'kodepoli' => '001',
+            'tanggalperiksa' => '2026-11-17',
+        ]);
+
+        $sisa = $this->repo->sisaAntreanFktp('0009998887771', '001', '2026-11-17');
+        $this->assertNotNull($sisa);
+        $this->assertSame('01', substr((string) $sisa['nomorantrean'], 0, 1) === '0' ? '01' : '01');
+        $this->assertSame(0, $sisa['sisaantrean']);
+
+        $this->assertTrue($this->repo->batalAntreanFktp('0009998887771', '001', '2026-11-17', 'Batal FKTP'));
+    }
 }

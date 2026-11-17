@@ -2555,4 +2555,48 @@ class HttpApplicationTest extends TestCase
             'kodebooking' => $kodebooking, 'keterangan' => 'Batal tes',
         ]), headers: $headers)['body'], true)['metadata']['code']);
     }
+
+    public function testJknMobileFktpApiEndToEnd(): void
+    {
+        $authRes = $this->app->handle('GET', '/api/v1/jkn-mobile-fktp/auth', headers: [
+            'X-Username' => 'admin',
+            'X-Password' => 'AdminPass2026!',
+        ]);
+        $this->assertSame(200, $authRes['status']);
+        $token = (string) (json_decode($authRes['body'], true)['response']['token'] ?? '');
+        $this->assertNotEmpty($token);
+
+        $headers = ['Content-Type' => 'application/json', 'X-Token' => $token, 'X-Username' => 'admin'];
+
+        $peserta = $this->app->handle('POST', '/api/v1/jkn-mobile-fktp/peserta', rawBody: json_encode([
+            'nomorkartu' => '0009998887771',
+            'nik' => '3500011122233',
+            'nama' => 'Siti FKTP JKN',
+            'jeniskelamin' => 'P',
+            'tanggallahir' => '1991-03-15',
+            'nohp' => '081234500001',
+        ]), headers: $headers);
+        $this->assertSame(200, json_decode($peserta['body'], true)['metadata']['code']);
+
+        $antrean = $this->app->handle('POST', '/api/v1/jkn-mobile-fktp/antrean', rawBody: json_encode([
+            'nomorkartu' => '0009998887771',
+            'nik' => '3500011122233',
+            'kodepoli' => '001',
+            'tanggalperiksa' => '2026-11-17',
+            'keluhan' => 'Batuk',
+        ]), headers: $headers);
+        $this->assertSame(200, json_decode($antrean['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile-fktp/status-antrean', rawBody: json_encode([
+            'kodepoli' => '001', 'tanggalperiksa' => '2026-11-17',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile-fktp/sisa-antrean', rawBody: json_encode([
+            'nomorkartu' => '0009998887771', 'kodepoli' => '001', 'tanggalperiksa' => '2026-11-17',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+
+        $this->assertSame(200, json_decode($this->app->handle('POST', '/api/v1/jkn-mobile-fktp/batal-antrean', rawBody: json_encode([
+            'nomorkartu' => '0009998887771', 'kodepoli' => '001', 'tanggalperiksa' => '2026-11-17', 'keterangan' => 'Batal FKTP',
+        ]), headers: $headers)['body'], true)['metadata']['code']);
+    }
 }

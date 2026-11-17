@@ -365,6 +365,10 @@ final class HttpApplication
             new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo),
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
+        $jknMobileFktpController = new JknMobileFktpController(
+            new \App\Infrastructure\Persistence\PdoJknMobileRepository($this->pdo),
+            (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
+        );
 
         $waRepo = new PdoWaGatewayRepository($this->pdo);
         $homeCareRepo = new PdoHomeCareRepository($this->pdo);
@@ -1279,6 +1283,12 @@ final class HttpApplication
         $router->post('/api/v1/jkn-mobile/status-antrean-farmasi', fn(): array => $jknMobileController->statusAntreanFarmasi($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
         $router->post('/api/v1/jkn-mobile/jadwal-operasi-rs', fn(): array => $jknMobileController->jadwalOperasiRs($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
         $router->post('/api/v1/jkn-mobile/jadwal-operasi-pasien', fn(): array => $jknMobileController->jadwalOperasiPasien($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->get('/api/v1/jkn-mobile-fktp/auth', fn(): array => $jknMobileFktpController->auth($headers, $queryParams));
+        $router->post('/api/v1/jkn-mobile-fktp/antrean', fn(): array => $jknMobileFktpController->antrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->post('/api/v1/jkn-mobile-fktp/status-antrean', fn(): array => $jknMobileFktpController->statusAntrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->post('/api/v1/jkn-mobile-fktp/sisa-antrean', fn(): array => $jknMobileFktpController->sisaAntrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->post('/api/v1/jkn-mobile-fktp/batal-antrean', fn(): array => $jknMobileFktpController->batalAntrean($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
+        $router->post('/api/v1/jkn-mobile-fktp/peserta', fn(): array => $jknMobileFktpController->peserta($headers, $this->parseJsonOrPost($rawBody, $postData, $headers)));
 
         // WhatsApp Gateway CRM & Home Care Preceptorship (PLN-33)
         $router->get('/wagateway', function () use ($communicationController): array {

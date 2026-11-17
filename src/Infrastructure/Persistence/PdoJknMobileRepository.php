@@ -272,4 +272,35 @@ final class PdoJknMobileRepository implements JknMobileRepositoryInterface
         $stmt->execute([':nk' => trim($noKartu)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
+
+    public function sisaAntreanFktp(string $noKartu, string $kodepoli, string $tanggalperiksa): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM referensi_mobilejkn_bpjs
+             WHERE nomorkartu = :nk AND kodepoli = :kp AND tanggalperiksa = :tgl AND status != 'Batal'
+             ORDER BY angkaantrean DESC LIMIT 1"
+        );
+        $stmt->execute([':nk' => trim($noKartu), ':kp' => trim($kodepoli), ':tgl' => trim($tanggalperiksa)]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+        return $this->sisaAntrean((string) $row['nobooking']);
+    }
+
+    public function batalAntreanFktp(string $noKartu, string $kodepoli, string $tanggalperiksa, string $keterangan): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE referensi_mobilejkn_bpjs
+             SET status = 'Batal', keterangan_batal = :ket
+             WHERE nomorkartu = :nk AND kodepoli = :kp AND tanggalperiksa = :tgl"
+        );
+        $stmt->execute([
+            ':ket' => trim($keterangan),
+            ':nk' => trim($noKartu),
+            ':kp' => trim($kodepoli),
+            ':tgl' => trim($tanggalperiksa),
+        ]);
+        return $stmt->rowCount() > 0;
+    }
 }

@@ -36,4 +36,9 @@ interface JknMobileRepositoryInterface
 
     /** @return list<array<string, mixed>> */
     public function jadwalOperasiPasien(string $noKartu): array;
+
+    /** @return array<string, mixed>|null */
+    public function sisaAntreanFktp(string $noKartu, string $kodepoli, string $tanggalperiksa): ?array;
+
+    public function batalAntreanFktp(string $noKartu, string $kodepoli, string $tanggalperiksa, string $keterangan): bool;
 }
