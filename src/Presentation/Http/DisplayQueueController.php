@@ -6,6 +6,7 @@ namespace App\Presentation\Http;
 
 use App\Application\Registration\DTO\CheckInMobileJknCommand;
 use App\Application\Registration\UseCase\CheckInMobileJknUseCase;
+use App\Domain\Queue\Repository\AnjunganQueueRepositoryInterface;
 use App\Domain\Registration\Repository\PoliklinikRepositoryInterface;
 use App\Domain\Registration\Repository\RegPeriksaRepositoryInterface;
 use App\Domain\Registration\ValueObject\NoRawat;
@@ -21,7 +22,8 @@ final readonly class DisplayQueueController
         private RegPeriksaRepositoryInterface $regRepo,
         private EventBroadcasterInterface $broadcaster,
         private ViewRenderer $renderer,
-        private ?CheckInMobileJknUseCase $checkInUseCase = null
+        private ?CheckInMobileJknUseCase $checkInUseCase = null,
+        private ?AnjunganQueueRepositoryInterface $anjunganRepo = null,
     ) {}
 
     /**
@@ -104,12 +106,24 @@ final readonly class DisplayQueueController
                 ]
             ));
 
+            $ticket = $this->anjunganRepo?->issueTicket(
+                'Poli',
+                $result->noRawat->value(),
+                $result->noRkmMedis->value(),
+                '',
+                'Poli ' . $result->kdPoli
+            );
+
             return $this->jsonResponse([
                 'status' => 'success',
                 'message' => 'Check-in Kiosk berhasil.',
                 'data' => [
                     'no_rawat' => $result->noRawat->value(),
                     'no_reg' => $result->noReg->value(),
+                    'kd_poli' => $result->kdPoli,
+                    'ticket_id' => $ticket['id'] ?? null,
+                    'noantrian' => $ticket['noantrian'] ?? $result->noReg->value(),
+                    'print_url' => isset($ticket['id']) ? ('/anjungan/tiket/cetak?id=' . $ticket['id']) : null,
                 ],
             ]);
         } catch (\DomainException|\InvalidArgumentException $e) {

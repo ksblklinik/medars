@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Presentation\Http;
 
 use App\Domain\Queue\Repository\AnjunganQueueRepositoryInterface;
+use App\Infrastructure\Realtime\EventBroadcasterInterface;
+use App\Infrastructure\Realtime\EventMessage;
 
 final readonly class AnjunganController
 {
-    public function __construct(private AnjunganQueueRepositoryInterface $repo)
-    {
+    public function __construct(
+        private AnjunganQueueRepositoryInterface $repo,
+        private ?EventBroadcasterInterface $broadcaster = null,
+    ) {
     }
 
     public function apiIssueTicket(array $post): array
@@ -40,6 +44,21 @@ final readonly class AnjunganController
         $row = $this->repo->callNext($type, (string) ($post['nama_loket'] ?? ''));
         if ($row === null) {
             return $this->json(404, ['status' => 'error', 'message' => 'Tidak ada antrean menunggu untuk ' . $type . '.']);
+        }
+        if ($this->broadcaster !== null) {
+            $loket = (string) ($row['nama_loket'] ?: ($type . ' 1'));
+            $noAntrean = (string) $row['noantrian'];
+            $this->broadcaster->publish('antrean', new EventMessage(
+                event: 'queue.called',
+                data: [
+                    'kd_poli' => strtoupper($type),
+                    'nm_poli' => $type,
+                    'no_reg' => $noAntrean,
+                    'room' => $loket,
+                    'sound_text' => "Nomor antrean {$noAntrean}, silakan menuju ke {$loket}",
+                    'timestamp' => date('c'),
+                ]
+            ));
         }
         return $this->json(200, ['status' => 'success', 'data' => $row]);
     }

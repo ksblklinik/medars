@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Registration\UseCase;
 
 use App\Application\Registration\Exception\ClinicalGuardBlockedException;
+use App\Domain\Billing\Repository\BillingLedgerRepositoryInterface;
 use App\Domain\Registration\Repository\RegPeriksaRepositoryInterface;
 use App\Domain\Registration\ValueObject\NoRawat;
 use App\Infrastructure\Database\TransactionManagerInterface;
@@ -17,6 +18,7 @@ final readonly class UpdateRegistrationStatusUseCase
         private RegPeriksaRepositoryInterface $regRepo,
         private ClinicalGuardShieldUseCase $clinicalGuard,
         private TransactionManagerInterface $tx,
+        private ?BillingLedgerRepositoryInterface $ledgerRepo = null,
     ) {}
 
     public function execute(
@@ -46,6 +48,9 @@ final readonly class UpdateRegistrationStatusUseCase
 
         $this->tx->transaction(function () use ($noRawat, $stts, $kdPoli, $kdDokter): void {
             $this->regRepo->updateStatusAndAssignment($noRawat, $stts, $kdPoli, $kdDokter);
+            if ($stts === 'Batal' && $this->ledgerRepo !== null) {
+                $this->ledgerRepo->cancelPendingByProviderId('REG|' . $noRawat->value());
+            }
         });
     }
 }

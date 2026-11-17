@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Billing\UseCase;
 
+use App\Domain\Billing\Entity\JurnalDetail;
+use App\Domain\Billing\Entity\JurnalEntry;
 use App\Domain\Billing\Entity\PosApotekUmumSale;
+use App\Domain\Billing\Repository\BillingLedgerRepositoryInterface;
 use App\Domain\Billing\Repository\PosApotekUmumRepositoryInterface;
 use App\Domain\Billing\ValueObject\PosPaymentMethod;
 use App\Domain\Pharmacy\Repository\DataBarangRepositoryInterface;
@@ -19,6 +22,7 @@ final readonly class ProcessPosApotekUmumUseCase
         private GudangBarangRepositoryInterface $gudangRepo,
         private PosApotekUmumRepositoryInterface $posRepo,
         private TransactionManagerInterface $tx,
+        private ?BillingLedgerRepositoryInterface $ledgerRepo = null,
     ) {
     }
 
@@ -95,6 +99,21 @@ final readonly class ProcessPosApotekUmumUseCase
                     );
 
                     $this->posRepo->saveSale($sale, $saleItems);
+
+                    if ($this->ledgerRepo !== null && $total > 0) {
+                        $noJurnal = $this->ledgerRepo->getNextJurnalNumber($now);
+                        $this->ledgerRepo->saveJurnal(new JurnalEntry(
+                            noJurnal: $noJurnal,
+                            tglJurnal: $tgl,
+                            jamJurnal: $jam,
+                            noBukti: $noNota,
+                            keterangan: "Penjualan POS Apotek Umum {$noNota} ({$paymentMethod->value()})",
+                            details: [
+                                new JurnalDetail(JurnalEntry::COA_KAS_FISIK, $total, 0.0),
+                                new JurnalDetail(JurnalEntry::COA_PENDAPATAN_OBAT, 0.0, $total),
+                            ]
+                        ));
+                    }
 
                     return $sale;
                 });

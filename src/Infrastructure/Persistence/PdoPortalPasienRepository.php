@@ -81,6 +81,12 @@ final readonly class PdoPortalPasienRepository implements PortalPasienRepository
             throw new \InvalidArgumentException('Tanggal periksa, poliklinik, dan dokter wajib dipilih.');
         }
 
+        $dupStmt = $this->pdo->prepare("SELECT 1 FROM booking_registrasi WHERE no_rkm_medis = :rm AND tanggal_periksa = :tp AND status = 'Belum' LIMIT 1");
+        $dupStmt->execute([':rm' => trim($noRkmMedis), ':tp' => trim($tanggalPeriksa)]);
+        if ($dupStmt->fetchColumn() !== false) {
+            throw new \DomainException('Anda sudah memiliki booking aktif pada tanggal periksa tersebut.');
+        }
+
         $maxStmt = $this->pdo->prepare('SELECT MAX(CAST(no_reg AS INTEGER)) FROM booking_registrasi WHERE tanggal_periksa = :tp AND kd_poli = :kp');
         $maxStmt->execute([':tp' => trim($tanggalPeriksa), ':kp' => trim($kdPoli)]);
         $nextReg = str_pad((string) (((int) $maxStmt->fetchColumn()) + 1), 3, '0', STR_PAD_LEFT);

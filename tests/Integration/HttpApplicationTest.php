@@ -3072,4 +3072,58 @@ class HttpApplicationTest extends TestCase
         ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
         $this->assertSame(422, $delBlocked['status']);
     }
+
+    public function testBookingCancelPosJurnalAndAnjunganSseEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $today = date('Y-m-d');
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, tgl_lahir, jk) VALUES ('RM-ANJ-1', 'Dina Antre', '1993-02-02', 'P')");
+        $this->pdo->exec("INSERT INTO databarang (kode_brng, nama_brng, kode_sat, dasar, h_beli, harga_tunai, harga_kapitasi, harga_nonkapitasi, jualbebas, status) VALUES ('OBT-POS-J', 'Vitamin C', 'TAB', 500, 600, 1500, 1000, 1200, 2000, '1')");
+        $this->pdo->exec("INSERT INTO gudangbarang (kode_brng, kd_bangsal, stok, no_batch, no_faktur) VALUES ('OBT-POS-J', 'APT', 30, 'B01', 'F01')");
+
+        $this->app->handle('GET', '/pendaftaran');
+        $csrf = (string) ($this->session['_csrf_token'] ?? '');
+
+        // 1. Register -> Cancel status -> Pending ledger REG|{no_rawat} ikut dibatalkan
+        $reg = $this->app->handle('POST', '/api/v1/registration/insite', postData: [
+            'no_rkm_medis' => 'RM-ANJ-1', 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001', 'kd_pj' => 'UMU',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $noRawat = json_decode($reg['body'], true)['data']['no_rawat'];
+
+        $cancel = $this->app->handle('POST', '/api/v1/registration/update-status', postData: [
+            'no_rawat' => $noRawat, 'stts' => 'Batal',
+        ], headers: ['X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $cancel['status']);
+        $ledStatus = (string) $this->pdo->query("SELECT status FROM mlite_billing_ledger WHERE provider_id = 'REG|{$noRawat}'")->fetchColumn();
+        $this->assertSame('Cancelled', $ledStatus);
+
+        // 2. POS Apotek Umum (PO-APT-%) otomatis membukukan jurnal akuntansi ke mlite_jurnal
+        $pos = $this->app->handle('POST', '/api/v1/apotek-umum/pos', rawBody: json_encode([
+            'items' => [['kode_brng' => 'OBT-POS-J', 'jml' => 5]],
+            'payment_method' => 'Tunai',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $pos['status']);
+        $noNota = json_decode($pos['body'], true)['data']['no_nota'];
+        $jurnalCount = (int) $this->pdo->query("SELECT COUNT(*) FROM mlite_jurnal WHERE no_bukti = '{$noNota}'")->fetchColumn();
+        $this->assertSame(1, $jurnalCount);
+
+        // 3. Portal Pasien anti-duplikasi booking di tanggal yang sama
+        $b1 = $this->app->handle('POST', '/api/v1/portal-pasien/booking', rawBody: json_encode([
+            'no_rkm_medis' => 'RM-ANJ-1', 'tgl_lahir' => '1993-02-02', 'tanggal_periksa' => $today, 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001',
+        ]), headers: ['Content-Type' => 'application/json']);
+        $this->assertSame(200, $b1['status']);
+        $b2 = $this->app->handle('POST', '/api/v1/portal-pasien/booking', rawBody: json_encode([
+            'no_rkm_medis' => 'RM-ANJ-1', 'tgl_lahir' => '1993-02-02', 'tanggal_periksa' => $today, 'kd_poli' => 'UMU01', 'kd_dokter' => 'DR001',
+        ]), headers: ['Content-Type' => 'application/json']);
+        $this->assertSame(422, $b2['status']);
+
+        // 4. Kiosk Check-In menerbitkan tiket thermal & noantrian
+        $kioskCi = $this->app->handle('POST', '/api/v1/kiosk/checkin', rawBody: json_encode([
+            'no_rkm_medis' => 'RM-ANJ-1',
+        ]), headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]);
+        $this->assertSame(200, $kioskCi['status']);
+        $kioskData = json_decode($kioskCi['body'], true)['data'];
+        $this->assertNotEmpty($kioskData['noantrian']);
+        $this->assertNotEmpty($kioskData['print_url']);
+    }
 }

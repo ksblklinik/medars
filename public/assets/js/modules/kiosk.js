@@ -80,8 +80,18 @@
             const btnAmbilAntrean = document.getElementById('btnKioskAmbilAntrean');
             if (btnAmbilAntrean) {
                 btnAmbilAntrean.addEventListener('click', () => {
-                    // Pendaftaran mandiri umum: arahkan atau cetak tiket walk-in
-                    this.showTicketModal('001', 'Poli Umum', 'dr. Budi Wicaksono');
+                    fetch('/api/v1/anjungan/tiket', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'Poli', nama_loket: 'Loket Pendaftaran' })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.status === 'success' && res.data) {
+                            this.showTicketModal(res.data.noantrian, 'Loket Pendaftaran / Poli', res.data.nama_loket || 'Loket 1');
+                        }
+                    })
+                    .catch(() => {});
                 });
             }
 
@@ -135,7 +145,7 @@
                     if (modalEl && window.bootstrap) {
                         window.bootstrap.Modal.getInstance(modalEl).hide();
                     }
-                    this.showTicketModal(res.data.no_reg, 'Poliklinik Tujuan', 'Dokter Spesialis');
+                    this.showTicketModal(res.data.no_reg, res.data.kd_poli ? ('Poliklinik ' + res.data.kd_poli) : 'Poliklinik Tujuan', res.data.noantrian ? ('Tiket: ' + res.data.noantrian) : 'Dokter Spesialis');
                 } else {
                     this.showAlert('danger', res.message || 'Check-in gagal diproses.');
                 }

@@ -227,6 +227,7 @@ final class HttpApplication
         $checkInMobileJknUseCase = new CheckInMobileJknUseCase($pasienRepo, $poliRepo, $regRepo, $bookingRepo, $tx, $ledgerRepo);
         $clinicalGuardUseCase = new ClinicalGuardShieldUseCase($regRepo);
 
+        $anjunganRepo = new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo);
         $regController = new RegistrationController(
             $this->pdo,
             $pasienRepo,
@@ -238,7 +239,7 @@ final class HttpApplication
             $this->renderer,
             $this->broadcaster,
             $this->navBuilder,
-            new UpdateRegistrationStatusUseCase($regRepo, $clinicalGuardUseCase, $tx)
+            new UpdateRegistrationStatusUseCase($regRepo, $clinicalGuardUseCase, $tx, $ledgerRepo)
         );
 
         $displayController = new DisplayQueueController(
@@ -247,7 +248,8 @@ final class HttpApplication
             $regRepo,
             $this->broadcaster,
             $this->renderer,
-            $checkInMobileJknUseCase
+            $checkInMobileJknUseCase,
+            $anjunganRepo
         );
 
         $ralanRepo = new PdoPemeriksaanRalanRepository($this->pdo);
@@ -304,7 +306,7 @@ final class HttpApplication
             new ProcessSplitPaymentUseCase($ledgerRepo, $regRepo, $tx),
             new VoidBillingTransactionUseCase($ledgerRepo, $regRepo, $this->auditRepo, $tx),
             new ReconcilePendingOrderUseCase($ledgerRepo, $this->auditRepo, $tx),
-            new ProcessPosApotekUmumUseCase($barangRepo, $gudangRepo, $posRepo, $tx),
+            new ProcessPosApotekUmumUseCase($barangRepo, $gudangRepo, $posRepo, $tx, $ledgerRepo),
             $this->renderer,
             $this->navBuilder,
             new SettlePiutangUseCase($ledgerRepo, $tx)
@@ -376,7 +378,7 @@ final class HttpApplication
             (string) ($this->config['app_key'] ?? 'medars-jkn-secret')
         );
         $satuSehatController = new SatuSehatController(new \App\Infrastructure\Persistence\PdoSatuSehatMappingRepository($this->pdo));
-        $anjunganController = new AnjunganController(new \App\Infrastructure\Persistence\PdoAnjunganQueueRepository($this->pdo));
+        $anjunganController = new AnjunganController($anjunganRepo, $this->broadcaster);
         $waCrmController = new WaCrmController(new \App\Infrastructure\Persistence\PdoWaCrmRepository($this->pdo));
         $homeCareExtrasController = new HomeCareExtrasController(new \App\Infrastructure\Persistence\PdoHomeCareCarePlanRepository($this->pdo));
         $riwayatSimgosController = new RiwayatSimgosController(
