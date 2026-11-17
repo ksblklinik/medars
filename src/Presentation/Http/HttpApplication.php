@@ -478,6 +478,12 @@ final class HttpApplication
             $this->navBuilder
         );
 
+        $moduleManagerController = new ModuleManagerController(
+            new \App\Infrastructure\Persistence\PdoModuleRepository($this->pdo),
+            $this->renderer,
+            $this->navBuilder
+        );
+
         $auditController = new AuditController(
             new DataIntegrityAuditService(new PdoDataIntegrityAuditRepository($this->pdo)),
             new LogRotationService(new PdoLogRotationRepository($this->pdo)),
@@ -1419,6 +1425,27 @@ final class HttpApplication
             $this->assertCsrfHeaderOrPost($postData, $headers);
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $apiKeyController->apiDelete($data);
+        });
+
+        $router->get('/modules', function () use ($moduleManagerController): array {
+            $user = $this->requireAnyServiceModuleAccess(['modules', 'admin']);
+            return $moduleManagerController->index($user, $this->csrfGuard->getToken());
+        });
+        $router->get('/api/v1/modules', function () use ($moduleManagerController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['modules', 'admin']);
+            return $moduleManagerController->apiList($queryParams);
+        });
+        $router->post('/api/v1/modules/toggle', function () use ($moduleManagerController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['modules', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $moduleManagerController->apiToggle($data);
+        });
+        $router->post('/api/v1/modules/sequence', function () use ($moduleManagerController, $postData, $rawBody, $headers): array {
+            $this->requireAnyServiceModuleAccess(['modules', 'admin']);
+            $this->assertCsrfHeaderOrPost($postData, $headers);
+            $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
+            return $moduleManagerController->apiSequence($data);
         });
 
         return $router->dispatch($method, $path);

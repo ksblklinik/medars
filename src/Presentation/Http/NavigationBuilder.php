@@ -239,6 +239,14 @@ final class NavigationBuilder
                 'modules' => ['mlite_api_key', 'admin'],
             ],
             [
+                'title' => 'Manajer Modul',
+                'icon' => 'fa-cubes',
+                'route' => '/modules',
+                'category' => 'Manajemen & Sistem',
+                'module_key' => 'modules',
+                'modules' => ['modules', 'admin'],
+            ],
+            [
                 'title' => 'Profil Saya',
                 'icon' => 'fa-user-gear',
                 'route' => '/profil',

@@ -49,6 +49,7 @@ class SchemaMigratorTest extends TestCase
             'mlite_presensi',
             'mlite_inventaris',
             'mlite_api_keys',
+            'mlite_modules',
             'mlite_pemeriksaan_ralan_metadata',
             'penyakit',
             'diagnosa_pasien',

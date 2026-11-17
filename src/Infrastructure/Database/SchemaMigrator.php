@@ -741,6 +741,14 @@ final class SchemaMigrator
                 created_at VARCHAR(25) NOT NULL
             ){$suffix}",
 
+            "CREATE TABLE IF NOT EXISTS mlite_modules (
+                dir VARCHAR(60) PRIMARY KEY,
+                sequence INT NOT NULL DEFAULT 0,
+                is_active INT NOT NULL DEFAULT 1,
+                is_core INT NOT NULL DEFAULT 0,
+                updated_at VARCHAR(25) NOT NULL DEFAULT ''
+            ){$suffix}",
+
             "CREATE TABLE IF NOT EXISTS mlite_presensi (
                 id {$bigAutoIncPk},
                 nip VARCHAR(30) NOT NULL,

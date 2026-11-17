@@ -1669,4 +1669,41 @@ class HttpApplicationTest extends TestCase
         );
         $this->assertSame(200, $delete['status']);
     }
+
+    public function testModuleManagerEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $page = $this->app->handle('GET', '/modules');
+        $this->assertSame(200, $page['status']);
+        $this->assertStringContainsString('Manajer Modul SIMRS', $page['body']);
+        $csrf = $this->session['_csrf_token'] ?? '';
+
+        $list = $this->app->handle('GET', '/api/v1/modules', queryParams: ['q' => 'inventaris']);
+        $this->assertSame(200, $list['status']);
+        $this->assertCount(1, json_decode($list['body'], true)['data']);
+
+        $toggleOff = $this->app->handle(
+            'POST',
+            '/api/v1/modules/toggle',
+            rawBody: json_encode(['dir' => 'inventaris', 'is_active' => false]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $toggleOff['status']);
+
+        $coreBlock = $this->app->handle(
+            'POST',
+            '/api/v1/modules/toggle',
+            rawBody: json_encode(['dir' => 'modules', 'is_active' => false]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(422, $coreBlock['status']);
+
+        $seq = $this->app->handle(
+            'POST',
+            '/api/v1/modules/sequence',
+            rawBody: json_encode(['dir' => 'inventaris', 'sequence' => 50]),
+            headers: ['Content-Type' => 'application/json', 'X-CSRF-Token' => $csrf]
+        );
+        $this->assertSame(200, $seq['status']);
+    }
 }
