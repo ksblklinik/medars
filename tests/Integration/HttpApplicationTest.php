@@ -2199,4 +2199,24 @@ class HttpApplicationTest extends TestCase
         $this->assertSame(200, $cetak['status']);
         $this->assertStringContainsString('BUKTI ANTREAN RAWAT JALAN', $cetak['body']);
     }
+
+    public function testDokterRalanPrintResumeEresepAndFullHistoryEndToEnd(): void
+    {
+        $this->session['user_id'] = 1;
+        $this->pdo->exec("INSERT INTO pasien (no_rkm_medis, nm_pasien, no_ktp, jk, tmp_lahir, tgl_lahir, alamat)
+            VALUES ('000077', 'Pasien Dokter', '3201010101900077', 'L', 'Bandung', '1992-02-02', 'Jl. Dokter')");
+        $noRawat = '2026/11/17/000077';
+        $this->pdo->exec("INSERT INTO reg_periksa (no_reg, no_rawat, no_rkm_medis, tgl_registrasi, jam_reg, kd_dokter, kd_poli, kd_pj, status_lanjut, stts)
+            VALUES ('077', '{$noRawat}', '000077', '2026-11-17', '08:00:00', 'DR01', 'UMU', 'UMUM', 'Ralan', 'Belum')");
+        $this->pdo->exec("INSERT INTO resume_pasien (no_rawat, kd_dokter, keluhan_utama, jalannya_penyakit, pemeriksaan_penunjang, hasil_laborat, kd_diagnosa_utama, diagnosa_utama, kondisi_pulang, obat_pulang)
+            VALUES ('{$noRawat}', 'DR01', 'Demam', '3 hari', '-', '-', 'R50', 'Fever', 'Hidup', 'Paracetamol')");
+
+        $resume = $this->app->handle('GET', '/dokter-ralan/resume/cetak', queryParams: ['no_rawat' => $noRawat]);
+        $this->assertSame(200, $resume['status']);
+        $this->assertStringContainsString('RESUME MEDIS PASIEN', $resume['body']);
+
+        $hist = $this->app->handle('GET', '/api/v1/dokter-ralan/full-history', queryParams: ['no_rkm_medis' => '000077']);
+        $this->assertSame(200, $hist['status']);
+        $this->assertArrayHasKey('soap', json_decode($hist['body'], true)['data']);
+    }
 }

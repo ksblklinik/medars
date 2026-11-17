@@ -95,6 +95,7 @@
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOrderPenunjang" type="button">Order Lab/Rad & E-Resep</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabResumeMedis" type="button">Resume Medis</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPoliSpesifik" type="button">Poli Spesifik & Odontogram</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRiwayatLengkap" type="button">Riwayat Lengkap</button></li>
                     </ul>
 
                     <div class="tab-content">
@@ -308,7 +309,10 @@
                                         <div id="eresepDraftList" class="small mb-2 border rounded p-2 bg-white" style="min-height: 60px;">
                                             <span class="text-muted">Belum ada item obat dipilih.</span>
                                         </div>
-                                        <button type="button" id="btnKirimEresep" class="btn btn-sm btn-primary w-100">Kirim E-Resep ke Farmasi</button>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" id="btnKirimEresep" class="btn btn-sm btn-primary flex-grow-1">Kirim E-Resep ke Farmasi</button>
+                                            <button type="button" id="btnPrintEresep" class="btn btn-sm btn-outline-secondary" title="Cetak E-Resep"><i class="fa fa-print"></i></button>
+                                        </div>
                                         <div id="eresepFeedback" class="small mt-2"></div>
                                     </div>
                                 </div>
@@ -358,9 +362,15 @@
                                 <div class="col-12 d-flex gap-2 mt-2">
                                     <button type="button" id="btnSaveResume" class="btn btn-sm btn-teal">Simpan Resume Medis</button>
                                     <button type="button" id="btnLoadResume" class="btn btn-sm btn-outline-secondary">Muat Resume</button>
+                                    <button type="button" id="btnPrintResume" class="btn btn-sm btn-outline-primary"><i class="fa fa-print me-1"></i>Cetak Resume</button>
                                     <span id="resumeFeedback" class="small align-self-center ms-2"></span>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Tab 7: Riwayat Lengkap per Tab -->
+                        <div class="tab-pane fade" id="tabRiwayatLengkap">
+                            <div id="riwayatLengkapContainer" class="small text-muted">Pilih pasien untuk memuat riwayat lengkap SOAP, Diagnosa, E-Resep, dan Tindakan.</div>
                         </div>
                     </div>
                 </form>

@@ -837,6 +837,18 @@ final class HttpApplication
             $data = $this->parseJsonOrPost($rawBody, $postData, $headers);
             return $dokterRalanController->apiSaveResume($user, $data);
         });
+        $router->get('/dokter-ralan/resume/cetak', function () use ($dokterRalanController, $queryParams): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->printResumeMedis($user, $queryParams);
+        });
+        $router->get('/dokter-ralan/eresep/cetak', function () use ($dokterRalanController, $queryParams): array {
+            $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->printEresep($user, $queryParams);
+        });
+        $router->get('/api/v1/dokter-ralan/full-history', function () use ($dokterRalanController, $queryParams): array {
+            $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
+            return $dokterRalanController->apiFullHistory($queryParams);
+        });
         $router->post('/api/v1/dokter-ralan/soap', function () use ($dokterRalanController, $postData, $rawBody, $headers): array {
             $user = $this->requireAnyServiceModuleAccess(['dokter_ralan', 'rawat_jalan']);
             $this->assertCsrfHeaderOrPost($postData, $headers);

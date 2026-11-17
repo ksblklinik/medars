@@ -161,10 +161,24 @@
             if (btnKirimEresep) {
                 btnKirimEresep.addEventListener('click', () => this.kirimEresep());
             }
+            const btnPrintEresep = document.getElementById('btnPrintEresep');
+            if (btnPrintEresep) {
+                btnPrintEresep.addEventListener('click', () => {
+                    if (!this._activePatient) return;
+                    window.open('/dokter-ralan/eresep/cetak?no_rawat=' + encodeURIComponent(this._activePatient.no_rawat), '_blank');
+                });
+            }
 
             const btnSaveResume = document.getElementById('btnSaveResume');
             if (btnSaveResume) {
                 btnSaveResume.addEventListener('click', () => this.saveResumeMedis());
+            }
+            const btnPrintResume = document.getElementById('btnPrintResume');
+            if (btnPrintResume) {
+                btnPrintResume.addEventListener('click', () => {
+                    if (!this._activePatient) return;
+                    window.open('/dokter-ralan/resume/cetak?no_rawat=' + encodeURIComponent(this._activePatient.no_rawat), '_blank');
+                });
             }
             const btnLoadResume = document.getElementById('btnLoadResume');
             if (btnLoadResume) {
@@ -250,8 +264,30 @@
             this.loadOdontogram(row.no_rkm_medis);
             this.loadTindakanDokter(row.no_rawat);
             this.loadResumeMedis(row.no_rawat);
+            this.loadFullHistory(row.no_rkm_medis);
             this._eresepDraft = [];
             this.renderEresepDraft();
+        },
+
+        loadFullHistory: function (noRkmMedis) {
+            const box = document.getElementById('riwayatLengkapContainer');
+            if (!box || !noRkmMedis) return;
+            const fetcher = window.MedarsApp ? window.MedarsApp.apiFetch : fetch;
+            fetcher('/api/v1/dokter-ralan/full-history?no_rkm_medis=' + encodeURIComponent(noRkmMedis))
+                .then(res => res.json())
+                .then(res => {
+                    const d = (res && res.data) ? res.data : {};
+                    const soap = (d.soap || []).map(s => `<li><strong>${this.escapeHtml(s.tgl_perawatan)}</strong>: S: ${this.escapeHtml(s.keluhan)} | A: ${this.escapeHtml(s.penilaian)}</li>`).join('') || '<li>-</li>';
+                    const diag = (d.diagnosa || []).map(x => `<li><code>${this.escapeHtml(x.kd_penyakit)}</code> ${this.escapeHtml(x.nm_penyakit)}</li>`).join('') || '<li>-</li>';
+                    const resep = (d.resep || []).map(r => `<li><strong>${this.escapeHtml(r.tgl_peresepan)}</strong>: ${this.escapeHtml(r.nama_obat)} (${this.escapeHtml(r.jml)}) - ${this.escapeHtml(r.aturan_pakai)}</li>`).join('') || '<li>-</li>';
+                    const tind = (d.tindakan || []).map(t => `<li><strong>${this.escapeHtml(t.tgl_perawatan)}</strong>: ${this.escapeHtml(t.nm_perawatan)}</li>`).join('') || '<li>-</li>';
+                    box.innerHTML = `<div class="row g-2">
+                        <div class="col-md-6"><strong>Riwayat SOAP:</strong><ul class="mb-2">${soap}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat Diagnosa ICD-10:</strong><ul class="mb-2">${diag}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat E-Resep:</strong><ul class="mb-0">${resep}</ul></div>
+                        <div class="col-md-6"><strong>Riwayat Tindakan:</strong><ul class="mb-0">${tind}</ul></div>
+                    </div>`;
+                });
         },
 
         loadSmartPeekHistory: function (noRkmMedis) {
